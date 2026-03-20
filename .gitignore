@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+
+# VS Code
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+
+# Secrets
+appsettings.Development.json
+*.pfx
+
+# OS
+.DS_Store
+Thumbs.db
