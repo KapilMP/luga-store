@@ -1,16 +1,10 @@
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using LugaStore.Application.Identity.Commands;
 using LugaStore.Application.Common.Interfaces;
 using UserEntity = LugaStore.Domain.Entities.User;
 using LugaStore.Domain.Common;
-using LugaStore.Domain.Enums;
-using LugaStore.WebAPI.Controllers;
 
 namespace LugaStore.WebAPI.Controllers.Manager;
 
