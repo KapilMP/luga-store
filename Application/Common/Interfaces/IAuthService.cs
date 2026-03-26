@@ -17,6 +17,7 @@ public interface IAuthService
     Task<bool> ConfirmEmailAsync(string userId, string token);
     Task ForgotPasswordAsync(string email);
     Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+    Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
     Task<bool> DeleteUserAsync(int userId);
 
     // User creation rules

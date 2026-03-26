@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
@@ -33,6 +34,15 @@ public class AuthController(
             SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/admin/auth/refresh");
 
         return Ok(new { accessToken = authResult.AccessToken });
+    }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(ChangePasswordCommand command)
+    {
+        var result = await mediator.Send(command);
+        if (!result) return BadRequest("Current password is incorrect.");
+        return Ok("Password changed successfully.");
     }
 
     [HttpPost("forgot-password")]

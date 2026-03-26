@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using LugaStore.Domain.Entities;
 
@@ -12,7 +10,7 @@ public static class DbSeeder
         RoleManager<IdentityRole<int>> roleManager)
     {
         // Final Role Set for Luga Store: [Admin, PartnerManager, Partner, User]
-        string[] roleNames = { "Admin", "PartnerManager", "Partner", "Customer" };
+        string[] roleNames = ["Admin", "PartnerManager", "Partner", "Customer"];
         foreach (var roleName in roleNames)
         {
             if (!await roleManager.RoleExistsAsync(roleName))

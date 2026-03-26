@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
@@ -15,7 +16,7 @@ namespace LugaStore.Infrastructure.Persistence;
 
 public class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options,
-    IUserService userService) : IdentityDbContext<User, IdentityRole<int>, int>(options), IApplicationDbContext
+    IHttpContextAccessor httpContextAccessor) : IdentityDbContext<User, IdentityRole<int>, int>(options), IApplicationDbContext
 {
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
@@ -58,7 +59,7 @@ public class ApplicationDbContext(
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var currentUserIdString = userService.UserId;
+        var currentUserIdString = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         int? currentUserId = string.IsNullOrEmpty(currentUserIdString) ? null : int.Parse(currentUserIdString);
         var now = DateTime.UtcNow;
 

@@ -159,6 +159,15 @@ public class AuthService(
         return result.Succeeded;
     }
 
+    public async Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null) return false;
+
+        var result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        return result.Succeeded;
+    }
+
     public async Task<bool> DeleteUserAsync(int userId)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
