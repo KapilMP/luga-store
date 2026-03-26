@@ -1,18 +1,15 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using System.Web;
-using System.Threading.Tasks;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.EntityFrameworkCore;
 using Google.Apis.Auth;
+using LugaStore.Application.Common.Exceptions;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Models;
-using LugaStore.Application.Common.Exceptions;
+using LugaStore.Infrastructure.Settings;
 using LugaStore.Domain.Entities;
 using LugaStore.Domain.Common;
 
@@ -23,13 +20,18 @@ public class AuthService(
     SignInManager<User> signInManager,
     IJwtSettings jwtSettings,
     IGoogleSettings googleSettings,
-    IEmailSender emailSender) : IAuthService
+    IEmailSender emailSender,
+    IConfiguration configuration) : IAuthService
 {
+    private string FrontendUrl => configuration["FrontendUrl"] ?? "https://luga-store.com";
     public async Task<AuthResult> LoginAsync(string email, string password)
     {
-        var user = await userManager.FindByEmailAsync(email);
-        if (user == null)
-            throw new NotFoundError("Email or Password is not correct");
+        var user = await userManager.FindByEmailAsync(email) ?? throw new NotFoundError("Email or Password is not correct");
+        if (!user.EmailConfirmed)
+            throw new NotFoundError("Please verify your email before logging in.");
+
+        if (!user.IsActive)
+            throw new UnauthorizedException("Your account has been deactivated.");
 
         var result = await signInManager.CheckPasswordSignInAsync(user, password, false);
         if (!result.Succeeded)
@@ -78,7 +80,7 @@ public class AuthService(
             var result = await userManager.CreateAsync(user);
             if (!result.Succeeded) return null;
 
-            await userManager.AddToRoleAsync(user, Roles.User);
+            await userManager.AddToRoleAsync(user, Roles.Customer);
         }
 
         var roles = await userManager.GetRolesAsync(user);
@@ -97,7 +99,7 @@ public class AuthService(
         if (string.IsNullOrEmpty(email)) return null;
 
         var user = await userManager.FindByEmailAsync(email);
-        if (user == null) return null;
+        if (user == null || !user.IsActive) return null;
 
         var roles = await userManager.GetRolesAsync(user);
         var newAccessToken = GenerateAccessToken(user, roles);
@@ -123,7 +125,7 @@ public class AuthService(
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = HttpUtility.UrlEncode(token);
 
-        var verificationUrl = $"https://luga-store.com/verify-email?userId={user.Id}&token={encodedToken}";
+        var verificationUrl = $"{FrontendUrl}/verify-email?userId={user.Id}&token={encodedToken}";
         await emailSender.SendEmailAsync(email, "Verify Your email", $"Please verify your account by clicking here: {verificationUrl}");
     }
 
@@ -144,7 +146,7 @@ public class AuthService(
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
         var encodedToken = HttpUtility.UrlEncode(token);
 
-        var resetUrl = $"https://luga-store.com/reset-password?email={email}&token={encodedToken}";
+        var resetUrl = $"{FrontendUrl}/reset-password?email={email}&token={encodedToken}";
         await emailSender.SendEmailAsync(email, "Reset Password", $"Reset your password by clicking here: {resetUrl}");
     }
 
@@ -166,13 +168,135 @@ public class AuthService(
         return result.Succeeded;
     }
 
+    public async Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone)
+    {
+        var existing = await userManager.FindByEmailAsync(email);
+        if (existing != null) return true; // already exists, guest or signed up
+
+        var user = new User
+        {
+            UserName = email,
+            Email = email,
+            FirstName = firstName,
+            LastName = lastName,
+            PhoneNumber = phone,
+            HasSignedUp = false
+        };
+
+        var result = await userManager.CreateAsync(user);
+        if (!result.Succeeded) return false;
+
+        await userManager.AddToRoleAsync(user, Roles.Customer);
+        return true;
+    }
+
+    public async Task<bool> RegisterAsync(string email, string password, string firstName, string lastName, string phone)
+    {
+        var existing = await userManager.FindByEmailAsync(email);
+        if (existing != null)
+        {
+            if (existing.HasSignedUp) return false;
+
+            existing.FirstName = firstName;
+            existing.LastName = lastName;
+            existing.PhoneNumber = phone;
+            existing.HasSignedUp = true;
+            await userManager.UpdateAsync(existing);
+            var addPasswordResult = await userManager.AddPasswordAsync(existing, password);
+            if (!addPasswordResult.Succeeded) return false;
+
+            await SendVerificationEmailAsync(email);
+            return true;
+        }
+
+        var user = new User
+        {
+            UserName = email,
+            Email = email,
+            FirstName = firstName,
+            LastName = lastName,
+            PhoneNumber = phone,
+            HasSignedUp = true
+        };
+
+        var result = await userManager.CreateAsync(user, password);
+        if (!result.Succeeded) return false;
+
+        await userManager.AddToRoleAsync(user, Roles.Customer);
+        await SendVerificationEmailAsync(email);
+        return true;
+    }
+
+    public Task<bool> CreateAdminAsync(string email, string firstName, string lastName)
+        => CreateInvitedUserAsync(email, firstName, lastName, Roles.Admin);
+
+    public Task<bool> CreatePartnerAsync(string email, string firstName, string lastName)
+        => CreateInvitedUserAsync(email, firstName, lastName, Roles.Partner);
+
+    public Task<bool> CreatePartnerManagerAsync(string email, string firstName, string lastName)
+        => CreateInvitedUserAsync(email, firstName, lastName, Roles.PartnerManager);
+
+    public async Task<bool> AcceptInvitationAsync(string email, string token, string password)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null || user.EmailConfirmed) return false;
+
+        var result = await userManager.ConfirmEmailAsync(user, token);
+        if (!result.Succeeded) return false;
+
+        var addPassword = await userManager.AddPasswordAsync(user, password);
+        return addPassword.Succeeded;
+    }
+
+    public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user == null) return false;
+
+        user.IsActive = isActive;
+        var result = await userManager.UpdateAsync(user);
+        return result.Succeeded;
+    }
+
+    private async Task<bool> CreateInvitedUserAsync(string email, string firstName, string lastName, string role)
+    {
+        if (await userManager.FindByEmailAsync(email) != null)
+            throw new ConflictException("Email already exists.");
+
+        var user = new User
+        {
+            UserName = email,
+            Email = email,
+            FirstName = firstName,
+            LastName = lastName,
+            HasSignedUp = true,
+            EmailConfirmed = false
+        };
+
+        var result = await userManager.CreateAsync(user);
+        if (!result.Succeeded) throw new BadRequestException("Failed to create user.");
+
+        await userManager.AddToRoleAsync(user, role);
+        await SendInvitationEmailAsync(user);
+        return true;
+    }
+
+    private async Task SendInvitationEmailAsync(User user)
+    {
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = HttpUtility.UrlEncode(token);
+        var inviteUrl = $"{FrontendUrl}/accept-invitation?email={user.Email}&token={encodedToken}";
+        await emailSender.SendEmailAsync(user.Email!, "You're invited to Luga Store",
+            $"Hi {user.FirstName}, you've been invited. Set your password here: {inviteUrl}");
+    }
+
     private string GenerateAccessToken(User user, IList<string> roles)
     {
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
         foreach (var role in roles)

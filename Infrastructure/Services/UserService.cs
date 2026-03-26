@@ -7,7 +7,7 @@ using LugaStore.Domain.Entities;
 namespace LugaStore.Infrastructure.Services;
 
 public class UserService(
-    IHttpContextAccessor httpContextAccessor, 
+    IHttpContextAccessor httpContextAccessor,
     UserManager<User> userManager) : IUserService
 {
     public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);

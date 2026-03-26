@@ -18,4 +18,13 @@ public interface IAuthService
     Task ForgotPasswordAsync(string email);
     Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
     Task<bool> DeleteUserAsync(int userId);
+
+    // User creation rules
+    Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone);
+    Task<bool> RegisterAsync(string email, string password, string firstName, string lastName, string phone);
+    Task<bool> CreateAdminAsync(string email, string firstName, string lastName);
+    Task<bool> CreatePartnerAsync(string email, string firstName, string lastName);
+    Task<bool> CreatePartnerManagerAsync(string email, string firstName, string lastName);
+    Task<bool> AcceptInvitationAsync(string email, string token, string password);
+    Task<bool> SetUserActiveStatusAsync(int userId, bool isActive);
 }

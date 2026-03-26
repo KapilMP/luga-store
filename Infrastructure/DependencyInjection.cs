@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using LugaStore.Application.Common.Interfaces;
-using LugaStore.Application.Common.Models;
+using LugaStore.Infrastructure.Messaging.Consumers;
 using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Services;
+using LugaStore.Infrastructure.Settings;
 using LugaStore.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

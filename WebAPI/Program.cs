@@ -1,11 +1,14 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using LugaStore.Application;
+using LugaStore.Application.Common.Exceptions;
 using LugaStore.Infrastructure;
 using LugaStore.Domain.Entities;
 using LugaStore.Infrastructure.Persistence.Seeds;
@@ -52,6 +55,39 @@ if (!string.IsNullOrEmpty(hyperDxKey))
         });
     });
 }
+
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddFixedWindowLimiter("global", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 100;
+        opt.QueueLimit = 0;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+
+    options.AddFixedWindowLimiter("auth", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 10;
+        opt.QueueLimit = 0;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+});
+
+// CORS
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Default", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials());
+});
 
 // Add services
 builder.Services.AddControllers();
@@ -123,7 +159,29 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseExceptionHandler(err => err.Run(async ctx =>
+{
+    var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    int status;
+    string message;
+    switch (ex)
+    {
+        case NotFoundException e: status = StatusCodes.Status404NotFound; message = e.Message; break;
+        case ConflictException e: status = StatusCodes.Status409Conflict; message = e.Message; break;
+        case BadRequestException e: status = StatusCodes.Status400BadRequest; message = e.Message; break;
+        case UnauthorizedException e: status = StatusCodes.Status401Unauthorized; message = e.Message; break;
+        case ForbiddenException e: status = StatusCodes.Status403Forbidden; message = e.Message; break;
+        default: status = StatusCodes.Status500InternalServerError; message = "An unexpected error occurred."; break;
+    }
+    ctx.Response.StatusCode = status;
+    await ctx.Response.WriteAsJsonAsync(new { error = message });
+}));
+
 app.UseHttpsRedirection();
+
+app.UseCors("Default");
+
+app.UseRateLimiter();
 
 // Antiforgery Middleware
 app.UseAntiforgery();
@@ -131,6 +189,6 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("global");
 
 app.Run();

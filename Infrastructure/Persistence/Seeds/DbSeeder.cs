@@ -11,8 +11,8 @@ public static class DbSeeder
         UserManager<User> userManager, 
         RoleManager<IdentityRole<int>> roleManager)
     {
-        // Final Role Set for Luga Store: [Admin, Manager, Partner, User]
-        string[] roleNames = { "Admin", "Manager", "Partner", "User" };
+        // Final Role Set for Luga Store: [Admin, PartnerManager, Partner, User]
+        string[] roleNames = { "Admin", "PartnerManager", "Partner", "Customer" };
         foreach (var roleName in roleNames)
         {
             if (!await roleManager.RoleExistsAsync(roleName))
@@ -43,8 +43,8 @@ public static class DbSeeder
             }
         }
 
-        // Seed Default Manager User
-        var managerEmail = "manager@luga-store.com";
+        // Seed Default PartnerManager User
+        var managerEmail = "partner-manager@luga-store.com";
         var managerUser = await userManager.FindByEmailAsync(managerEmail);
 
         if (managerUser == null)
@@ -54,14 +54,14 @@ public static class DbSeeder
                 UserName = managerEmail,
                 Email = managerEmail,
                 EmailConfirmed = true,
-                FirstName = "Store",
+                FirstName = "Partner",
                 LastName = "Manager"
             };
 
             var result = await userManager.CreateAsync(user, "LugaStore@123!");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(user, "Manager");
+                await userManager.AddToRoleAsync(user, "PartnerManager");
             }
         }
     }

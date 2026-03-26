@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,12 @@ public class ApplicationDbContext(
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Newsletter> Newsletters => Set<Newsletter>();
+    public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<RestockSubscription> RestockSubscriptions => Set<RestockSubscription>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<ProductSizeStock> ProductSizeStocks => Set<ProductSizeStock>();
+    public DbSet<ProductSale> ProductSales => Set<ProductSale>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
     
     DbSet<User> IApplicationDbContext.Users => Users;
 

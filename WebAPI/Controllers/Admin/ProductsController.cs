@@ -1,50 +1,45 @@
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using LugaStore.Application.Common.Interfaces;
-using LugaStore.Domain.Entities;
+using LugaStore.Application.Products.Commands;
+using LugaStore.Application.Products.Queries;
 using LugaStore.Domain.Common;
+using LugaStore.Domain.Enums;
 
 namespace LugaStore.WebAPI.Controllers.Admin;
+
+public record CreateProductRequest(string Name, string? Description, decimal Price, ProductCategory Category);
+public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
 
 [ApiController]
 [Route("admin/[controller]")]
 [Authorize(Roles = Roles.Admin)]
-public class ProductsController(IApplicationDbContext context) : ControllerBase
+public class ProductsController(ISender mediator) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllProducts()
-    {
-        // Admin sees EVERYTHING across all partners and brand stock
-        var products = await context.Products
-            .Include(p => p.Creator)
-            .ToListAsync();
-
-        return Ok(products);
-    }
+        => Ok(await mediator.Send(new GetAllProductsQuery()));
 
     [HttpPost]
-    public async Task<IActionResult> CreateProduct(Product product)
+    public async Task<IActionResult> CreateProduct(CreateProductRequest request)
     {
-        // Admin creations are usually brand creations (CreatorId = null) 
-        // unless they explicitly assign one.
-        context.Products.Add(product);
-        await context.SaveChangesAsync(default);
+        var id = await mediator.Send(new CreateProductCommand(request.Name, request.Description, request.Price, request.Category));
+        return CreatedAtAction(nameof(GetAllProducts), new { id }, id);
+    }
 
-        return CreatedAtAction(nameof(GetAllProducts), new { id = product.Id }, product);
+    [HttpPost("{id:int}/sizes")]
+    public async Task<IActionResult> SetSizes(int id, SetSizesRequest request)
+    {
+        var result = await mediator.Send(new SetProductSizesCommand(id, request.Sizes, IsAdmin: true));
+        if (!result) return NotFound();
+        return Ok();
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteAnyProduct(int id)
+    public async Task<IActionResult> DeleteProduct(int id)
     {
-        var product = await context.Products.FindAsync(id);
-        if (product == null) return NotFound();
-
-        context.Products.Remove(product);
-        await context.SaveChangesAsync(default);
-
+        var result = await mediator.Send(new DeleteProductCommand(id, IsAdmin: true));
+        if (!result) return NotFound();
         return NoContent();
     }
 }

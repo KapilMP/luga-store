@@ -1,14 +1,10 @@
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
-using LugaStore.Application.Common.Interfaces;
-using UserEntity = LugaStore.Domain.Entities.User;
 using LugaStore.Domain.Common;
+using UserEntity = LugaStore.Domain.Entities.User;
 
 namespace LugaStore.WebAPI.Controllers.Admin;
 
@@ -16,10 +12,10 @@ public record ForgotPasswordRequest(string Email);
 public record ResetPasswordRequest(string Email, string Token, string NewPassword);
 
 [ApiController]
-[Route("admin/[controller]")] 
+[Route("admin/[controller]")]
+[EnableRateLimiting("auth")]
 public class AuthController(
-    ISender mediator, 
-    IAuthService authService,
+    ISender mediator,
     UserManager<UserEntity> userManager) : BaseAuthController
 {
     [HttpPost("login")]
@@ -28,18 +24,12 @@ public class AuthController(
         var authResult = await mediator.Send(command);
         if (authResult == null) return Unauthorized("Invalid credentials.");
 
-        // Role Validation: Ensure the user trying to log in via Admin path HAS the Admin role
         var user = await userManager.FindByEmailAsync(command.Email);
         if (user == null || !await userManager.IsInRoleAsync(user, Roles.Admin))
-        {
             return Forbid("Access denied: You do not have administrative privileges.");
-        }
 
         if (!string.IsNullOrEmpty(authResult.RefreshToken))
-        {
-            var refreshCsrf = Guid.NewGuid().ToString();
-            SetAuthCookies(authResult.RefreshToken, refreshCsrf, "/admin/auth/refresh");
-        }
+            SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/admin/auth/refresh");
 
         return Ok(new { accessToken = authResult.AccessToken });
     }
@@ -47,15 +37,15 @@ public class AuthController(
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
     {
-        await authService.ForgotPasswordAsync(request.Email);
+        await mediator.Send(new ForgotPasswordCommand(request.Email));
         return Ok("If the admin exists, a reset link has been sent.");
     }
 
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
     {
-        var result = await authService.ResetPasswordAsync(request.Email, request.Token, request.NewPassword);
-        if (!result) return BadRequest("Invalid Token or Admin");
+        var result = await mediator.Send(new ResetPasswordCommand(request.Email, request.Token, request.NewPassword));
+        if (!result) return BadRequest("Invalid Token or Admin.");
         return Ok("Password has been reset.");
     }
 
@@ -66,21 +56,15 @@ public class AuthController(
         var refreshCsrfCookie = Request.Cookies["refreshCsrf"];
         var csrfHeader = Request.Headers["X-XSRF-TOKEN"].ToString();
 
-        if (string.IsNullOrEmpty(refreshToken) || 
-            string.IsNullOrEmpty(refreshCsrfCookie) || 
+        if (string.IsNullOrEmpty(refreshToken) ||
+            string.IsNullOrEmpty(refreshCsrfCookie) ||
             csrfHeader != refreshCsrfCookie)
-        {
-            return Unauthorized("Invalid refresh request (CSRF failure)");
-        }
+            return Unauthorized("Invalid refresh request (CSRF failure).");
 
-        var result = await authService.RefreshTokenAsync(refreshToken);
-        if (result == null)
-            return Unauthorized("Refresh session expired");
+        var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
+        if (result == null) return Unauthorized("Refresh session expired.");
 
-        var newRefreshCsrf = Guid.NewGuid().ToString();
-        SetAuthCookies(result.Value.RefreshToken, newRefreshCsrf, "/admin/auth/refresh");
-
+        SetAuthCookies(result.Value.RefreshToken, Guid.NewGuid().ToString(), "/admin/auth/refresh");
         return Ok(new { accessToken = result.Value.AccessToken });
     }
-
 }

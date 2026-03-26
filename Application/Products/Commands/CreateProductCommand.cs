@@ -3,10 +3,11 @@ using System.Threading.Tasks;
 using MediatR;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Entities;
+using LugaStore.Domain.Enums;
 
 namespace LugaStore.Application.Products.Commands;
 
-public record CreateProductCommand(string Name, string? Description, decimal Price, int CategoryId) : IRequest<int>;
+public record CreateProductCommand(string Name, string? Description, decimal Price, ProductCategory Category) : IRequest<int>;
 
 public class CreateProductCommandHandler(IApplicationDbContext context) : IRequestHandler<CreateProductCommand, int>
 {
@@ -17,7 +18,7 @@ public class CreateProductCommandHandler(IApplicationDbContext context) : IReque
             Name = request.Name,
             Description = request.Description,
             Price = request.Price,
-            CategoryId = request.CategoryId
+            Category = request.Category
         };
 
         context.Products.Add(product);

@@ -1,17 +1,10 @@
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
-using LugaStore.Application.Common.Interfaces;
-using UserEntity = LugaStore.Domain.Entities.User;
 using LugaStore.Domain.Common;
-using LugaStore.Domain.Enums;
-using LugaStore.WebAPI.Controllers;
+using UserEntity = LugaStore.Domain.Entities.User;
 
 namespace LugaStore.WebAPI.Controllers.Partner;
 
@@ -19,10 +12,10 @@ public record ForgotPasswordRequest(string Email);
 public record ResetPasswordRequest(string Email, string Token, string NewPassword);
 
 [ApiController]
-[Route("partner/[controller]")] 
+[Route("partner/[controller]")]
+[EnableRateLimiting("auth")]
 public class AuthController(
-    ISender mediator, 
-    IAuthService authService,
+    ISender mediator,
     UserManager<UserEntity> userManager) : BaseAuthController
 {
     [HttpPost("login")]
@@ -31,21 +24,15 @@ public class AuthController(
         var authResult = await mediator.Send(command);
         if (authResult == null) return Unauthorized("Invalid credentials.");
 
-        // Role Validation: Partners, Admins, and Managers can login here
         var user = await userManager.FindByEmailAsync(command.Email);
-        if (user == null || 
-            (!await userManager.IsInRoleAsync(user, Roles.Partner) && 
-             !await userManager.IsInRoleAsync(user, Roles.Admin) && 
-             !await userManager.IsInRoleAsync(user, Roles.Manager)))
-        {
+        if (user == null ||
+            (!await userManager.IsInRoleAsync(user, Roles.Partner) &&
+             !await userManager.IsInRoleAsync(user, Roles.Admin) &&
+             !await userManager.IsInRoleAsync(user, Roles.PartnerManager)))
             return Forbid("Access denied: You are not authorized for the partner portal.");
-        }
 
         if (!string.IsNullOrEmpty(authResult.RefreshToken))
-        {
-            var refreshCsrf = Guid.NewGuid().ToString();
-            SetAuthCookies(authResult.RefreshToken, refreshCsrf, "/partner/auth/refresh");
-        }
+            SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/partner/auth/refresh");
 
         return Ok(new { accessToken = authResult.AccessToken });
     }
@@ -53,15 +40,15 @@ public class AuthController(
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
     {
-        await authService.ForgotPasswordAsync(request.Email);
+        await mediator.Send(new ForgotPasswordCommand(request.Email));
         return Ok("If the partner exists, a reset link has been sent.");
     }
 
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
     {
-        var result = await authService.ResetPasswordAsync(request.Email, request.Token, request.NewPassword);
-        if (!result) return BadRequest("Invalid Token or Partner");
+        var result = await mediator.Send(new ResetPasswordCommand(request.Email, request.Token, request.NewPassword));
+        if (!result) return BadRequest("Invalid Token or Partner.");
         return Ok("Password has been reset.");
     }
 
@@ -72,21 +59,15 @@ public class AuthController(
         var refreshCsrfCookie = Request.Cookies["refreshCsrf"];
         var csrfHeader = Request.Headers["X-XSRF-TOKEN"].ToString();
 
-        if (string.IsNullOrEmpty(refreshToken) || 
-            string.IsNullOrEmpty(refreshCsrfCookie) || 
+        if (string.IsNullOrEmpty(refreshToken) ||
+            string.IsNullOrEmpty(refreshCsrfCookie) ||
             csrfHeader != refreshCsrfCookie)
-        {
-            return Unauthorized("Invalid refresh request (CSRF failure)");
-        }
+            return Unauthorized("Invalid refresh request (CSRF failure).");
 
-        var result = await authService.RefreshTokenAsync(refreshToken);
-        if (result == null)
-            return Unauthorized("Refresh session expired");
+        var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
+        if (result == null) return Unauthorized("Refresh session expired.");
 
-        var newRefreshCsrf = Guid.NewGuid().ToString();
-        SetAuthCookies(result.Value.RefreshToken, newRefreshCsrf, "/partner/auth/refresh");
-
+        SetAuthCookies(result.Value.RefreshToken, Guid.NewGuid().ToString(), "/partner/auth/refresh");
         return Ok(new { accessToken = result.Value.AccessToken });
     }
-
 }

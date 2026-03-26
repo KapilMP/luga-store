@@ -6,13 +6,8 @@ namespace LugaStore.Domain.Entities;
 
 public class Order : BaseAuditableEntity
 {
-    public int? UserId { get; set; } // Nullable for Guest Checkout
+    public int? UserId { get; set; }
     public User? User { get; set; }
-
-    // Guest Info (Required if UserId is null)
-    public string CustomerName { get; set; } = string.Empty;
-    public string CustomerEmail { get; set; } = string.Empty;
-    public string ShippingAddress { get; set; } = string.Empty;
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public decimal TotalAmount { get; set; }
