@@ -15,6 +15,7 @@ public record ConfirmEmailRequest(string UserId, string Token);
 [ApiController]
 [Route("customer/[controller]")]
 [EnableRateLimiting("auth")]
+[Consumes("application/json")]
 public class AuthController(ISender mediator) : BaseAuthController
 {
     [HttpPost("login")]

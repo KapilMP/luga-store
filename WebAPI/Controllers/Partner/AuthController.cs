@@ -14,6 +14,7 @@ public record ResetPasswordRequest(string Email, string Token, string NewPasswor
 [ApiController]
 [Route("partner/[controller]")]
 [EnableRateLimiting("auth")]
+[Consumes("application/json")]
 public class AuthController(
     ISender mediator,
     UserManager<UserEntity> userManager) : BaseAuthController
