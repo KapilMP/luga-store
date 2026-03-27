@@ -14,22 +14,6 @@ namespace LugaStore.WebAPI.Controllers.Admin;
 [Consumes("application/json")]
 public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
-    [HttpPost("invite")]
-    public async Task<IActionResult> InviteAdmin(InviteAdminCommand command)
-    {
-        var result = await mediator.Send(command);
-        if (!result) return BadRequest("Failed to create admin.");
-        return Ok("Invitation sent.");
-    }
-
-    [HttpPost("resend-invitation")]
-    public async Task<IActionResult> ResendInvitation(ResendInvitationCommand command)
-    {
-        var result = await mediator.Send(command);
-        if (!result) return BadRequest("User not found or already accepted invitation.");
-        return Ok("Invitation resent.");
-    }
-
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
     {
@@ -73,7 +57,7 @@ public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings)
     {
         var refreshToken = Request.Cookies["refreshToken"];
         var refreshCsrfCookie = Request.Cookies["refreshCsrf"];
-        var csrfHeader = Request.Headers["X-XSRF-TOKEN"].ToString();
+        var csrfHeader = Request.Headers["C-CSRF-TOKEN"].ToString();
 
         if (string.IsNullOrEmpty(refreshToken) ||
             string.IsNullOrEmpty(refreshCsrfCookie) ||

@@ -1,4 +1,5 @@
 using FluentValidation;
+using LugaStore.Application.Common.Models;
 using LugaStore.Application.Identity.Commands;
 
 namespace LugaStore.Application.Identity.Validators;
@@ -76,6 +77,24 @@ public class ResendInvitationCommandValidator : AbstractValidator<ResendInvitati
     public ResendInvitationCommandValidator()
     {
         RuleFor(v => v.Email).NotEmpty().EmailAddress();
+    }
+}
+
+public class UpdateProfileCommandValidator : AbstractValidator<UpdateProfileCommand<BaseUserProfile>>
+{
+    public UpdateProfileCommandValidator()
+    {
+        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
+        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
+        RuleFor(v => v.Phone).NotEmpty().Matches(@"^\+?[0-9]{7,15}$").WithMessage("A valid phone number is required.");
+    }
+}
+
+public class UploadAvatarCommandValidator : AbstractValidator<UploadAvatarCommand<BaseUserProfile>>
+{
+    public UploadAvatarCommandValidator()
+    {
+        RuleFor(v => v.Stream).NotNull().WithMessage("File is required.");
     }
 }
 

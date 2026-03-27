@@ -102,7 +102,7 @@ builder.Services.AddAuthentication(options =>
 // Configure Antiforgery (CSRF)
 builder.Services.AddAntiforgery(options =>
 {
-    options.HeaderName = "X-XSRF-TOKEN";
+    options.HeaderName = "C-CSRF-TOKEN";
 });
 
 // Register Clean Architecture layers

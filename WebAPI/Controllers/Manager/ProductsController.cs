@@ -6,13 +6,13 @@ using LugaStore.Application.Products.Queries;
 using LugaStore.Domain.Common;
 using LugaStore.Domain.Enums;
 
-namespace LugaStore.WebAPI.Controllers.PartnerManager;
+namespace LugaStore.WebAPI.Controllers.Manager;
 
 public record CreateProductRequest(string Name, string? Description, decimal Price, ProductCategory Category);
 public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
 
 [ApiController]
-[Route("partner/{partnerId:int}/manager/[controller]")]
+[Route("manager/[controller]")]
 [Authorize(Roles = Roles.PartnerManager + "," + Roles.Admin)]
 public class ProductsController(ISender mediator) : ControllerBase
 {

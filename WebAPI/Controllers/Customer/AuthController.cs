@@ -88,7 +88,7 @@ public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings)
     {
         var refreshToken = Request.Cookies["refreshToken"];
         var refreshCsrfCookie = Request.Cookies["refreshCsrf"];
-        var csrfHeader = Request.Headers["X-XSRF-TOKEN"].ToString();
+        var csrfHeader = Request.Headers["C-CSRF-TOKEN"].ToString();
 
         if (string.IsNullOrEmpty(refreshToken) ||
             string.IsNullOrEmpty(refreshCsrfCookie) ||

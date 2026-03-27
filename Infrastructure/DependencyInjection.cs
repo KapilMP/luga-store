@@ -30,6 +30,11 @@ public static class DependencyInjection
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
         services.AddSingleton<IAppSettings>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
 
+        services.Configure<OpeninarySettings>(configuration.GetSection("Openinary"));
+        services.AddSingleton<IOpeninarySettings>(sp => sp.GetRequiredService<IOptions<OpeninarySettings>>().Value);
+
+        services.AddHttpClient<IImageService, OpeninaryService>();
+
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
@@ -45,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IEmailSender, EmailSender>();
+        services.AddScoped<IOrderService, OrderService>();
 
         // Messaging
         services.AddMassTransit(x =>

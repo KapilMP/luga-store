@@ -25,6 +25,7 @@ public class AuthService(
     IHttpContextAccessor httpContextAccessor,
     IRefreshTokenPaths cookieSettings,
     IAppSettings appSettings,
+    IUserService userService,
     ApplicationDbContext dbContext) : IAuthService
 {
     private string FrontendUrl => appSettings.FrontendUrl;
@@ -210,6 +211,13 @@ public class AuthService(
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user == null) return false;
 
+        if (await userManager.IsInRoleAsync(user, Roles.Admin))
+        {
+            var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
+            if (admins.Count <= 1)
+                throw new BadRequestException("Cannot delete the last admin.");
+        }
+
         var result = await userManager.DeleteAsync(user);
         return result.Succeeded;
     }
@@ -270,27 +278,6 @@ public class AuthService(
         return true;
     }
 
-    public async Task<bool> InviteAdminAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
-    {
-        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.Admin, cancellationToken);
-        await SendInvitationEmailAsync(user);
-        return true;
-    }
-
-    public async Task<bool> InvitePartnerAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
-    {
-        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.Partner, cancellationToken);
-        await SendInvitationEmailAsync(user);
-        return true;
-    }
-
-    public async Task<bool> InvitePartnerManagerAsync(string email, string firstName, string lastName, int partnerId, CancellationToken cancellationToken = default)
-    {
-        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.PartnerManager, cancellationToken, partnerId);
-        await SendInvitationEmailAsync(user);
-        return true;
-    }
-
     public async Task<bool> AcceptInvitationAsync(string email, string token, string password, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
@@ -301,68 +288,6 @@ public class AuthService(
 
         var addPassword = await userManager.AddPasswordAsync(user, password);
         return addPassword.Succeeded;
-    }
-
-    public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
-    {
-        var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user == null) return false;
-
-        user.IsActive = isActive;
-        var result = await userManager.UpdateAsync(user);
-        return result.Succeeded;
-    }
-
-    public async Task<bool> ResendInvitationAsync(string email, CancellationToken cancellationToken = default)
-    {
-        var user = await userManager.FindByEmailAsync(email);
-        if (user == null || user.EmailConfirmed) return false;
-
-        await SendInvitationEmailAsync(user);
-        return true;
-    }
-
-    private async Task<User> CreateInvitedUserAsync(string email, string firstName, string lastName, string role, CancellationToken cancellationToken, int? partnerId = null)
-    {
-        if (await userManager.FindByEmailAsync(email) != null)
-            throw new ConflictException("Email already exists.");
-
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var user = new User
-            {
-                UserName = email,
-                Email = email,
-                FirstName = firstName,
-                LastName = lastName,
-                EmailConfirmed = false,
-                PartnerId = partnerId
-            };
-
-            var result = await userManager.CreateAsync(user);
-            if (!result.Succeeded) throw new InternalServerException("Failed to create user.");
-
-            var roleResult = await userManager.AddToRoleAsync(user, role);
-            if (!roleResult.Succeeded) throw new InternalServerException("Failed to assign role.");
-
-            await transaction.CommitAsync(cancellationToken);
-            return user;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-    }
-
-    private async Task SendInvitationEmailAsync(User user)
-    {
-        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = HttpUtility.UrlEncode(token);
-        var inviteUrl = $"{FrontendUrl}/accept-invitation?email={user.Email}&token={encodedToken}";
-        await emailSender.SendEmailAsync(user.Email!, "You're invited to Luga Store",
-            $"Hi {user.FirstName}, you've been invited. Set your password here: {inviteUrl}");
     }
 
     private void SetRefreshCookie(string refreshToken, string path)

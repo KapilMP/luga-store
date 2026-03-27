@@ -26,10 +26,5 @@ public interface IAuthService
     // User creation rules
     Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone, CancellationToken cancellationToken = default);
     Task<bool> RegisterAsync(string email, string password, string firstName, string lastName, string phone, CancellationToken cancellationToken = default);
-    Task<bool> InviteAdminAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default);
-    Task<bool> InvitePartnerAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default);
-    Task<bool> InvitePartnerManagerAsync(string email, string firstName, string lastName, int partnerId, CancellationToken cancellationToken = default);
     Task<bool> AcceptInvitationAsync(string email, string token, string password, CancellationToken cancellationToken = default);
-    Task<bool> ResendInvitationAsync(string email);
-    Task<bool> SetUserActiveStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default);
 }

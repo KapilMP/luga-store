@@ -5,30 +5,14 @@ using LugaStore.Application.Identity.Commands;
 using LugaStore.Infrastructure.Settings;
 using LugaStore.WebAPI.Dtos;
 
-namespace LugaStore.WebAPI.Controllers.Partner.Manager;
+namespace LugaStore.WebAPI.Controllers.Manager;
 
 [ApiController]
-[Route("partner/{partnerId:int}/manager/[controller]")]
+[Route("manager/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
 public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
-    [HttpPost("invite")]
-    public async Task<IActionResult> InvitePartnerManager(int partnerId, InvitePartnerManagerRequest request)
-    {
-        var result = await mediator.Send(new InvitePartnerManagerCommand(request.Email, request.FirstName, request.LastName, partnerId));
-        if (!result) return BadRequest("Failed to invite partner manager.");
-        return Ok("Invitation sent.");
-    }
-
-    [HttpPost("resend-invitation")]
-    public async Task<IActionResult> ResendInvitation(ResendInvitationCommand command)
-    {
-        var result = await mediator.Send(command);
-        if (!result) return BadRequest("User not found or already accepted invitation.");
-        return Ok("Invitation resent.");
-    }
-
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
     {
@@ -63,7 +47,7 @@ public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings)
     {
         var refreshToken = Request.Cookies["refreshToken"];
         var refreshCsrfCookie = Request.Cookies["refreshCsrf"];
-        var csrfHeader = Request.Headers["X-XSRF-TOKEN"].ToString();
+        var csrfHeader = Request.Headers["C-CSRF-TOKEN"].ToString();
 
         if (string.IsNullOrEmpty(refreshToken) ||
             string.IsNullOrEmpty(refreshCsrfCookie) ||
