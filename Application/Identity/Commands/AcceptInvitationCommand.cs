@@ -8,5 +8,5 @@ public record AcceptInvitationCommand(string Email, string Token, string Passwor
 public class AcceptInvitationCommandHandler(IAuthService authService) : IRequestHandler<AcceptInvitationCommand, bool>
 {
     public async Task<bool> Handle(AcceptInvitationCommand request, CancellationToken cancellationToken)
-        => await authService.AcceptInvitationAsync(request.Email, request.Token, request.Password);
+        => await authService.AcceptInvitationAsync(request.Email, request.Token, request.Password, cancellationToken);
 }

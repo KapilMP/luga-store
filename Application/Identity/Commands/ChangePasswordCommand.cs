@@ -8,5 +8,5 @@ public record ChangePasswordCommand(string CurrentPassword, string NewPassword) 
 public class ChangePasswordCommandHandler(IAuthService authService, IUserService userService) : IRequestHandler<ChangePasswordCommand, bool>
 {
     public async Task<bool> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
-        => await authService.ChangePasswordAsync(userService.UserId!, request.CurrentPassword, request.NewPassword);
+        => await authService.ChangePasswordAsync(userService.UserId!, request.CurrentPassword, request.NewPassword, cancellationToken);
 }

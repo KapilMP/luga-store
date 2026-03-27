@@ -8,5 +8,5 @@ public record SetUserActiveStatusCommand(int UserId, bool IsActive) : IRequest<b
 public class SetUserActiveStatusCommandHandler(IAuthService authService) : IRequestHandler<SetUserActiveStatusCommand, bool>
 {
     public async Task<bool> Handle(SetUserActiveStatusCommand request, CancellationToken cancellationToken)
-        => await authService.SetUserActiveStatusAsync(request.UserId, request.IsActive);
+        => await authService.SetUserActiveStatusAsync(request.UserId, request.IsActive, cancellationToken);
 }

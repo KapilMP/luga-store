@@ -12,7 +12,7 @@ namespace LugaStore.WebAPI.Controllers.Customer;
 [Route("customer/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(ISender mediator, ICookieSettings cookieSettings) : BaseAuthController(cookieSettings)
+public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
@@ -32,7 +32,7 @@ public class AuthController(ISender mediator, ICookieSettings cookieSettings) : 
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        ClearAuthCookies(CookieSettings.CustomerRefreshPath);
+        ClearAuthCookies(RefreshTokenPaths.CustomerRefreshPath);
         return NoContent();
     }
 
@@ -98,7 +98,7 @@ public class AuthController(ISender mediator, ICookieSettings cookieSettings) : 
         var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
         if (result == null) return Unauthorized("Refresh session expired.");
 
-        SetAuthCookies(result.Value.RefreshToken, CookieSettings.CustomerRefreshPath);
+        SetAuthCookies(result.Value.RefreshToken, RefreshTokenPaths.CustomerRefreshPath);
         return Ok(new { accessToken = result.Value.AccessToken });
     }
 }

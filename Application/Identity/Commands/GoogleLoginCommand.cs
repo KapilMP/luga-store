@@ -9,5 +9,5 @@ public record GoogleLoginCommand(string IdToken) : IRequest<AuthResult?>;
 public class GoogleLoginCommandHandler(IAuthService authService) : IRequestHandler<GoogleLoginCommand, AuthResult?>
 {
     public async Task<AuthResult?> Handle(GoogleLoginCommand request, CancellationToken cancellationToken)
-        => await authService.LoginWithGoogleAsync(request.IdToken);
+        => await authService.LoginWithGoogleAsync(request.IdToken, cancellationToken);
 }

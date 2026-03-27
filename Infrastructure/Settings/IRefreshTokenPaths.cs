@@ -1,6 +1,6 @@
 namespace LugaStore.Infrastructure.Settings;
 
-public interface ICookieSettings
+public interface IRefreshTokenPaths
 {
     string CustomerRefreshPath { get; init; }
     string AdminRefreshPath { get; init; }

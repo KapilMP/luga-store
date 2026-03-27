@@ -5,14 +5,30 @@ using LugaStore.Application.Identity.Commands;
 using LugaStore.Infrastructure.Settings;
 using LugaStore.WebAPI.Dtos;
 
-namespace LugaStore.WebAPI.Controllers.PartnerManager;
+namespace LugaStore.WebAPI.Controllers.Partner.Manager;
 
 [ApiController]
 [Route("partner/{partnerId:int}/manager/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(ISender mediator, ICookieSettings cookieSettings) : BaseAuthController(cookieSettings)
+public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
+    [HttpPost("invite")]
+    public async Task<IActionResult> InvitePartnerManager(int partnerId, InvitePartnerManagerRequest request)
+    {
+        var result = await mediator.Send(new InvitePartnerManagerCommand(request.Email, request.FirstName, request.LastName, partnerId));
+        if (!result) return BadRequest("Failed to invite partner manager.");
+        return Ok("Invitation sent.");
+    }
+
+    [HttpPost("resend-invitation")]
+    public async Task<IActionResult> ResendInvitation(ResendInvitationCommand command)
+    {
+        var result = await mediator.Send(command);
+        if (!result) return BadRequest("User not found or already accepted invitation.");
+        return Ok("Invitation resent.");
+    }
+
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
     {
@@ -23,7 +39,7 @@ public class AuthController(ISender mediator, ICookieSettings cookieSettings) : 
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        ClearAuthCookies(CookieSettings.PartnerManagerRefreshPath);
+        ClearAuthCookies(RefreshTokenPaths.PartnerManagerRefreshPath);
         return NoContent();
     }
 
@@ -57,7 +73,7 @@ public class AuthController(ISender mediator, ICookieSettings cookieSettings) : 
         var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
         if (result == null) return Unauthorized("Refresh session expired.");
 
-        SetAuthCookies(result.Value.RefreshToken, CookieSettings.PartnerManagerRefreshPath);
+        SetAuthCookies(result.Value.RefreshToken, RefreshTokenPaths.PartnerManagerRefreshPath);
         return Ok(new { accessToken = result.Value.AccessToken });
     }
 }

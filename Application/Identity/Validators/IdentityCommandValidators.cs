@@ -71,6 +71,14 @@ public class AcceptInvitationCommandValidator : AbstractValidator<AcceptInvitati
     }
 }
 
+public class ResendInvitationCommandValidator : AbstractValidator<ResendInvitationCommand>
+{
+    public ResendInvitationCommandValidator()
+    {
+        RuleFor(v => v.Email).NotEmpty().EmailAddress();
+    }
+}
+
 public class ConfirmEmailCommandValidator : AbstractValidator<ConfirmEmailCommand>
 {
     public ConfirmEmailCommandValidator()
@@ -104,9 +112,9 @@ public class SetUserActiveStatusCommandValidator : AbstractValidator<SetUserActi
     }
 }
 
-public class CreateAdminCommandValidator : AbstractValidator<CreateAdminCommand>
+public class InviteAdminCommandValidator : AbstractValidator<InviteAdminCommand>
 {
-    public CreateAdminCommandValidator()
+    public InviteAdminCommandValidator()
     {
         RuleFor(v => v.Email).NotEmpty().EmailAddress();
         RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
@@ -114,9 +122,9 @@ public class CreateAdminCommandValidator : AbstractValidator<CreateAdminCommand>
     }
 }
 
-public class CreatePartnerCommandValidator : AbstractValidator<CreatePartnerCommand>
+public class InvitePartnerCommandValidator : AbstractValidator<InvitePartnerCommand>
 {
-    public CreatePartnerCommandValidator()
+    public InvitePartnerCommandValidator()
     {
         RuleFor(v => v.Email).NotEmpty().EmailAddress();
         RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
@@ -124,9 +132,9 @@ public class CreatePartnerCommandValidator : AbstractValidator<CreatePartnerComm
     }
 }
 
-public class CreatePartnerManagerCommandValidator : AbstractValidator<CreatePartnerManagerCommand>
+public class InvitePartnerManagerCommandValidator : AbstractValidator<InvitePartnerManagerCommand>
 {
-    public CreatePartnerManagerCommandValidator()
+    public InvitePartnerManagerCommandValidator()
     {
         RuleFor(v => v.Email).NotEmpty().EmailAddress();
         RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);

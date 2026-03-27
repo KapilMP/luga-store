@@ -12,8 +12,24 @@ namespace LugaStore.WebAPI.Controllers.Partner;
 [Route("partner/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(ISender mediator, ICookieSettings cookieSettings) : BaseAuthController(cookieSettings)
+public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
+    [HttpPost("invite")]
+    public async Task<IActionResult> InvitePartner(InvitePartnerCommand command)
+    {
+        var result = await mediator.Send(command);
+        if (!result) return BadRequest("Failed to invite partner.");
+        return Ok("Invitation sent.");
+    }
+
+    [HttpPost("resend-invitation")]
+    public async Task<IActionResult> ResendInvitation(ResendInvitationCommand command)
+    {
+        var result = await mediator.Send(command);
+        if (!result) return BadRequest("User not found or already accepted invitation.");
+        return Ok("Invitation resent.");
+    }
+
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
     {
@@ -24,7 +40,7 @@ public class AuthController(ISender mediator, ICookieSettings cookieSettings) : 
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        ClearAuthCookies(CookieSettings.PartnerRefreshPath);
+        ClearAuthCookies(RefreshTokenPaths.PartnerRefreshPath);
         return NoContent();
     }
 
@@ -67,7 +83,7 @@ public class AuthController(ISender mediator, ICookieSettings cookieSettings) : 
         var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
         if (result == null) return Unauthorized("Refresh session expired.");
 
-        SetAuthCookies(result.Value.RefreshToken, CookieSettings.PartnerRefreshPath);
+        SetAuthCookies(result.Value.RefreshToken, RefreshTokenPaths.PartnerRefreshPath);
         return Ok(new { accessToken = result.Value.AccessToken });
     }
 }

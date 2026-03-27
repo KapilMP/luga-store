@@ -9,6 +9,7 @@ using Google.Apis.Auth;
 using LugaStore.Application.Common.Exceptions;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Models;
+using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Settings;
 using LugaStore.Domain.Entities;
 using LugaStore.Domain.Common;
@@ -22,29 +23,43 @@ public class AuthService(
     IGoogleSettings googleSettings,
     IEmailSender emailSender,
     IHttpContextAccessor httpContextAccessor,
-    ICookieSettings cookieSettings,
-    IAppSettings appSettings) : IAuthService
+    IRefreshTokenPaths cookieSettings,
+    IAppSettings appSettings,
+    ApplicationDbContext dbContext) : IAuthService
 {
     private string FrontendUrl => appSettings.FrontendUrl;
 
-    public Task<AuthResult> CustomerLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, cookieSettings.CustomerRefreshPath, Roles.Customer);
+    public async Task<AuthResult> CustomerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
+    {
+        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.CustomerRefreshPath, Roles.Customer, cancellationToken);
+        if (user.PasswordHash == null) throw new NotFoundError("Email or Password is not correct");
+        return new AuthResult { AccessToken = accessToken, User = CustomerProfileDto.From(user) };
+    }
 
-    public Task<AuthResult> AdminLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, cookieSettings.AdminRefreshPath, Roles.Admin);
+    public async Task<AuthResult> AdminLoginAsync(string email, string password, CancellationToken cancellationToken = default)
+    {
+        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.AdminRefreshPath, Roles.Admin, cancellationToken);
+        if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
+        return new AuthResult { AccessToken = accessToken, User = AdminProfileDto.From(user) };
+    }
 
-    public Task<AuthResult> PartnerLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, cookieSettings.PartnerRefreshPath, Roles.Partner);
+    public async Task<AuthResult> PartnerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
+    {
+        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.PartnerRefreshPath, Roles.Partner, cancellationToken);
+        if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
+        return new AuthResult { AccessToken = accessToken, User = PartnerProfileDto.From(user) };
+    }
 
-    public Task<AuthResult> PartnerManagerLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, cookieSettings.PartnerManagerRefreshPath, Roles.PartnerManager);
+    public async Task<AuthResult> PartnerManagerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
+    {
+        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.PartnerManagerRefreshPath, Roles.PartnerManager, cancellationToken);
+        if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
+        return new AuthResult { AccessToken = accessToken, User = PartnerManagerProfileDto.From(user) };
+    }
 
-    private async Task<AuthResult> LoginWithRoleAsync(string email, string password, string refreshPath, string requiredRole)
+    private async Task<(string AccessToken, User User)> LoginWithRoleAsync(string email, string password, string refreshPath, string requiredRole, CancellationToken cancellationToken)
     {
         var user = await userManager.FindByEmailAsync(email) ?? throw new NotFoundError("Email or Password is not correct");
-
-        if (!user.EmailConfirmed)
-            throw new NotFoundError("Please verify your email before logging in.");
 
         if (!user.IsActive)
             throw new UnauthorizedException("Your account has been deactivated.");
@@ -61,26 +76,22 @@ public class AuthService(
         var refreshToken = GenerateRefreshToken(user);
         SetRefreshCookie(refreshToken, refreshPath);
 
-        return new AuthResult
-        {
-            AccessToken = accessToken,
-            User = UserProfileDto.From(user)
-        };
+        return (accessToken, user);
     }
 
-    public async Task<AuthResult?> LoginWithGoogleAsync(string idToken)
+    public async Task<AuthResult?> LoginWithGoogleAsync(string idToken, CancellationToken cancellationToken = default)
     {
         try
         {
             var settings = new GoogleJsonWebSignature.ValidationSettings
             {
-                Audience = new List<string> { googleSettings.ClientId }
+                Audience = [googleSettings.ClientId]
             };
 
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
             if (payload == null) return null;
 
-            return await LoginExternalAsync(payload.Email, payload.GivenName ?? "", payload.FamilyName ?? "");
+            return await LoginExternalAsync(payload.Email, payload.GivenName ?? "", payload.FamilyName ?? "", cancellationToken);
         }
         catch (InvalidJwtException)
         {
@@ -88,7 +99,7 @@ public class AuthService(
         }
     }
 
-    public async Task<AuthResult?> LoginExternalAsync(string email, string firstName, string lastName)
+    public async Task<AuthResult?> LoginExternalAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user == null)
@@ -115,11 +126,11 @@ public class AuthService(
         return new AuthResult
         {
             AccessToken = accessToken,
-            User = UserProfileDto.From(user)
+            User = CustomerProfileDto.From(user)
         };
     }
 
-    public async Task<(string AccessToken, string RefreshToken)?> RefreshTokenAsync(string refreshTokenValue)
+    public async Task<(string AccessToken, string RefreshToken)?> RefreshTokenAsync(string refreshTokenValue, CancellationToken cancellationToken = default)
     {
         var principal = GetPrincipalFromExpiredToken(refreshTokenValue);
         if (principal == null) return null;
@@ -137,7 +148,7 @@ public class AuthService(
         return (newAccessToken, newRefreshToken);
     }
 
-    public async Task<string?> GenerateRefreshTokenAsync(string email)
+    public async Task<string?> GenerateRefreshTokenAsync(string email, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user == null) return null;
@@ -156,7 +167,7 @@ public class AuthService(
         await emailSender.SendEmailAsync(email, "Verify Your email", $"Please verify your account by clicking here: {verificationUrl}");
     }
 
-    public async Task<bool> ConfirmEmailAsync(string userId, string token)
+    public async Task<bool> ConfirmEmailAsync(string userId, string token, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId);
         if (user == null) return false;
@@ -176,7 +187,7 @@ public class AuthService(
         await emailSender.SendEmailAsync(email, "Reset Password", $"Reset your password by clicking here: {resetUrl}");
     }
 
-    public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
+    public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user == null) return false;
@@ -185,7 +196,7 @@ public class AuthService(
         return result.Succeeded;
     }
 
-    public async Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+    public async Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId);
         if (user == null) return false;
@@ -194,7 +205,7 @@ public class AuthService(
         return result.Succeeded;
     }
 
-    public async Task<bool> DeleteUserAsync(int userId)
+    public async Task<bool> DeleteUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user == null) return false;
@@ -203,7 +214,7 @@ public class AuthService(
         return result.Succeeded;
     }
 
-    public async Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone)
+    public async Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone, CancellationToken cancellationToken = default)
     {
         var existing = await userManager.FindByEmailAsync(email);
         if (existing != null) return true;
@@ -215,7 +226,6 @@ public class AuthService(
             FirstName = firstName,
             LastName = lastName,
             PhoneNumber = phone,
-            HasSignedUp = false
         };
 
         var result = await userManager.CreateAsync(user);
@@ -225,17 +235,16 @@ public class AuthService(
         return true;
     }
 
-    public async Task<bool> RegisterAsync(string email, string password, string firstName, string lastName, string phone)
+    public async Task<bool> RegisterAsync(string email, string password, string firstName, string lastName, string phone, CancellationToken cancellationToken = default)
     {
         var existing = await userManager.FindByEmailAsync(email);
         if (existing != null)
         {
-            if (existing.HasSignedUp) return false;
+            if (existing.PasswordHash != null) return false;
 
             existing.FirstName = firstName;
             existing.LastName = lastName;
             existing.PhoneNumber = phone;
-            existing.HasSignedUp = true;
             await userManager.UpdateAsync(existing);
             var addPasswordResult = await userManager.AddPasswordAsync(existing, password);
             if (!addPasswordResult.Succeeded) return false;
@@ -251,7 +260,6 @@ public class AuthService(
             FirstName = firstName,
             LastName = lastName,
             PhoneNumber = phone,
-            HasSignedUp = true
         };
 
         var result = await userManager.CreateAsync(user, password);
@@ -262,16 +270,28 @@ public class AuthService(
         return true;
     }
 
-    public Task<bool> CreateAdminAsync(string email, string firstName, string lastName)
-        => CreateInvitedUserAsync(email, firstName, lastName, Roles.Admin);
+    public async Task<bool> InviteAdminAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
+    {
+        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.Admin, cancellationToken);
+        await SendInvitationEmailAsync(user);
+        return true;
+    }
 
-    public Task<bool> CreatePartnerAsync(string email, string firstName, string lastName)
-        => CreateInvitedUserAsync(email, firstName, lastName, Roles.Partner);
+    public async Task<bool> InvitePartnerAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
+    {
+        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.Partner, cancellationToken);
+        await SendInvitationEmailAsync(user);
+        return true;
+    }
 
-    public Task<bool> CreatePartnerManagerAsync(string email, string firstName, string lastName)
-        => CreateInvitedUserAsync(email, firstName, lastName, Roles.PartnerManager);
+    public async Task<bool> InvitePartnerManagerAsync(string email, string firstName, string lastName, int partnerId, CancellationToken cancellationToken = default)
+    {
+        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.PartnerManager, cancellationToken, partnerId);
+        await SendInvitationEmailAsync(user);
+        return true;
+    }
 
-    public async Task<bool> AcceptInvitationAsync(string email, string token, string password)
+    public async Task<bool> AcceptInvitationAsync(string email, string token, string password, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user == null || user.EmailConfirmed) return false;
@@ -283,7 +303,7 @@ public class AuthService(
         return addPassword.Succeeded;
     }
 
-    public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive)
+    public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user == null) return false;
@@ -293,27 +313,47 @@ public class AuthService(
         return result.Succeeded;
     }
 
-    private async Task<bool> CreateInvitedUserAsync(string email, string firstName, string lastName, string role)
+    public async Task<bool> ResendInvitationAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null || user.EmailConfirmed) return false;
+
+        await SendInvitationEmailAsync(user);
+        return true;
+    }
+
+    private async Task<User> CreateInvitedUserAsync(string email, string firstName, string lastName, string role, CancellationToken cancellationToken, int? partnerId = null)
     {
         if (await userManager.FindByEmailAsync(email) != null)
             throw new ConflictException("Email already exists.");
 
-        var user = new User
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            UserName = email,
-            Email = email,
-            FirstName = firstName,
-            LastName = lastName,
-            HasSignedUp = true,
-            EmailConfirmed = false
-        };
+            var user = new User
+            {
+                UserName = email,
+                Email = email,
+                FirstName = firstName,
+                LastName = lastName,
+                EmailConfirmed = false,
+                PartnerId = partnerId
+            };
 
-        var result = await userManager.CreateAsync(user);
-        if (!result.Succeeded) throw new BadRequestException("Failed to create user.");
+            var result = await userManager.CreateAsync(user);
+            if (!result.Succeeded) throw new InternalServerException("Failed to create user.");
 
-        await userManager.AddToRoleAsync(user, role);
-        await SendInvitationEmailAsync(user);
-        return true;
+            var roleResult = await userManager.AddToRoleAsync(user, role);
+            if (!roleResult.Succeeded) throw new InternalServerException("Failed to assign role.");
+
+            await transaction.CommitAsync(cancellationToken);
+            return user;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     private async Task SendInvitationEmailAsync(User user)

@@ -8,5 +8,5 @@ public record ResetPasswordCommand(string Email, string Token, string NewPasswor
 public class ResetPasswordCommandHandler(IAuthService authService) : IRequestHandler<ResetPasswordCommand, bool>
 {
     public async Task<bool> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
-        => await authService.ResetPasswordAsync(request.Email, request.Token, request.NewPassword);
+        => await authService.ResetPasswordAsync(request.Email, request.Token, request.NewPassword, cancellationToken);
 }

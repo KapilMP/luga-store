@@ -14,7 +14,7 @@ public class AddressDto
     public string ZipCode { get; set; } = string.Empty;
 }
 
-public class UserProfileDto
+public class BaseUserProfile
 {
     public int Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
@@ -22,18 +22,32 @@ public class UserProfileDto
     public string Email { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
-    public int? PartnerId { get; set; }
+
+    protected static T MapBase<T>(User user, T dto) where T : BaseUserProfile
+    {
+        dto.Id = user.Id;
+        dto.FirstName = user.FirstName ?? string.Empty;
+        dto.LastName = user.LastName ?? string.Empty;
+        dto.Email = user.Email ?? string.Empty;
+        dto.AvatarUrl = user.AvatarPath ?? string.Empty;
+        dto.Phone = user.PhoneNumber ?? string.Empty;
+        return dto;
+    }
+}
+
+public class AdminProfileDto : BaseUserProfile
+{
+    public static AdminProfileDto From(User user) => MapBase(user, new AdminProfileDto());
+}
+
+public class CustomerProfileDto : BaseUserProfile
+{
+    public bool IsEmailConfirmed { get; set; }
     public List<AddressDto> Addresses { get; set; } = [];
 
-    public static UserProfileDto From(User user) => new()
+    public static CustomerProfileDto From(User user) => MapBase(user, new CustomerProfileDto
     {
-        Id = user.Id,
-        FirstName = user.FirstName ?? string.Empty,
-        LastName = user.LastName ?? string.Empty,
-        Email = user.Email ?? string.Empty,
-        AvatarUrl = user.AvatarPath ?? string.Empty,
-        Phone = user.PhoneNumber ?? string.Empty,
-        PartnerId = user.PartnerId,
+        IsEmailConfirmed = user.EmailConfirmed,
         Addresses = [.. user.Addresses.Select(a => new AddressDto
         {
             Id = a.Id,
@@ -45,5 +59,15 @@ public class UserProfileDto
             City = a.City,
             ZipCode = a.ZipCode
         })]
-    };
+    });
+}
+
+public class PartnerProfileDto : BaseUserProfile
+{
+    public static PartnerProfileDto From(User user) => MapBase(user, new PartnerProfileDto());
+}
+
+public class PartnerManagerProfileDto : BaseUserProfile
+{
+    public static PartnerManagerProfileDto From(User user) => MapBase(user, new PartnerManagerProfileDto());
 }

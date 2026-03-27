@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LugaStore.WebAPI.Controllers;
 
-public abstract class BaseAuthController(ICookieSettings cookieSettings) : ControllerBase
+public abstract class BaseAuthController(IRefreshTokenPaths cookieSettings) : ControllerBase
 {
-    protected ICookieSettings CookieSettings => cookieSettings;
+    protected IRefreshTokenPaths RefreshTokenPaths => cookieSettings;
 
     protected void SetAuthCookies(string refreshToken, string refreshPath)
     {
@@ -33,16 +33,30 @@ public abstract class BaseAuthController(ICookieSettings cookieSettings) : Contr
 
     protected void ClearAuthCookies(string refreshPath)
     {
-        var expired = new CookieOptions
+        var baseOptions = new CookieOptions
         {
-            HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
             Path = refreshPath,
             Expires = DateTime.UtcNow.AddDays(-1)
         };
 
-        Response.Cookies.Append("refreshToken", "", expired);
-        Response.Cookies.Append("refreshCsrf", "", expired with { HttpOnly = false });
+        Response.Cookies.Append("refreshToken", "", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = baseOptions.Secure,
+            SameSite = baseOptions.SameSite,
+            Path = baseOptions.Path,
+            Expires = baseOptions.Expires
+        });
+
+        Response.Cookies.Append("refreshCsrf", "", new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = baseOptions.Secure,
+            SameSite = baseOptions.SameSite,
+            Path = baseOptions.Path,
+            Expires = baseOptions.Expires
+        });
     }
 }

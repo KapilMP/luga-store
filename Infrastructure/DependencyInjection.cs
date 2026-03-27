@@ -21,14 +21,11 @@ public static class DependencyInjection
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         services.AddSingleton<IJwtSettings>(sp => sp.GetRequiredService<IOptions<JwtSettings>>().Value);
 
-        services.Configure<HyperDxSettings>(configuration.GetSection("HyperDX"));
-        services.AddSingleton<IHyperDxSettings>(sp => sp.GetRequiredService<IOptions<HyperDxSettings>>().Value);
-
         services.Configure<GoogleSettings>(configuration.GetSection("Google"));
         services.AddSingleton<IGoogleSettings>(sp => sp.GetRequiredService<IOptions<GoogleSettings>>().Value);
 
-        services.Configure<CookieSettings>(configuration.GetSection("CookieSettings"));
-        services.AddSingleton<ICookieSettings>(sp => sp.GetRequiredService<IOptions<CookieSettings>>().Value);
+        services.Configure<RefreshTokenPaths>(configuration.GetSection("RefreshTokenPaths"));
+        services.AddSingleton<IRefreshTokenPaths>(sp => sp.GetRequiredService<IOptions<RefreshTokenPaths>>().Value);
 
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
         services.AddSingleton<IAppSettings>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);

@@ -8,5 +8,5 @@ public record ConfirmEmailCommand(string UserId, string Token) : IRequest<bool>;
 public class ConfirmEmailCommandHandler(IAuthService authService) : IRequestHandler<ConfirmEmailCommand, bool>
 {
     public async Task<bool> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
-        => await authService.ConfirmEmailAsync(request.UserId, request.Token);
+        => await authService.ConfirmEmailAsync(request.UserId, request.Token, cancellationToken);
 }

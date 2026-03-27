@@ -3,58 +3,15 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
 using LugaStore.Application;
 using LugaStore.Application.Common.Exceptions;
 using LugaStore.Infrastructure;
 using LugaStore.Domain.Entities;
 using LugaStore.Infrastructure.Persistence.Seeds;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Configure HyperDX / OpenTelemetry
-var hyperDxConfig = builder.Configuration.GetSection("HyperDX");
-var hyperDxKey = hyperDxConfig["ApiKey"];
-var serviceName = hyperDxConfig["ServiceName"] ?? "LugaStore.API";
-
-if (!string.IsNullOrEmpty(hyperDxKey))
-{
-    builder.Services.AddOpenTelemetry()
-        .WithTracing(tracing => tracing
-            .AddSource(serviceName)
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddEntityFrameworkCoreInstrumentation()
-            .AddOtlpExporter(opt =>
-            {
-                opt.Endpoint = new Uri("https://in-otel.hyperdx.io");
-                opt.Headers = $"authorization={hyperDxKey}";
-            }))
-        .WithMetrics(metrics => metrics
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddOtlpExporter(opt =>
-            {
-                opt.Endpoint = new Uri("https://in-otel.hyperdx.io");
-                opt.Headers = $"authorization={hyperDxKey}";
-            }));
-
-    builder.Logging.AddOpenTelemetry(logging =>
-    {
-        logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName));
-        logging.AddOtlpExporter(opt =>
-        {
-            opt.Endpoint = new Uri("https://in-otel.hyperdx.io");
-            opt.Headers = $"authorization={hyperDxKey}";
-        });
-    });
-}
 
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
@@ -92,6 +49,32 @@ builder.Services.AddCors(options =>
 // Add services
 builder.Services.AddControllers();
 
+// Swagger
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Luga Store API", Version = "v1" });
+        c.CustomSchemaIds(type => type.FullName!.Replace("+", ".").Replace("[", "_").Replace("]", "_"));
+
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "Enter your JWT token"
+        });
+
+        c.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", doc)] = []
+        });
+    });
+}
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("Jwt Secret key is missing");
@@ -123,7 +106,6 @@ builder.Services.AddAntiforgery(options =>
 });
 
 // Register Clean Architecture layers
-// AddInfrastructure now handles MassTransit, Database, and Identities
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -159,6 +141,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseExceptionHandler(err => err.Run(async ctx =>
 {
     var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
@@ -171,21 +159,18 @@ app.UseExceptionHandler(err => err.Run(async ctx =>
         case BadRequestException e: status = StatusCodes.Status400BadRequest; message = e.Message; break;
         case UnauthorizedException e: status = StatusCodes.Status401Unauthorized; message = e.Message; break;
         case ForbiddenException e: status = StatusCodes.Status403Forbidden; message = e.Message; break;
+        case InternalServerException e: status = StatusCodes.Status500InternalServerError; message = e.Message; break;
         default: status = StatusCodes.Status500InternalServerError; message = "An unexpected error occurred."; break;
     }
     ctx.Response.StatusCode = status;
     await ctx.Response.WriteAsJsonAsync(new { error = message });
 }));
 
-app.UseHttpsRedirection();
-
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseCors("Default");
-
 app.UseRateLimiter();
-
-// Antiforgery Middleware
 app.UseAntiforgery();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
