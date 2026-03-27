@@ -1,11 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
-using LugaStore.Domain.Common;
-using UserEntity = LugaStore.Domain.Entities.User;
+using LugaStore.WebAPI.Dtos;
 
 namespace LugaStore.WebAPI.Controllers.Admin;
 
@@ -16,24 +14,13 @@ public record ResetPasswordRequest(string Email, string Token, string NewPasswor
 [Route("admin/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(
-    ISender mediator,
-    UserManager<UserEntity> userManager) : BaseAuthController
+public class AuthController(ISender mediator) : BaseAuthController
 {
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginCommand command)
     {
-        var authResult = await mediator.Send(command);
-        if (authResult == null) return Unauthorized("Invalid credentials.");
-
-        var user = await userManager.FindByEmailAsync(command.Email);
-        if (user == null || !await userManager.IsInRoleAsync(user, Roles.Admin))
-            return Forbid("Access denied: You do not have administrative privileges.");
-
-        if (!string.IsNullOrEmpty(authResult.RefreshToken))
-            SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/admin/auth/refresh");
-
-        return Ok(new { accessToken = authResult.AccessToken });
+        var result = await mediator.Send(command);
+        return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 
     [HttpPost("change-password")]

@@ -1,10 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
-using LugaStore.Domain.Common;
-using UserEntity = LugaStore.Domain.Entities.User;
+using LugaStore.WebAPI.Dtos;
 
 namespace LugaStore.WebAPI.Controllers.PartnerManager;
 
@@ -15,26 +13,13 @@ public record ResetPasswordRequest(string Email, string Token, string NewPasswor
 [Route("partner/{partnerId:int}/manager/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(
-    ISender mediator,
-    UserManager<UserEntity> userManager) : BaseAuthController
+public class AuthController(ISender mediator) : BaseAuthController
 {
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginCommand command)
     {
-        var authResult = await mediator.Send(command);
-        if (authResult == null) return Unauthorized("Invalid credentials.");
-
-        var user = await userManager.FindByEmailAsync(command.Email);
-        if (user == null ||
-            (!await userManager.IsInRoleAsync(user, Roles.PartnerManager) &&
-             !await userManager.IsInRoleAsync(user, Roles.Admin)))
-            return Forbid("Access denied: You do not have management privileges.");
-
-        if (!string.IsNullOrEmpty(authResult.RefreshToken))
-            SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/partner/{partnerId}/manager/auth/refresh");
-
-        return Ok(new { accessToken = authResult.AccessToken });
+        var result = await mediator.Send(command);
+        return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 
     [HttpPost("forgot-password")]
@@ -67,7 +52,7 @@ public class AuthController(
         var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
         if (result == null) return Unauthorized("Refresh session expired.");
 
-        SetAuthCookies(result.Value.RefreshToken, Guid.NewGuid().ToString(), "/partner/{partnerId}/manager/auth/refresh");
+        SetAuthCookies(result.Value.RefreshToken, Guid.NewGuid().ToString(), "/partner/manager/auth/refresh");
         return Ok(new { accessToken = result.Value.AccessToken });
     }
 }

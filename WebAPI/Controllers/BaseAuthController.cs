@@ -18,7 +18,7 @@ public abstract class BaseAuthController : ControllerBase
 
         var csrfOptions = new CookieOptions
         {
-            HttpOnly = false, // Accessible to JS
+            HttpOnly = false, 
             Secure = true,
             SameSite = SameSiteMode.Strict,
             Path = refreshPath, 

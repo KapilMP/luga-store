@@ -3,7 +3,7 @@
     "Development": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:7000;http://localhost:5000",
+      "applicationUrl": "https://localhost:7000;http://localhost:7070",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

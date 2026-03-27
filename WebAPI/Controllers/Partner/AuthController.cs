@@ -1,11 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
-using LugaStore.Domain.Common;
-using UserEntity = LugaStore.Domain.Entities.User;
+using LugaStore.WebAPI.Dtos;
 
 namespace LugaStore.WebAPI.Controllers.Partner;
 
@@ -16,27 +14,13 @@ public record ResetPasswordRequest(string Email, string Token, string NewPasswor
 [Route("partner/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(
-    ISender mediator,
-    UserManager<UserEntity> userManager) : BaseAuthController
+public class AuthController(ISender mediator) : BaseAuthController
 {
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginCommand command)
     {
-        var authResult = await mediator.Send(command);
-        if (authResult == null) return Unauthorized("Invalid credentials.");
-
-        var user = await userManager.FindByEmailAsync(command.Email);
-        if (user == null ||
-            (!await userManager.IsInRoleAsync(user, Roles.Partner) &&
-             !await userManager.IsInRoleAsync(user, Roles.Admin) &&
-             !await userManager.IsInRoleAsync(user, Roles.PartnerManager)))
-            return Forbid("Access denied: You are not authorized for the partner portal.");
-
-        if (!string.IsNullOrEmpty(authResult.RefreshToken))
-            SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/partner/auth/refresh");
-
-        return Ok(new { accessToken = authResult.AccessToken });
+        var result = await mediator.Send(command);
+        return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 
     [HttpPost("change-password")]

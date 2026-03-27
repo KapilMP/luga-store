@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Web;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -21,27 +22,50 @@ public class AuthService(
     IJwtSettings jwtSettings,
     IGoogleSettings googleSettings,
     IEmailSender emailSender,
+    IHttpContextAccessor httpContextAccessor,
     IConfiguration configuration) : IAuthService
 {
     private string FrontendUrl => configuration["FrontendUrl"] ?? "https://luga-store.com";
-    public async Task<AuthResult> LoginAsync(string email, string password)
+
+    public Task<AuthResult> CustomerLoginAsync(string email, string password)
+        => LoginWithRoleAsync(email, password, "/customer/auth/refresh", Roles.Customer);
+
+    public Task<AuthResult> AdminLoginAsync(string email, string password)
+        => LoginWithRoleAsync(email, password, "/admin/auth/refresh", Roles.Admin);
+
+    public Task<AuthResult> PartnerLoginAsync(string email, string password)
+        => LoginWithRoleAsync(email, password, "/partner/auth/refresh", Roles.Partner);
+
+    public Task<AuthResult> PartnerManagerLoginAsync(string email, string password)
+        => LoginWithRoleAsync(email, password, "/partner/manager/auth/refresh", Roles.PartnerManager);
+
+    private async Task<AuthResult> LoginWithRoleAsync(string email, string password, string refreshPath, string requiredRole)
     {
         var user = await userManager.FindByEmailAsync(email) ?? throw new NotFoundError("Email or Password is not correct");
+
         if (!user.EmailConfirmed)
             throw new NotFoundError("Please verify your email before logging in.");
 
         if (!user.IsActive)
             throw new UnauthorizedException("Your account has been deactivated.");
 
-        var result = await signInManager.CheckPasswordSignInAsync(user, password, false);
-        if (!result.Succeeded)
+        var signInResult = await signInManager.CheckPasswordSignInAsync(user, password, false);
+        if (!signInResult.Succeeded)
+            throw new NotFoundError("Email or Password is not correct");
+
+        if (!await userManager.IsInRoleAsync(user, requiredRole))
             throw new NotFoundError("Email or Password is not correct");
 
         var roles = await userManager.GetRolesAsync(user);
         var accessToken = GenerateAccessToken(user, roles);
         var refreshToken = GenerateRefreshToken(user);
+        SetRefreshCookie(refreshToken, refreshPath);
 
-        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken };
+        return new AuthResult
+        {
+            AccessToken = accessToken,
+            User = UserProfileDto.From(user)
+        };
     }
 
     public async Task<AuthResult?> LoginWithGoogleAsync(string idToken)
@@ -86,8 +110,13 @@ public class AuthService(
         var roles = await userManager.GetRolesAsync(user);
         var accessToken = GenerateAccessToken(user, roles);
         var refreshToken = GenerateRefreshToken(user);
+        SetRefreshCookie(refreshToken, "/customer/auth/refresh");
 
-        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken };
+        return new AuthResult
+        {
+            AccessToken = accessToken,
+            User = UserProfileDto.From(user)
+        };
     }
 
     public async Task<(string AccessToken, string RefreshToken)?> RefreshTokenAsync(string refreshTokenValue)
@@ -116,7 +145,6 @@ public class AuthService(
         return GenerateRefreshToken(user);
     }
 
-    // Identity Management
     public async Task SendVerificationEmailAsync(string email)
     {
         var user = await userManager.FindByEmailAsync(email);
@@ -124,7 +152,6 @@ public class AuthService(
 
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = HttpUtility.UrlEncode(token);
-
         var verificationUrl = $"{FrontendUrl}/verify-email?userId={user.Id}&token={encodedToken}";
         await emailSender.SendEmailAsync(email, "Verify Your email", $"Please verify your account by clicking here: {verificationUrl}");
     }
@@ -145,7 +172,6 @@ public class AuthService(
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
         var encodedToken = HttpUtility.UrlEncode(token);
-
         var resetUrl = $"{FrontendUrl}/reset-password?email={email}&token={encodedToken}";
         await emailSender.SendEmailAsync(email, "Reset Password", $"Reset your password by clicking here: {resetUrl}");
     }
@@ -180,7 +206,7 @@ public class AuthService(
     public async Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone)
     {
         var existing = await userManager.FindByEmailAsync(email);
-        if (existing != null) return true; // already exists, guest or signed up
+        if (existing != null) return true;
 
         var user = new User
         {
@@ -299,6 +325,30 @@ public class AuthService(
             $"Hi {user.FirstName}, you've been invited. Set your password here: {inviteUrl}");
     }
 
+    private void SetRefreshCookie(string refreshToken, string path)
+    {
+        var response = httpContextAccessor.HttpContext!.Response;
+        var csrf = Guid.NewGuid().ToString();
+
+        response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = path,
+            Expires = DateTime.UtcNow.AddDays(jwtSettings.RefreshTokenExpiryDays)
+        });
+
+        response.Cookies.Append("refreshCsrf", csrf, new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = path,
+            Expires = DateTime.UtcNow.AddDays(jwtSettings.RefreshTokenExpiryDays)
+        });
+    }
+
     private string GenerateAccessToken(User user, IList<string> roles)
     {
         var claims = new List<Claim>
@@ -309,9 +359,7 @@ public class AuthService(
         };
 
         foreach (var role in roles)
-        {
             claims.Add(new Claim(ClaimTypes.Role, role));
-        }
 
         return CreateToken(claims, jwtSettings.AccessTokenExpiryMinutes);
     }
@@ -320,8 +368,8 @@ public class AuthService(
     {
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? "")
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email ?? "")
         };
 
         return CreateToken(claims, jwtSettings.RefreshTokenExpiryDays * 24 * 60);
@@ -358,7 +406,8 @@ public class AuthService(
         try
         {
             var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+                !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
                 return null;
 
             return principal;

@@ -6,7 +6,10 @@ namespace LugaStore.Application.Common.Interfaces;
 
 public interface IAuthService
 {
-    Task<AuthResult> LoginAsync(string email, string password);
+    Task<AuthResult> CustomerLoginAsync(string email, string password);
+    Task<AuthResult> AdminLoginAsync(string email, string password);
+    Task<AuthResult> PartnerLoginAsync(string email, string password);
+    Task<AuthResult> PartnerManagerLoginAsync(string email, string password);
     Task<AuthResult?> LoginWithGoogleAsync(string idToken);
     Task<AuthResult?> LoginExternalAsync(string email, string firstName, string lastName);
     Task<(string AccessToken, string RefreshToken)?> RefreshTokenAsync(string refreshToken);

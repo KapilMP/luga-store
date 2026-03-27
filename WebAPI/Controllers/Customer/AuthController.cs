@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
+using LugaStore.WebAPI.Dtos;
 
 namespace LugaStore.WebAPI.Controllers.Customer;
 
@@ -22,13 +23,16 @@ public class AuthController(ISender mediator) : BaseAuthController
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginCommand command)
     {
-        var authResult = await mediator.Send(command);
-        if (authResult == null) return Unauthorized("Invalid credentials.");
+        var result = await mediator.Send(command);
+        return Ok(new { accessToken = result.AccessToken, user = result.User });
+    }
 
-        if (!string.IsNullOrEmpty(authResult.RefreshToken))
-            SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/customer/auth/refresh");
-
-        return Ok(new { accessToken = authResult.AccessToken });
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        var result = await mediator.Send(new GoogleLoginCommand(request.IdToken));
+        if (result == null) return Unauthorized("Invalid Google Token.");
+        return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 
     [HttpPost("register")]
@@ -44,18 +48,6 @@ public class AuthController(ISender mediator) : BaseAuthController
     {
         await mediator.Send(new GuestCheckoutCommand(request.Email, request.FirstName, request.LastName, request.Phone));
         return Ok();
-    }
-
-    [HttpPost("google-login")]
-    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
-    {
-        var authResult = await mediator.Send(new GoogleLoginCommand(request.IdToken));
-        if (authResult == null) return Unauthorized("Invalid Google Token.");
-
-        if (!string.IsNullOrEmpty(authResult.RefreshToken))
-            SetAuthCookies(authResult.RefreshToken, Guid.NewGuid().ToString(), "/customer/auth/refresh");
-
-        return Ok(new { accessToken = authResult.AccessToken });
     }
 
     [HttpPost("change-password")]

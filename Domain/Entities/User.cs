@@ -25,9 +25,8 @@ public class User : IdentityUser<int>, ISoftDelete, IAuditableEntity
     public bool IsActive { get; set; } = true;
 
     // Profile
-    public string? ImagePath { get; set; }
+    public string? AvatarPath { get; set; }
 
     // Relationships
-    public int? PartnerId { get; set; }
     public ICollection<Address> Addresses { get; set; } = [];
 }
