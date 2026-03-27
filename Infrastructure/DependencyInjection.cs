@@ -27,6 +27,12 @@ public static class DependencyInjection
         services.Configure<GoogleSettings>(configuration.GetSection("Google"));
         services.AddSingleton<IGoogleSettings>(sp => sp.GetRequiredService<IOptions<GoogleSettings>>().Value);
 
+        services.Configure<CookieSettings>(configuration.GetSection("CookieSettings"));
+        services.AddSingleton<ICookieSettings>(sp => sp.GetRequiredService<IOptions<CookieSettings>>().Value);
+
+        services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
+        services.AddSingleton<IAppSettings>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),

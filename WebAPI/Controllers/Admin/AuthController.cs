@@ -3,24 +3,29 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
+using LugaStore.Infrastructure.Settings;
 using LugaStore.WebAPI.Dtos;
 
 namespace LugaStore.WebAPI.Controllers.Admin;
-
-public record ForgotPasswordRequest(string Email);
-public record ResetPasswordRequest(string Email, string Token, string NewPassword);
 
 [ApiController]
 [Route("admin/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(ISender mediator) : BaseAuthController
+public class AuthController(ISender mediator, ICookieSettings cookieSettings) : BaseAuthController(cookieSettings)
 {
     [HttpPost("login")]
-    public async Task<ActionResult> Login(LoginCommand command)
+    public async Task<ActionResult> Login(LoginRequest request)
     {
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(new AdminLoginCommand(request.Email, request.Password));
         return Ok(new { accessToken = result.AccessToken, user = result.User });
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        ClearAuthCookies(CookieSettings.AdminRefreshPath);
+        return NoContent();
     }
 
     [HttpPost("change-password")]
@@ -33,16 +38,16 @@ public class AuthController(ISender mediator) : BaseAuthController
     }
 
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordCommand command)
     {
-        await mediator.Send(new ForgotPasswordCommand(request.Email));
+        await mediator.Send(command);
         return Ok("If the admin exists, a reset link has been sent.");
     }
 
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword(ResetPasswordCommand command)
     {
-        var result = await mediator.Send(new ResetPasswordCommand(request.Email, request.Token, request.NewPassword));
+        var result = await mediator.Send(command);
         if (!result) return BadRequest("Invalid Token or Admin.");
         return Ok("Password has been reset.");
     }
@@ -62,7 +67,7 @@ public class AuthController(ISender mediator) : BaseAuthController
         var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
         if (result == null) return Unauthorized("Refresh session expired.");
 
-        SetAuthCookies(result.Value.RefreshToken, Guid.NewGuid().ToString(), "/admin/auth/refresh");
+        SetAuthCookies(result.Value.RefreshToken, CookieSettings.AdminRefreshPath);
         return Ok(new { accessToken = result.Value.AccessToken });
     }
 }

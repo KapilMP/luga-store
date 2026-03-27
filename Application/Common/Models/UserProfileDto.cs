@@ -22,6 +22,7 @@ public class UserProfileDto
     public string Email { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public int? PartnerId { get; set; }
     public List<AddressDto> Addresses { get; set; } = [];
 
     public static UserProfileDto From(User user) => new()
@@ -32,6 +33,7 @@ public class UserProfileDto
         Email = user.Email ?? string.Empty,
         AvatarUrl = user.AvatarPath ?? string.Empty,
         Phone = user.PhoneNumber ?? string.Empty,
+        PartnerId = user.PartnerId,
         Addresses = [.. user.Addresses.Select(a => new AddressDto
         {
             Id = a.Id,

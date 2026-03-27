@@ -2,37 +2,42 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
+using LugaStore.Infrastructure.Settings;
 using LugaStore.WebAPI.Dtos;
 
 namespace LugaStore.WebAPI.Controllers.PartnerManager;
-
-public record ForgotPasswordRequest(string Email);
-public record ResetPasswordRequest(string Email, string Token, string NewPassword);
 
 [ApiController]
 [Route("partner/{partnerId:int}/manager/[controller]")]
 [EnableRateLimiting("auth")]
 [Consumes("application/json")]
-public class AuthController(ISender mediator) : BaseAuthController
+public class AuthController(ISender mediator, ICookieSettings cookieSettings) : BaseAuthController(cookieSettings)
 {
     [HttpPost("login")]
-    public async Task<ActionResult> Login(LoginCommand command)
+    public async Task<ActionResult> Login(LoginRequest request)
     {
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(new PartnerManagerLoginCommand(request.Email, request.Password));
         return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 
-    [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    [HttpPost("logout")]
+    public IActionResult Logout()
     {
-        await mediator.Send(new ForgotPasswordCommand(request.Email));
+        ClearAuthCookies(CookieSettings.PartnerManagerRefreshPath);
+        return NoContent();
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordCommand command)
+    {
+        await mediator.Send(command);
         return Ok("If the manager exists, a reset link has been sent.");
     }
 
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword(ResetPasswordCommand command)
     {
-        var result = await mediator.Send(new ResetPasswordCommand(request.Email, request.Token, request.NewPassword));
+        var result = await mediator.Send(command);
         if (!result) return BadRequest("Invalid Token or PartnerManager.");
         return Ok("Password has been reset.");
     }
@@ -52,7 +57,7 @@ public class AuthController(ISender mediator) : BaseAuthController
         var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
         if (result == null) return Unauthorized("Refresh session expired.");
 
-        SetAuthCookies(result.Value.RefreshToken, Guid.NewGuid().ToString(), "/partner/manager/auth/refresh");
+        SetAuthCookies(result.Value.RefreshToken, CookieSettings.PartnerManagerRefreshPath);
         return Ok(new { accessToken = result.Value.AccessToken });
     }
 }

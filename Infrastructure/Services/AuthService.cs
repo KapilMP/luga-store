@@ -4,7 +4,6 @@ using System.Web;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Google.Apis.Auth;
 using LugaStore.Application.Common.Exceptions;
@@ -23,21 +22,22 @@ public class AuthService(
     IGoogleSettings googleSettings,
     IEmailSender emailSender,
     IHttpContextAccessor httpContextAccessor,
-    IConfiguration configuration) : IAuthService
+    ICookieSettings cookieSettings,
+    IAppSettings appSettings) : IAuthService
 {
-    private string FrontendUrl => configuration["FrontendUrl"] ?? "https://luga-store.com";
+    private string FrontendUrl => appSettings.FrontendUrl;
 
     public Task<AuthResult> CustomerLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, "/customer/auth/refresh", Roles.Customer);
+        => LoginWithRoleAsync(email, password, cookieSettings.CustomerRefreshPath, Roles.Customer);
 
     public Task<AuthResult> AdminLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, "/admin/auth/refresh", Roles.Admin);
+        => LoginWithRoleAsync(email, password, cookieSettings.AdminRefreshPath, Roles.Admin);
 
     public Task<AuthResult> PartnerLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, "/partner/auth/refresh", Roles.Partner);
+        => LoginWithRoleAsync(email, password, cookieSettings.PartnerRefreshPath, Roles.Partner);
 
     public Task<AuthResult> PartnerManagerLoginAsync(string email, string password)
-        => LoginWithRoleAsync(email, password, "/partner/manager/auth/refresh", Roles.PartnerManager);
+        => LoginWithRoleAsync(email, password, cookieSettings.PartnerManagerRefreshPath, Roles.PartnerManager);
 
     private async Task<AuthResult> LoginWithRoleAsync(string email, string password, string refreshPath, string requiredRole)
     {
@@ -110,7 +110,7 @@ public class AuthService(
         var roles = await userManager.GetRolesAsync(user);
         var accessToken = GenerateAccessToken(user, roles);
         var refreshToken = GenerateRefreshToken(user);
-        SetRefreshCookie(refreshToken, "/customer/auth/refresh");
+        SetRefreshCookie(refreshToken, cookieSettings.CustomerRefreshPath);
 
         return new AuthResult
         {
