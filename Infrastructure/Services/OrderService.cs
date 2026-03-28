@@ -9,6 +9,7 @@ public class OrderService(IApplicationDbContext context) : IOrderService
 {
     public async Task<List<Order>> GetOrdersByUserAsync(int userId, CancellationToken cancellationToken = default)
         => await context.Orders
+            .AsNoTracking()
             .Where(o => o.UserId == userId)
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
@@ -17,13 +18,17 @@ public class OrderService(IApplicationDbContext context) : IOrderService
 
     public async Task UpdateOrderStatusAsync(int orderId, int customerId, OrderStatus status, CancellationToken cancellationToken = default)
     {
-        var order = await context.Orders.FindAsync([orderId], cancellationToken)
-            ?? throw new NotFoundException("Order not found.");
+        var existingOrder = await context.Orders
+            .AsNoTracking()
+            .Select(o => new { o.Id, o.UserId })
+            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken)
+            ?? throw new NotFoundError("Order not found.");
 
-        if (order.UserId != customerId)
-            throw new ForbiddenException("Order does not belong to this customer.");
+        if (existingOrder.UserId != customerId)
+            throw new ForbiddenError("Order does not belong to this customer.");
 
-        order.Status = status;
-        await context.SaveChangesAsync(cancellationToken);
+        await context.Orders
+            .Where(o => o.Id == orderId)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, status), cancellationToken);
     }
 }

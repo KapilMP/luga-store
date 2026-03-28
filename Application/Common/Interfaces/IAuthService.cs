@@ -21,10 +21,10 @@ public interface IAuthService
     Task ForgotPasswordAsync(string email);
     Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default);
     Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
-    Task<bool> DeleteUserAsync(int userId, CancellationToken cancellationToken = default);
+
 
     // User creation rules
     Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone, CancellationToken cancellationToken = default);
     Task<bool> RegisterAsync(string email, string password, string firstName, string lastName, string phone, CancellationToken cancellationToken = default);
-    Task<bool> AcceptInvitationAsync(string email, string token, string password, CancellationToken cancellationToken = default);
+    Task<bool> AcceptInvitationAsync(string email, string token, string password, string firstName, string lastName, CancellationToken cancellationToken = default);
 }

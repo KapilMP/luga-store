@@ -11,7 +11,7 @@ public record GetAdminsQuery : IRequest<List<AdminProfileDto>>;
 public class GetAdminQueryHandler(IUserService userService) : IRequestHandler<GetAdminQuery, AdminProfileDto>
 {
     public async Task<AdminProfileDto> Handle(GetAdminQuery request, CancellationToken cancellationToken)
-        => await userService.GetAdminAsync(request.Id) ?? throw new NotFoundException("Admin not found.");
+        => await userService.GetAdminAsync(request.Id) ?? throw new NotFoundError("Admin not found.");
 }
 
 public class GetAdminsQueryHandler(IUserService userService) : IRequestHandler<GetAdminsQuery, List<AdminProfileDto>>

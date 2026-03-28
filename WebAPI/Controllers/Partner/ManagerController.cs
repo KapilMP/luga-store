@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LugaStore.Application.Identity.Commands;
+using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.WebAPI.Controllers.Partner;
@@ -9,41 +10,61 @@ namespace LugaStore.WebAPI.Controllers.Partner;
 [ApiController]
 [Route("partner/[controller]")]
 [Authorize(Roles = Roles.Partner)]
-public class ManagerController(ISender mediator) : ControllerBase
+public class ManagerController(ISender mediator, IPartnerService partnerService) : ControllerBase
 {
-    [HttpPost("invite")]
-    public async Task<IActionResult> InviteManager(InvitePartnerManagerCommand command)
+    [HttpGet]
+    public async Task<IActionResult> GetManagers()
     {
-        var result = await mediator.Send(command);
-        if (!result) return Conflict("Email already exists.");
+        var managers = await partnerService.GetManagersAsync();
+        return Ok(managers);
+    }
+
+    [HttpGet("invited")]
+    public async Task<IActionResult> GetInvitedManagers()
+    {
+        var result = await mediator.Send(new GetInvitedManagersQuery());
+        return Ok(result);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetManager(int id)
+    {
+        var manager = await partnerService.GetManagerByManagerIdAsync(id);
+        return Ok(manager);
+    }
+
+    [HttpPost("invite")]
+    public async Task<IActionResult> InviteManager(InviteManagerCommand command)
+    {
+        await mediator.Send(command);
         return Ok("Invitation sent.");
     }
 
-    [HttpPost("resend-invitation")]
-    public async Task<IActionResult> ResendInvitation(ResendInvitationCommand command)
+    [HttpPost("{id:int}/resend-invitation")]
+    public async Task<IActionResult> ResendInvitation(int id)
     {
-        await mediator.Send(command);
+        await mediator.Send(new ResendManagerInvitationCommand(id));
         return Ok("Invitation resent.");
     }
 
     [HttpPatch("{id:int}/activate")]
     public async Task<IActionResult> ActivateManager(int id)
     {
-        await mediator.Send(new ActivatePartnerManagerCommand(id));
+        await mediator.Send(new ActivateManagerCommand(id));
         return Ok();
     }
 
     [HttpPatch("{id:int}/deactivate")]
     public async Task<IActionResult> DeactivateManager(int id)
     {
-        await mediator.Send(new DeactivatePartnerManagerCommand(id));
+        await mediator.Send(new DeactivateManagerCommand(id));
         return Ok();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteManager(int id)
     {
-        await mediator.Send(new DeletePartnerManagerCommand(id));
+        await mediator.Send(new DeleteManagerCommand(id));
         return NoContent();
     }
 }

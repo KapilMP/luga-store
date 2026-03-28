@@ -19,6 +19,13 @@ public class AdminsController(ISender mediator) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("invited")]
+    public async Task<IActionResult> GetInvitedAdmins()
+    {
+        var result = await mediator.Send(new GetInvitedAdminsQuery());
+        return Ok(result);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetAdmin(int id)
     {
@@ -33,10 +40,10 @@ public class AdminsController(ISender mediator) : ControllerBase
         return Ok("Invitation sent.");
     }
 
-    [HttpPost("resend-invitation")]
-    public async Task<IActionResult> ResendInvitation(ResendInvitationCommand command)
+    [HttpPost("{id:int}/resend-invitation")]
+    public async Task<IActionResult> ResendInvitation(int id)
     {
-        await mediator.Send(command);
+        await mediator.Send(new ResendAdminInvitationCommand(id));
         return Ok("Invitation resent.");
     }
 

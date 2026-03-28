@@ -25,7 +25,6 @@ public class AuthService(
     IHttpContextAccessor httpContextAccessor,
     IRefreshTokenPaths cookieSettings,
     IAppSettings appSettings,
-    IUserService userService,
     ApplicationDbContext dbContext) : IAuthService
 {
     private string FrontendUrl => appSettings.FrontendUrl;
@@ -63,7 +62,7 @@ public class AuthService(
         var user = await userManager.FindByEmailAsync(email) ?? throw new NotFoundError("Email or Password is not correct");
 
         if (!user.IsActive)
-            throw new UnauthorizedException("Your account has been deactivated.");
+            throw new UnauthorizedError("Your account has been deactivated.");
 
         var signInResult = await signInManager.CheckPasswordSignInAsync(user, password, false);
         if (!signInResult.Succeeded)
@@ -206,21 +205,7 @@ public class AuthService(
         return result.Succeeded;
     }
 
-    public async Task<bool> DeleteUserAsync(int userId, CancellationToken cancellationToken = default)
-    {
-        var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user == null) return false;
 
-        if (await userManager.IsInRoleAsync(user, Roles.Admin))
-        {
-            var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
-            if (admins.Count <= 1)
-                throw new BadRequestException("Cannot delete the last admin.");
-        }
-
-        var result = await userManager.DeleteAsync(user);
-        return result.Succeeded;
-    }
 
     public async Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone, CancellationToken cancellationToken = default)
     {
@@ -278,10 +263,14 @@ public class AuthService(
         return true;
     }
 
-    public async Task<bool> AcceptInvitationAsync(string email, string token, string password, CancellationToken cancellationToken = default)
+    public async Task<bool> AcceptInvitationAsync(string email, string token, string password, string firstName, string lastName, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user == null || user.EmailConfirmed) return false;
+
+        user.FirstName = firstName;
+        user.LastName = lastName;
+        await userManager.UpdateAsync(user);
 
         var result = await userManager.ConfirmEmailAsync(user, token);
         if (!result.Succeeded) return false;

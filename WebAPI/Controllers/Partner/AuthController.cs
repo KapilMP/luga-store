@@ -14,8 +14,6 @@ namespace LugaStore.WebAPI.Controllers.Partner;
 [Consumes("application/json")]
 public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
-
-
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
     {

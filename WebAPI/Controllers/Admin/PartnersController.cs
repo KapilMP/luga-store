@@ -19,6 +19,13 @@ public class PartnersController(ISender mediator) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("invited")]
+    public async Task<IActionResult> GetInvitedPartners()
+    {
+        var result = await mediator.Send(new GetInvitedPartnersQuery());
+        return Ok(result);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetPartner(int id)
     {
@@ -29,15 +36,14 @@ public class PartnersController(ISender mediator) : ControllerBase
     [HttpPost("invite")]
     public async Task<IActionResult> InvitePartner(InvitePartnerCommand command)
     {
-        var result = await mediator.Send(command);
-        if (!result) return Conflict("Email already exists.");
+        await mediator.Send(command);
         return Ok("Invitation sent.");
     }
 
-    [HttpPost("resend-invitation")]
-    public async Task<IActionResult> ResendInvitation(ResendInvitationCommand command)
+    [HttpPost("{id:int}/resend-invitation")]
+    public async Task<IActionResult> ResendInvitation(int id)
     {
-        await mediator.Send(command);
+        await mediator.Send(new ResendPartnerInvitationCommand(id));
         return Ok("Invitation resent.");
     }
 

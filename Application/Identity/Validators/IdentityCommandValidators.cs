@@ -69,14 +69,8 @@ public class AcceptInvitationCommandValidator : AbstractValidator<AcceptInvitati
         RuleFor(v => v.Email).NotEmpty().EmailAddress();
         RuleFor(v => v.Token).NotEmpty();
         RuleFor(v => v.Password).NotEmpty().MinimumLength(8);
-    }
-}
-
-public class ResendInvitationCommandValidator : AbstractValidator<ResendInvitationCommand>
-{
-    public ResendInvitationCommandValidator()
-    {
-        RuleFor(v => v.Email).NotEmpty().EmailAddress();
+        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
+        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
     }
 }
 
@@ -115,48 +109,125 @@ public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenComman
     }
 }
 
-public class DeleteUserCommandValidator : AbstractValidator<DeleteUserCommand>
-{
-    public DeleteUserCommandValidator()
-    {
-        RuleFor(v => v.Id).GreaterThan(0);
-    }
-}
-
-public class SetUserActiveStatusCommandValidator : AbstractValidator<SetUserActiveStatusCommand>
-{
-    public SetUserActiveStatusCommandValidator()
-    {
-        RuleFor(v => v.UserId).GreaterThan(0);
-    }
-}
-
+// Admin Identity Validators
 public class InviteAdminCommandValidator : AbstractValidator<InviteAdminCommand>
 {
-    public InviteAdminCommandValidator()
-    {
-        RuleFor(v => v.Email).NotEmpty().EmailAddress();
-        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
-    }
+    public InviteAdminCommandValidator() => RuleFor(v => v.Email).NotEmpty().EmailAddress();
 }
 
+public class ResendAdminInvitationCommandValidator : AbstractValidator<ResendAdminInvitationCommand>
+{
+    public ResendAdminInvitationCommandValidator() => RuleFor(v => v.UserId).GreaterThan(0);
+}
+
+public class ActivateAdminCommandValidator : AbstractValidator<ActivateAdminCommand>
+{
+    public ActivateAdminCommandValidator() => RuleFor(v => v.UserId).GreaterThan(0);
+}
+
+public class DeactivateAdminCommandValidator : AbstractValidator<DeactivateAdminCommand>
+{
+    public DeactivateAdminCommandValidator() => RuleFor(v => v.UserId).GreaterThan(0);
+}
+
+public class DeleteAdminCommandValidator : AbstractValidator<DeleteAdminCommand>
+{
+    public DeleteAdminCommandValidator() => RuleFor(v => v.UserId).GreaterThan(0);
+}
+
+// Partner Admin Validators
 public class InvitePartnerCommandValidator : AbstractValidator<InvitePartnerCommand>
 {
-    public InvitePartnerCommandValidator()
-    {
-        RuleFor(v => v.Email).NotEmpty().EmailAddress();
-        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
-    }
+    public InvitePartnerCommandValidator() => RuleFor(v => v.Email).NotEmpty().EmailAddress();
+}
+
+public class ResendPartnerInvitationCommandValidator : AbstractValidator<ResendPartnerInvitationCommand>
+{
+    public ResendPartnerInvitationCommandValidator() => RuleFor(v => v.PartnerId).GreaterThan(0);
+}
+
+public class DeletePartnerCommandValidator : AbstractValidator<DeletePartnerCommand>
+{
+    public DeletePartnerCommandValidator() => RuleFor(v => v.PartnerId).GreaterThan(0);
+}
+
+public class ActivatePartnerCommandValidator : AbstractValidator<ActivatePartnerCommand>
+{
+    public ActivatePartnerCommandValidator() => RuleFor(v => v.PartnerId).GreaterThan(0);
+}
+
+public class DeactivatePartnerCommandValidator : AbstractValidator<DeactivatePartnerCommand>
+{
+    public DeactivatePartnerCommandValidator() => RuleFor(v => v.PartnerId).GreaterThan(0);
 }
 
 public class InvitePartnerManagerCommandValidator : AbstractValidator<InvitePartnerManagerCommand>
 {
     public InvitePartnerManagerCommandValidator()
     {
+        RuleFor(v => v.PartnerId).GreaterThan(0);
         RuleFor(v => v.Email).NotEmpty().EmailAddress();
-        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
     }
+}
+
+public class ResendPartnerManagerInvitationCommandValidator : AbstractValidator<ResendPartnerManagerInvitationCommand>
+{
+    public ResendPartnerManagerInvitationCommandValidator()
+    {
+        RuleFor(v => v.PartnerId).GreaterThan(0);
+        RuleFor(v => v.ManagerId).GreaterThan(0);
+    }
+}
+
+public class ActivatePartnerManagerCommandValidator : AbstractValidator<ActivatePartnerManagerCommand>
+{
+    public ActivatePartnerManagerCommandValidator() 
+    {
+        RuleFor(v => v.PartnerId).GreaterThan(0);
+        RuleFor(v => v.ManagerId).GreaterThan(0);
+    }
+}
+
+public class DeactivatePartnerManagerCommandValidator : AbstractValidator<DeactivatePartnerManagerCommand>
+{
+    public DeactivatePartnerManagerCommandValidator()
+    {
+        RuleFor(v => v.PartnerId).GreaterThan(0);
+        RuleFor(v => v.ManagerId).GreaterThan(0);
+    }
+}
+
+public class DeletePartnerManagerCommandValidator : AbstractValidator<DeletePartnerManagerCommand>
+{
+    public DeletePartnerManagerCommandValidator()
+    {
+        RuleFor(v => v.PartnerId).GreaterThan(0);
+        RuleFor(v => v.ManagerId).GreaterThan(0);
+    }
+}
+
+// Partner Context Validators
+public class InviteManagerCommandValidator : AbstractValidator<InviteManagerCommand>
+{
+    public InviteManagerCommandValidator() => RuleFor(v => v.Email).NotEmpty().EmailAddress();
+}
+
+public class ResendManagerInvitationCommandValidator : AbstractValidator<ResendManagerInvitationCommand>
+{
+    public ResendManagerInvitationCommandValidator() => RuleFor(v => v.ManagerId).GreaterThan(0);
+}
+
+public class ActivateManagerCommandValidator : AbstractValidator<ActivateManagerCommand>
+{
+    public ActivateManagerCommandValidator() => RuleFor(v => v.ManagerId).GreaterThan(0);
+}
+
+public class DeactivateManagerCommandValidator : AbstractValidator<DeactivateManagerCommand>
+{
+    public DeactivateManagerCommandValidator() => RuleFor(v => v.ManagerId).GreaterThan(0);
+}
+
+public class DeleteManagerCommandValidator : AbstractValidator<DeleteManagerCommand>
+{
+    public DeleteManagerCommandValidator() => RuleFor(v => v.ManagerId).GreaterThan(0);
 }

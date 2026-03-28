@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IPartnerService, PartnerService>();
         services.AddScoped<IEmailSender, EmailSender>();
         services.AddScoped<IOrderService, OrderService>();
 

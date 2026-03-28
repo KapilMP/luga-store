@@ -154,12 +154,12 @@ app.UseExceptionHandler(err => err.Run(async ctx =>
     string message;
     switch (ex)
     {
-        case NotFoundException e: status = StatusCodes.Status404NotFound; message = e.Message; break;
-        case ConflictException e: status = StatusCodes.Status409Conflict; message = e.Message; break;
-        case BadRequestException e: status = StatusCodes.Status400BadRequest; message = e.Message; break;
-        case UnauthorizedException e: status = StatusCodes.Status401Unauthorized; message = e.Message; break;
-        case ForbiddenException e: status = StatusCodes.Status403Forbidden; message = e.Message; break;
-        case InternalServerException e: status = StatusCodes.Status500InternalServerError; message = e.Message; break;
+        case NotFoundError e: status = StatusCodes.Status404NotFound; message = e.Message; break;
+        case ConflictError e: status = StatusCodes.Status409Conflict; message = e.Message; break;
+        case BadRequestError e: status = StatusCodes.Status400BadRequest; message = e.Message; break;
+        case UnauthorizedError e: status = StatusCodes.Status401Unauthorized; message = e.Message; break;
+        case ForbiddenError e: status = StatusCodes.Status403Forbidden; message = e.Message; break;
+        case InternalServerError e: status = StatusCodes.Status500InternalServerError; message = e.Message; break;
         default: status = StatusCodes.Status500InternalServerError; message = "An unexpected error occurred."; break;
     }
     ctx.Response.StatusCode = status;

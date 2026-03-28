@@ -28,7 +28,7 @@ public class ApplicationDbContext(
     public DbSet<ProductSizeStock> ProductSizeStocks => Set<ProductSizeStock>();
     public DbSet<ProductSale> ProductSales => Set<ProductSale>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
-    
+    public DbSet<PartnerManager> PartnerManagers => Set<PartnerManager>();
     DbSet<User> IApplicationDbContext.Users => Users;
 
     protected override void OnModelCreating(ModelBuilder builder)

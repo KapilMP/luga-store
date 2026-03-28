@@ -21,8 +21,9 @@ public class User : IdentityUser<int>, ISoftDelete, IAuditableEntity
     // Active status
     public bool IsActive { get; set; } = true;
 
-    // Partner
-    public int? PartnerId { get; set; }
+    // Partner manager assignments
+    public ICollection<PartnerManager> ManagedPartnerships { get; set; } = [];
+    public ICollection<PartnerManager> AssignedManagerships { get; set; } = [];
 
     // Profile
     public string? AvatarPath { get; set; }

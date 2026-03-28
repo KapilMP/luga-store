@@ -15,7 +15,6 @@ namespace LugaStore.Infrastructure.Services;
 public class UserService(
     IHttpContextAccessor httpContextAccessor,
     UserManager<User> userManager,
-    IAuthService authService,
     IImageService imageService,
     IEmailSender emailSender,
     IAppSettings appSettings,
@@ -23,15 +22,6 @@ public class UserService(
 {
     public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
     public string? Role => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
-
-    public async Task<bool> DeleteUserAsync(int userId)
-    {
-        var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user == null) return false;
-
-        var result = await userManager.DeleteAsync(user);
-        return result.Succeeded;
-    }
 
     public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
     {
@@ -45,9 +35,7 @@ public class UserService(
 
     private async Task SetActiveStatusWithRoleCheckAsync(int userId, bool isActive, string role, CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("User not found.");
-        if (!await userManager.IsInRoleAsync(user, role))
-            throw new NotFoundException("User not found.");
+        var user = await GetUserWithRoleAsync(userId, role);
 
         user.IsActive = isActive;
         await userManager.UpdateAsync(user);
@@ -55,15 +43,13 @@ public class UserService(
 
     private async Task DeleteWithRoleCheckAsync(int userId, string role, CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("User not found.");
-        if (!await userManager.IsInRoleAsync(user, role))
-            throw new NotFoundException("User not found.");
+        var user = await GetUserWithRoleAsync(userId, role);
 
         if (role == Roles.Admin)
         {
             var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
             if (admins.Count <= 1)
-                throw new BadRequestException("Cannot delete the last admin.");
+                throw new BadRequestError("Cannot delete the last admin.");
         }
 
         await userManager.DeleteAsync(user);
@@ -75,111 +61,103 @@ public class UserService(
     public Task DeactivateAdminAsync(int userId, CancellationToken cancellationToken = default)
         => SetActiveStatusWithRoleCheckAsync(userId, false, Roles.Admin, cancellationToken);
 
-    public Task ActivatePartnerAsync(int userId, CancellationToken cancellationToken = default)
-        => SetActiveStatusWithRoleCheckAsync(userId, true, Roles.Partner, cancellationToken);
-
-    public Task DeactivatePartnerAsync(int userId, CancellationToken cancellationToken = default)
-        => SetActiveStatusWithRoleCheckAsync(userId, false, Roles.Partner, cancellationToken);
-
-    public Task ActivatePartnerManagerAsync(int userId, CancellationToken cancellationToken = default)
-        => SetActiveStatusWithRoleCheckAsync(userId, true, Roles.PartnerManager, cancellationToken);
-
-    public Task DeactivatePartnerManagerAsync(int userId, CancellationToken cancellationToken = default)
-        => SetActiveStatusWithRoleCheckAsync(userId, false, Roles.PartnerManager, cancellationToken);
-
     public Task DeleteAdminAsync(int userId, CancellationToken cancellationToken = default)
         => DeleteWithRoleCheckAsync(userId, Roles.Admin, cancellationToken);
-
-    public Task DeletePartnerAsync(int userId, CancellationToken cancellationToken = default)
-        => DeleteWithRoleCheckAsync(userId, Roles.Partner, cancellationToken);
-
-    public Task DeletePartnerManagerAsync(int userId, CancellationToken cancellationToken = default)
-        => DeleteWithRoleCheckAsync(userId, Roles.PartnerManager, cancellationToken);
-    public async Task<PartnerProfileDto?> GetPartnerAsync(int id)
-    {
-        var user = await userManager.FindByIdAsync(id.ToString());
-        if (user == null || !await userManager.IsInRoleAsync(user, Roles.Partner)) return null;
-        return PartnerProfileDto.From(user);
-    }
-
-    public async Task<List<PartnerProfileDto>> GetPartnersAsync()
-    {
-        var partners = await userManager.GetUsersInRoleAsync(Roles.Partner);
-        return partners.Select(PartnerProfileDto.From).ToList();
-    }
-
-    public async Task<PartnerManagerProfileDto?> GetPartnerManagerAsync(int id)
-    {
-        var user = await userManager.FindByIdAsync(id.ToString());
-        if (user == null || !await userManager.IsInRoleAsync(user, Roles.PartnerManager)) return null;
-        return PartnerManagerProfileDto.From(user);
-    }
-
-    public async Task<List<PartnerManagerProfileDto>> GetPartnerManagersAsync()
-    {
-        var managers = await userManager.GetUsersInRoleAsync(Roles.PartnerManager);
-        return managers.Select(PartnerManagerProfileDto.From).ToList();
-    }
-
     public async Task<CustomerProfileDto?> GetCustomerAsync(int id)
     {
-        var user = await userManager.FindByIdAsync(id.ToString());
-        if (user == null || !await userManager.IsInRoleAsync(user, Roles.Customer)) return null;
-        return CustomerProfileDto.From(user);
+        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Customer).Select(r => r.Id).FirstOrDefaultAsync();
+        
+        return await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.UserId == id && ur.RoleId == roleId)
+            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new CustomerProfileDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName ?? string.Empty,
+                LastName = u.LastName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                AvatarUrl = u.AvatarPath ?? string.Empty,
+                Phone = u.PhoneNumber ?? string.Empty,
+                IsEmailConfirmed = u.EmailConfirmed
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<CustomerProfileDto>> GetCustomersAsync()
     {
-        var customers = await userManager.GetUsersInRoleAsync(Roles.Customer);
-        return customers.Select(CustomerProfileDto.From).ToList();
+        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Customer).Select(r => r.Id).FirstOrDefaultAsync();
+
+        return await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.RoleId == roleId)
+            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new CustomerProfileDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName ?? string.Empty,
+                LastName = u.LastName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                AvatarUrl = u.AvatarPath ?? string.Empty,
+                Phone = u.PhoneNumber ?? string.Empty,
+                IsEmailConfirmed = u.EmailConfirmed
+            })
+            .ToListAsync();
     }
 
     public async Task<AdminProfileDto?> GetAdminAsync(int id)
     {
-        var user = await userManager.FindByIdAsync(id.ToString());
-        if (user == null || !await userManager.IsInRoleAsync(user, Roles.Admin)) return null;
-        return AdminProfileDto.From(user);
+        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
+
+        return await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.UserId == id && ur.RoleId == roleId)
+            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new AdminProfileDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName ?? string.Empty,
+                LastName = u.LastName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                AvatarUrl = u.AvatarPath ?? string.Empty,
+                Phone = u.PhoneNumber ?? string.Empty
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<AdminProfileDto>> GetAdminsAsync()
     {
-        var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
-        return admins.Select(AdminProfileDto.From).ToList();
+        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
+
+        return await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.RoleId == roleId)
+            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new AdminProfileDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName ?? string.Empty,
+                LastName = u.LastName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                AvatarUrl = u.AvatarPath ?? string.Empty,
+                Phone = u.PhoneNumber ?? string.Empty
+            })
+            .ToListAsync();
     }
 
-    public async Task<bool> InviteAdminAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
+    public async Task InviteAdminAsync(string email, CancellationToken cancellationToken = default)
     {
-        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.Admin, cancellationToken);
-        await SendInvitationEmailAsync(user);
-        return true;
-    }
-
-    public async Task<bool> InvitePartnerAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
-    {
-        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.Partner, cancellationToken);
-        await SendInvitationEmailAsync(user);
-        return true;
-    }
-
-    public async Task<bool> InvitePartnerManagerAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default)
-    {
-        var partnerId = int.Parse(UserId!);
-        var user = await CreateInvitedUserAsync(email, firstName, lastName, Roles.PartnerManager, cancellationToken, partnerId);
-        await SendInvitationEmailAsync(user);
-        return true;
-    }
-
-    public async Task ResendInvitationAsync(string email)
-    {
-        var user = await userManager.FindByEmailAsync(email) ?? throw new NotFoundException("User not found.");
-        if (user.EmailConfirmed) throw new BadRequestException("User has already accepted the invitation.");
+        var user = await CreateInvitedUserAsync(email, Roles.Admin, cancellationToken);
         await SendInvitationEmailAsync(user);
     }
 
-    private async Task<User> CreateInvitedUserAsync(string email, string firstName, string lastName, string role, CancellationToken cancellationToken, int? partnerId = null)
+    public async Task ResendAdminInvitationAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await GetUserWithRoleAsync(userId, Roles.Admin);
+        if (user.EmailConfirmed) throw new BadRequestError("User has already accepted the invitation.");
+        await SendInvitationEmailAsync(user);
+    }
+
+    private async Task<User> CreateInvitedUserAsync(string email, string role, CancellationToken cancellationToken)
     {
         if (await userManager.FindByEmailAsync(email) != null)
-            throw new ConflictException("Email already exists.");
+            throw new ConflictError("Email already exists.");
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -190,15 +168,14 @@ public class UserService(
                 Email = email,
                 FirstName = firstName,
                 LastName = lastName,
-                EmailConfirmed = false,
-                PartnerId = partnerId
+                EmailConfirmed = false
             };
 
             var result = await userManager.CreateAsync(user);
-            if (!result.Succeeded) throw new InternalServerException("Failed to create user.");
+            if (!result.Succeeded) throw new InternalServerError("Failed to create user.");
 
             var roleResult = await userManager.AddToRoleAsync(user, role);
-            if (!roleResult.Succeeded) throw new InternalServerException("Failed to assign role.");
+            if (!roleResult.Succeeded) throw new InternalServerError("Failed to assign role.");
 
             await transaction.CommitAsync(cancellationToken);
             return user;
@@ -216,11 +193,11 @@ public class UserService(
         var encodedToken = HttpUtility.UrlEncode(token);
         var inviteUrl = $"{appSettings.FrontendUrl}/accept-invitation?email={user.Email}&token={encodedToken}";
         await emailSender.SendEmailAsync(user.Email!, "You're invited to Luga Store",
-            $"Hi {user.FirstName}, you've been invited. Set your password here: {inviteUrl}");
+            $"You've been invited. Set your password here: {inviteUrl}");
     }
 
     private async Task<User> GetCurrentUserAsync()
-        => await userManager.FindByIdAsync(UserId!) ?? throw new NotFoundException("User not found.");
+        => await userManager.FindByIdAsync(UserId!) ?? throw new NotFoundError("User not found.");
 
     private static T MapToDto<T>(User user) where T : BaseUserProfile
     {
@@ -257,6 +234,49 @@ public class UserService(
     public async Task DeleteAccountAsync()
     {
         var user = await GetCurrentUserAsync();
-        await authService.DeleteUserAsync(user.Id);
+        await DeleteUserAsync(user.Id);
+    }
+
+    public async Task<bool> DeleteUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user == null) return false;
+
+        if (await userManager.IsInRoleAsync(user, Roles.Admin))
+        {
+            var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
+            var adminCount = await dbContext.UserRoles.Where(ur => ur.RoleId == roleId).CountAsync(cancellationToken);
+            if (adminCount <= 1)
+                throw new BadRequestError("Cannot delete the last admin.");
+        }
+
+        var result = await userManager.DeleteAsync(user);
+        return result.Succeeded;
+    }
+    public async Task<List<AdminProfileDto>> GetInvitedAdminsAsync()
+    {
+        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
+
+        return await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.RoleId == roleId)
+            .Join(dbContext.Users.Where(u => !u.EmailConfirmed), ur => ur.UserId, u => u.Id, (ur, u) => new AdminProfileDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName ?? string.Empty,
+                LastName = u.LastName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                AvatarUrl = u.AvatarPath ?? string.Empty,
+                Phone = u.PhoneNumber ?? string.Empty
+            })
+            .ToListAsync();
+    }
+
+    public async Task<User> GetUserWithRoleAsync(int userId, string requiredRole)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundError("User not found.");
+        if (!await userManager.IsInRoleAsync(user, requiredRole))
+            throw new ForbiddenError($"User is not in {requiredRole} role.");
+        return user;
     }
 }

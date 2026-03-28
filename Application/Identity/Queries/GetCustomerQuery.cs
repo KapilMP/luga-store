@@ -11,7 +11,7 @@ public record GetCustomersQuery : IRequest<List<CustomerProfileDto>>;
 public class GetCustomerQueryHandler(IUserService userService) : IRequestHandler<GetCustomerQuery, CustomerProfileDto>
 {
     public async Task<CustomerProfileDto> Handle(GetCustomerQuery request, CancellationToken cancellationToken)
-        => await userService.GetCustomerAsync(request.Id) ?? throw new NotFoundException("Customer not found.");
+        => await userService.GetCustomerAsync(request.Id) ?? throw new NotFoundError("Customer not found.");
 }
 
 public class GetCustomersQueryHandler(IUserService userService) : IRequestHandler<GetCustomersQuery, List<CustomerProfileDto>>

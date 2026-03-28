@@ -5,17 +5,24 @@ using LugaStore.Application.Common.Models;
 
 namespace LugaStore.Application.Identity.Queries;
 
-public record GetPartnerManagerQuery(int Id) : IRequest<PartnerManagerProfileDto>;
-public record GetPartnerManagersQuery : IRequest<List<PartnerManagerProfileDto>>;
+public record GetPartnerManagerQuery(int PartnerId, int ManagerId) : IRequest<PartnerManagerProfileDto>;
+public record GetPartnerManagersQuery(int PartnerId) : IRequest<List<PartnerManagerProfileDto>>;
+public record GetMyPartnerManagersQuery : IRequest<List<PartnerManagerProfileDto>>;
 
-public class GetPartnerManagerQueryHandler(IUserService userService) : IRequestHandler<GetPartnerManagerQuery, PartnerManagerProfileDto>
+public class GetPartnerManagerQueryHandler(IPartnerService partnerService) : IRequestHandler<GetPartnerManagerQuery, PartnerManagerProfileDto>
 {
-    public async Task<PartnerManagerProfileDto> Handle(GetPartnerManagerQuery request, CancellationToken cancellationToken)
-        => await userService.GetPartnerManagerAsync(request.Id) ?? throw new NotFoundException("Partner manager not found.");
+    public Task<PartnerManagerProfileDto> Handle(GetPartnerManagerQuery request, CancellationToken cancellationToken)
+        => partnerService.GetPartnerManagerByPartnerIdAndManagerIdAsync(request.PartnerId, request.ManagerId);
 }
 
-public class GetPartnerManagersQueryHandler(IUserService userService) : IRequestHandler<GetPartnerManagersQuery, List<PartnerManagerProfileDto>>
+public class GetPartnerManagersQueryHandler(IPartnerService partnerService) : IRequestHandler<GetPartnerManagersQuery, List<PartnerManagerProfileDto>>
 {
-    public async Task<List<PartnerManagerProfileDto>> Handle(GetPartnerManagersQuery request, CancellationToken cancellationToken)
-        => await userService.GetPartnerManagersAsync();
+    public Task<List<PartnerManagerProfileDto>> Handle(GetPartnerManagersQuery request, CancellationToken cancellationToken)
+        => partnerService.GetPartnerManagersByPartnerIdAsync(request.PartnerId);
+}
+
+public class GetMyPartnerManagersQueryHandler(IPartnerService partnerService) : IRequestHandler<GetMyPartnerManagersQuery, List<PartnerManagerProfileDto>>
+{
+    public Task<List<PartnerManagerProfileDto>> Handle(GetMyPartnerManagersQuery request, CancellationToken cancellationToken)
+        => partnerService.GetManagersAsync();
 }
