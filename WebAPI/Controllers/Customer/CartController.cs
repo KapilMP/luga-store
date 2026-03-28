@@ -1,23 +1,16 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using LugaStore.Application.Cart;
 using LugaStore.Application.Cart.Commands;
 using LugaStore.Application.Cart.Queries;
-using LugaStore.Application.Common.Interfaces;
-using LugaStore.Domain.Enums;
 
 namespace LugaStore.WebAPI.Controllers.Customer;
 
-public record AddToCartRequest(int ProductId, ProductSize Size, int Quantity);
-public record UpdateCartRequest(ProductSize Size, int Quantity);
-
-[ApiController]
 [Route("customer/[controller]")]
 [Authorize]
-public class CartController(ISender mediator, ICurrentUser currentUser) : ControllerBase
+public class CartController(ISender mediator) : LugaStoreControllerBase
 {
-    private int CurrentUserId => int.Parse(currentUser.UserId!);
-
     [HttpGet]
     public async Task<IActionResult> GetCart()
         => Ok(await mediator.Send(new GetCartQuery(CurrentUserId)));

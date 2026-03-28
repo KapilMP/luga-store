@@ -1,19 +1,16 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using LugaStore.Application.Orders;
 using LugaStore.Application.Orders.Commands;
 using LugaStore.Application.Orders.Queries;
 using LugaStore.Application.Common.Interfaces;
 
 namespace LugaStore.WebAPI.Controllers.Customer;
 
-public record CheckoutAddressRequest(string FullName, string Phone, string Street, string City, string ZipCode);
-public record CreateOrderRequest(string? CustomerEmail, CheckoutAddressRequest? ShippingAddress, List<OrderItemRequest> Items);
-public record OrderItemRequest(int ProductId, int Quantity);
-
 [ApiController]
 [Route("customer/[controller]")]
-public class OrdersController(ISender mediator, ICurrentUser currentUser) : ControllerBase
+public class OrdersController(ISender mediator, ICurrentUser currentUser) : LugaStoreControllerBase
 {
     [HttpPost("checkout")]
     [AllowAnonymous]

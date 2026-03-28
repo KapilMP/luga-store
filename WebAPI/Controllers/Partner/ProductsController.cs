@@ -8,24 +8,21 @@ using LugaStore.Domain.Common;
 
 using LugaStore.Domain.Enums;
 
-namespace LugaStore.WebAPI.Controllers.Partner;
+using LugaStore.Application.Products;
 
-public record CreatePartnerProductRequest(string Name, string? Description, decimal Price, Gender Gender, List<int> CategoryIds);
-public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
+namespace LugaStore.WebAPI.Controllers.Partner;
 
 [ApiController]
 [Route("partner/[controller]")]
 [Authorize(Roles = Roles.Partner)]
-public class ProductsController(ISender mediator, ICurrentUser currentUser) : ControllerBase
+public class ProductsController(ISender mediator) : LugaStoreControllerBase
 {
-    private int CurrentUserId => int.Parse(currentUser.UserId!);
-
     [HttpGet("my-creations")]
     public async Task<IActionResult> GetMyProducts()
         => Ok(await mediator.Send(new GetMyProductsQuery(CurrentUserId)));
 
     [HttpPost]
-    public async Task<IActionResult> CreateAsPartner(CreatePartnerProductRequest request)
+    public async Task<IActionResult> CreateAsPartner(ProductUpsertRequest request)
     {
         var id = await mediator.Send(new CreatePartnerProductCommand(request.Name, request.Description, request.Price, request.Gender, request.CategoryIds, CurrentUserId));
         return CreatedAtAction(nameof(GetMyProducts), new { id }, id);

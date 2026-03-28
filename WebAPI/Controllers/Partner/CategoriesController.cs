@@ -4,21 +4,16 @@ using LugaStore.Application.Categories;
 using LugaStore.Application.Categories.Commands;
 using LugaStore.Application.Categories.Queries;
 using MediatR;
-using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.WebAPI.Controllers.Partner;
 
-public record CategoryUpsertRequest(string Name, string? Description);
-public record CategoryReorderRequest(List<OrderItemDto> Orders);
-public record OrderItemDto(int Id, int DisplayOrder);
 
-[ApiController]
+
 [Route("partner/[controller]")]
 [Authorize(Roles = Roles.Partner)]
-public class CategoriesController(ISender mediator, ICurrentUser currentUser) : ControllerBase
+public class CategoriesController(ISender mediator) : LugaStoreControllerBase
 {
-    private int CurrentUserId => int.Parse(currentUser.UserId!);
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {

@@ -18,7 +18,6 @@ public class UserService(
     IAppSettings appSettings,
     IApplicationDbContext dbContext) : IUserService
 {
-
     public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
@@ -32,7 +31,6 @@ public class UserService(
     private async Task SetActiveStatusWithRoleCheckAsync(int userId, bool isActive, string role, CancellationToken cancellationToken)
     {
         var user = await GetUserWithRoleAsync(userId, role);
-
         user.IsActive = isActive;
         await userManager.UpdateAsync(user);
     }
@@ -40,14 +38,13 @@ public class UserService(
     private async Task DeleteWithRoleCheckAsync(int userId, string role, CancellationToken cancellationToken)
     {
         var user = await GetUserWithRoleAsync(userId, role);
-
         if (role == Roles.Admin)
         {
-            var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
-            if (admins.Count <= 1)
+            var adminRoleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstAsync(cancellationToken);
+            var adminCount = await dbContext.UserRoles.Where(ur => ur.RoleId == adminRoleId).CountAsync(cancellationToken);
+            if (adminCount <= 1)
                 throw new BadRequestError("Cannot delete the last admin.");
         }
-
         await userManager.DeleteAsync(user);
     }
 
@@ -59,98 +56,37 @@ public class UserService(
 
     public Task DeleteAdminAsync(int userId, CancellationToken cancellationToken = default)
         => DeleteWithRoleCheckAsync(userId, Roles.Admin, cancellationToken);
-    public async Task<CustomerProfileDto?> GetCustomerAsync(int id)
+
+    public async Task<List<T>> GetUsersByRoleAsync<T>(string roleName, bool? confirmedOnly = null) where T : BaseUserProfile, new()
     {
-        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Customer).Select(r => r.Id).FirstOrDefaultAsync();
+        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == roleName).Select(r => r.Id).FirstOrDefaultAsync();
 
-        return await dbContext.UserRoles
-            .AsNoTracking()
-            .Where(ur => ur.UserId == id && ur.RoleId == roleId)
-            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new CustomerProfileDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName ?? string.Empty,
-                LastName = u.LastName ?? string.Empty,
-                Email = u.Email ?? string.Empty,
-                AvatarUrl = u.AvatarPath ?? string.Empty,
-                Phone = u.PhoneNumber ?? string.Empty,
-                IsEmailConfirmed = u.EmailConfirmed
-            })
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task<List<CustomerProfileDto>> GetCustomersAsync()
-    {
-        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Customer).Select(r => r.Id).FirstOrDefaultAsync();
-
-        return await dbContext.UserRoles
+        var query = dbContext.UserRoles
             .AsNoTracking()
             .Where(ur => ur.RoleId == roleId)
-            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new CustomerProfileDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName ?? string.Empty,
-                LastName = u.LastName ?? string.Empty,
-                Email = u.Email ?? string.Empty,
-                AvatarUrl = u.AvatarPath ?? string.Empty,
-                Phone = u.PhoneNumber ?? string.Empty,
-                IsEmailConfirmed = u.EmailConfirmed
-            })
-            .ToListAsync();
+            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => u);
+
+        if (confirmedOnly.HasValue)
+            query = query.Where(u => u.EmailConfirmed == confirmedOnly.Value);
+
+        var users = await query.ToListAsync();
+        return users.Select(MapToDto<T>).ToList();
     }
 
-    public async Task<AdminProfileDto?> GetAdminAsync(int id)
+    public async Task<T?> GetUserWithRoleAsync<T>(int userId, string roleName) where T : BaseUserProfile, new()
     {
-        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
+        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == roleName).Select(r => r.Id).FirstOrDefaultAsync();
 
-        return await dbContext.UserRoles
+        var user = await dbContext.UserRoles
             .AsNoTracking()
-            .Where(ur => ur.UserId == id && ur.RoleId == roleId)
-            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new AdminProfileDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName ?? string.Empty,
-                LastName = u.LastName ?? string.Empty,
-                Email = u.Email ?? string.Empty,
-                AvatarUrl = u.AvatarPath ?? string.Empty,
-                Phone = u.PhoneNumber ?? string.Empty
-            })
+            .Where(ur => ur.UserId == userId && ur.RoleId == roleId)
+            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => u)
             .FirstOrDefaultAsync();
+
+        return user == null ? null : MapToDto<T>(user);
     }
 
-    public async Task<List<AdminProfileDto>> GetAdminsAsync()
-    {
-        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
-
-        return await dbContext.UserRoles
-            .AsNoTracking()
-            .Where(ur => ur.RoleId == roleId)
-            .Join(dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new AdminProfileDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName ?? string.Empty,
-                LastName = u.LastName ?? string.Empty,
-                Email = u.Email ?? string.Empty,
-                AvatarUrl = u.AvatarPath ?? string.Empty,
-                Phone = u.PhoneNumber ?? string.Empty
-            })
-            .ToListAsync();
-    }
-
-    public async Task InviteAdminAsync(string email, CancellationToken cancellationToken = default)
-    {
-        var user = await CreateInvitedUserAsync(email, Roles.Admin, cancellationToken);
-        await SendInvitationEmailAsync(user);
-    }
-
-    public async Task ResendAdminInvitationAsync(int userId, CancellationToken cancellationToken = default)
-    {
-        var user = await GetUserWithRoleAsync(userId, Roles.Admin);
-        if (user.EmailConfirmed) throw new BadRequestError("User has already accepted the invitation.");
-        await SendInvitationEmailAsync(user);
-    }
-
-    private async Task<User> CreateInvitedUserAsync(string email, string role, CancellationToken cancellationToken)
+    public async Task<User> CreateInvitedUserAsync(string email, string role, CancellationToken cancellationToken = default)
     {
         if (await userManager.FindByEmailAsync(email) != null)
             throw new ConflictError("Email already exists.");
@@ -158,12 +94,7 @@ public class UserService(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var user = new User
-            {
-                Email = email,
-                EmailConfirmed = false
-            };
-
+            var user = new User { Email = email, EmailConfirmed = false };
             var result = await userManager.CreateAsync(user);
             if (!result.Succeeded) throw new InternalServerError("Failed to create user.");
 
@@ -180,7 +111,7 @@ public class UserService(
         }
     }
 
-    private async Task SendInvitationEmailAsync(User user)
+    public async Task SendInvitationEmailAsync(User user)
     {
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = HttpUtility.UrlEncode(token);
@@ -189,8 +120,13 @@ public class UserService(
             $"You've been invited. Set your password here: {inviteUrl}");
     }
 
-    private async Task<User> GetCurrentUserAsync()
-        => await userManager.FindByIdAsync(currentUser.UserId!) ?? throw new NotFoundError("User not found.");
+    public async Task<User> GetUserWithRoleAsync(int userId, string requiredRole)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundError("User not found.");
+        if (!await userManager.IsInRoleAsync(user, requiredRole))
+            throw new ForbiddenError($"User is not in {requiredRole} role.");
+        return user;
+    }
 
     private static T MapToDto<T>(User user) where T : BaseUserProfile
     {
@@ -201,10 +137,7 @@ public class UserService(
     }
 
     public async Task<T> GetProfileAsync<T>() where T : BaseUserProfile
-    {
-        var user = await GetCurrentUserAsync();
-        return MapToDto<T>(user);
-    }
+        => MapToDto<T>(await GetCurrentUserAsync());
 
     public async Task<T> UpdateProfileAsync<T>(string firstName, string lastName, string phone) where T : BaseUserProfile
     {
@@ -224,11 +157,7 @@ public class UserService(
         return MapToDto<T>(user);
     }
 
-    public async Task DeleteAccountAsync()
-    {
-        var user = await GetCurrentUserAsync();
-        await DeleteUserAsync(user.Id);
-    }
+    public async Task DeleteAccountAsync() => await DeleteUserAsync(int.Parse(currentUser.UserId!));
 
     public async Task<bool> DeleteUserAsync(int userId, CancellationToken cancellationToken = default)
     {
@@ -237,8 +166,8 @@ public class UserService(
 
         if (await userManager.IsInRoleAsync(user, Roles.Admin))
         {
-            var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
-            var adminCount = await dbContext.UserRoles.Where(ur => ur.RoleId == roleId).CountAsync(cancellationToken);
+            var adminRoleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstAsync(cancellationToken);
+            var adminCount = await dbContext.UserRoles.Where(ur => ur.RoleId == adminRoleId).CountAsync(cancellationToken);
             if (adminCount <= 1)
                 throw new BadRequestError("Cannot delete the last admin.");
         }
@@ -246,30 +175,7 @@ public class UserService(
         var result = await userManager.DeleteAsync(user);
         return result.Succeeded;
     }
-    public async Task<List<AdminProfileDto>> GetInvitedAdminsAsync()
-    {
-        var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Admin).Select(r => r.Id).FirstOrDefaultAsync();
 
-        return await dbContext.UserRoles
-            .AsNoTracking()
-            .Where(ur => ur.RoleId == roleId)
-            .Join(dbContext.Users.Where(u => !u.EmailConfirmed), ur => ur.UserId, u => u.Id, (ur, u) => new AdminProfileDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName ?? string.Empty,
-                LastName = u.LastName ?? string.Empty,
-                Email = u.Email ?? string.Empty,
-                AvatarUrl = u.AvatarPath ?? string.Empty,
-                Phone = u.PhoneNumber ?? string.Empty
-            })
-            .ToListAsync();
-    }
-
-    public async Task<User> GetUserWithRoleAsync(int userId, string requiredRole)
-    {
-        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundError("User not found.");
-        if (!await userManager.IsInRoleAsync(user, requiredRole))
-            throw new ForbiddenError($"User is not in {requiredRole} role.");
-        return user;
-    }
+    private async Task<User> GetCurrentUserAsync()
+        => await userManager.FindByIdAsync(currentUser.UserId!) ?? throw new NotFoundError("User not found.");
 }

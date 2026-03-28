@@ -6,10 +6,9 @@ using LugaStore.Application.Products.Queries;
 using LugaStore.Domain.Common;
 using LugaStore.Domain.Enums;
 
-namespace LugaStore.WebAPI.Controllers.Manager;
+using LugaStore.Application.Products;
 
-public record CreateProductRequest(string Name, string? Description, decimal Price, Gender Gender, List<int> CategoryIds);
-public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
+namespace LugaStore.WebAPI.Controllers.Manager;
 
 [ApiController]
 [Route("manager/[controller]")]
@@ -21,7 +20,7 @@ public class ProductsController(ISender mediator) : ControllerBase
         => Ok(await mediator.Send(new GetAllProductsQuery()));
 
     [HttpPost]
-    public async Task<IActionResult> ManageProduct(CreateProductRequest request)
+    public async Task<IActionResult> ManageProduct(ProductUpsertRequest request)
     {
         var id = await mediator.Send(new CreateProductCommand(request.Name, request.Description, request.Price, request.Gender, request.CategoryIds));
         return CreatedAtAction(nameof(GetStoreProducts), new { id }, id);

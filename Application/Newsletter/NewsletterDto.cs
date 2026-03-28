@@ -1,3 +1,3 @@
-namespace LugaStore.WebAPI.Dtos;
+namespace LugaStore.Application.Newsletter;
 
 public record ValidateUnsubscribeDto(string Email);

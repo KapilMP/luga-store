@@ -1,7 +1,14 @@
 using LugaStore.Domain.Enums;
+using LugaStore.Application.Products.Commands;
 
-namespace LugaStore.WebAPI.Dtos;
+namespace LugaStore.Application.Products;
 
+// Request Models (Inputs)
+public record ProductUpsertRequest(string Name, string? Description, decimal Price, Gender Gender, List<int> CategoryIds);
+public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
+
+// Response Models (Outputs)
+public record ProductDto(int Id, string Name, string? Description, decimal Price, int DisplayOrder);
 public record ProductSizeStockResponseDto(ProductSize Size, int Stock);
 
 public record ProductSaleDto(

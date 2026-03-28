@@ -8,9 +8,6 @@ using LugaStore.Domain.Common;
 
 namespace LugaStore.WebAPI.Controllers.Manager;
 
-public record CategoryUpsertRequest(string Name, string? Description);
-public record CategoryReorderRequest(List<OrderItemDto> Orders);
-public record OrderItemDto(int Id, int DisplayOrder);
 
 [ApiController]
 [Route("partner/{partnerId:int}/[controller]")]
