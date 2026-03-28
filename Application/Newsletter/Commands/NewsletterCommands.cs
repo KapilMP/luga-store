@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Entities;
 
-namespace LugaStore.Application.NewsletterFeature.Commands;
+namespace LugaStore.Application.Newsletter.Commands;
 
 public record SubscribeCommand(string Email) : IRequest<string>;
 
@@ -11,7 +11,7 @@ public class SubscribeCommandHandler(IApplicationDbContext context) : IRequestHa
 {
     public async Task<string> Handle(SubscribeCommand request, CancellationToken cancellationToken)
     {
-        var existing = await context.Newsletters.FirstOrDefaultAsync(n => n.Email == request.Email, cancellationToken);
+        var existing = await context.NewsletterSubscribers.FirstOrDefaultAsync(n => n.Email == request.Email, cancellationToken);
 
         if (existing != null)
         {
@@ -22,7 +22,7 @@ public class SubscribeCommandHandler(IApplicationDbContext context) : IRequestHa
             return "reactivated";
         }
 
-        context.Newsletters.Add(new LugaStore.Domain.Entities.Newsletter
+        context.NewsletterSubscribers.Add(new NewsletterSubscriber
         {
             Email = request.Email,
             IsSubscribed = true,
@@ -39,7 +39,7 @@ public class ConfirmUnsubscribeCommandHandler(IApplicationDbContext context) : I
 {
     public async Task<bool> Handle(ConfirmUnsubscribeCommand request, CancellationToken cancellationToken)
     {
-        var existing = await context.Newsletters.FirstOrDefaultAsync(n => n.UnsubscribeToken == request.Token, cancellationToken);
+        var existing = await context.NewsletterSubscribers.FirstOrDefaultAsync(n => n.UnsubscribeToken == request.Token, cancellationToken);
         if (existing == null) return false;
 
         existing.IsSubscribed = false;
@@ -54,7 +54,7 @@ public class UnsubscribeCommandHandler(IApplicationDbContext context) : IRequest
 {
     public async Task<bool> Handle(UnsubscribeCommand request, CancellationToken cancellationToken)
     {
-        var existing = await context.Newsletters.FirstOrDefaultAsync(n => n.Email == request.Email, cancellationToken);
+        var existing = await context.NewsletterSubscribers.FirstOrDefaultAsync(n => n.Email == request.Email, cancellationToken);
         if (existing == null) return false;
 
         existing.IsSubscribed = false;

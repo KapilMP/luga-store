@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Interfaces;
 
-namespace LugaStore.Application.NewsletterFeature.Queries;
+namespace LugaStore.Application.Newsletter.Queries;
 
 public record ValidateUnsubscribeQuery(string Token) : IRequest<string?>;
 
@@ -10,7 +10,7 @@ public class ValidateUnsubscribeQueryHandler(IApplicationDbContext context) : IR
 {
     public async Task<string?> Handle(ValidateUnsubscribeQuery request, CancellationToken cancellationToken)
     {
-        var entry = await context.Newsletters.FirstOrDefaultAsync(n => n.UnsubscribeToken == request.Token, cancellationToken);
+        var entry = await context.NewsletterSubscribers.FirstOrDefaultAsync(n => n.UnsubscribeToken == request.Token, cancellationToken);
         return entry?.Email;
     }
 }

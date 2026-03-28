@@ -22,4 +22,14 @@ public interface IUserService
     Task DeleteAccountAsync();
     Task<bool> DeleteUserAsync(int userId, CancellationToken cancellationToken = default);
     Task<User> GetUserWithRoleAsync(int userId, string requiredRole);
+    
+    Task<List<AdminProfileDto>> GetInvitedAdminsAsync();
+    Task<List<AdminProfileDto>> GetAdminsAsync();
+    Task<AdminProfileDto?> GetAdminAsync(int userId);
+    Task InviteAdminAsync(string email, CancellationToken cancellationToken = default);
+    Task ResendAdminInvitationAsync(int userId, CancellationToken cancellationToken = default);
+    
+    Task<List<CustomerProfileDto>> GetCustomersAsync();
+    Task<CustomerProfileDto?> GetCustomerAsync(int userId);
 }
+

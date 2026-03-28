@@ -1,7 +1,7 @@
 using FluentValidation;
-using LugaStore.Application.NewsletterFeature.Commands;
+using LugaStore.Application.Newsletter.Commands;
 
-namespace LugaStore.Application.NewsletterFeature.Validators;
+namespace LugaStore.Application.Newsletter.Validators;
 
 public class SubscribeCommandValidator : AbstractValidator<SubscribeCommand>
 {

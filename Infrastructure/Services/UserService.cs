@@ -70,7 +70,7 @@ public class UserService(
             query = query.Where(u => u.EmailConfirmed == confirmedOnly.Value);
 
         var users = await query.ToListAsync();
-        return users.Select(MapToDto<T>).ToList();
+        return [.. users.Select(MapToDto<T>)];
     }
 
     public async Task<T?> GetUserWithRoleAsync<T>(int userId, string roleName) where T : BaseUserProfile, new()
@@ -178,4 +178,34 @@ public class UserService(
 
     private async Task<User> GetCurrentUserAsync()
         => await userManager.FindByIdAsync(currentUser.UserId!) ?? throw new NotFoundError("User not found.");
+
+    public Task<List<AdminProfileDto>> GetInvitedAdminsAsync()
+        => GetUsersByRoleAsync<AdminProfileDto>(Roles.Admin, confirmedOnly: false);
+
+    public Task<List<AdminProfileDto>> GetAdminsAsync()
+        => GetUsersByRoleAsync<AdminProfileDto>(Roles.Admin);
+
+    public Task<AdminProfileDto?> GetAdminAsync(int userId)
+        => GetUserWithRoleAsync<AdminProfileDto>(userId, Roles.Admin);
+
+    public async Task InviteAdminAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var user = await CreateInvitedUserAsync(email, Roles.Admin, cancellationToken);
+        await SendInvitationEmailAsync(user);
+    }
+
+    public async Task ResendAdminInvitationAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await GetUserWithRoleAsync(userId, Roles.Admin);
+        if (user.EmailConfirmed)
+            throw new BadRequestError("User has already confirmed their email.");
+        await SendInvitationEmailAsync(user);
+    }
+
+    public Task<List<CustomerProfileDto>> GetCustomersAsync()
+        => GetUsersByRoleAsync<CustomerProfileDto>(Roles.Customer);
+
+    public Task<CustomerProfileDto?> GetCustomerAsync(int userId)
+        => GetUserWithRoleAsync<CustomerProfileDto>(userId, Roles.Customer);
 }
+

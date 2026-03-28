@@ -12,7 +12,7 @@ public interface IApplicationDbContext
     DbSet<User> Users { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
-    DbSet<Newsletter> Newsletters { get; }
+    DbSet<NewsletterSubscriber> NewsletterSubscribers { get; }
     DbSet<Address> Addresses { get; }
     DbSet<RestockSubscription> RestockSubscriptions { get; }
     DbSet<ProductImage> ProductImages { get; }

@@ -1,8 +1,5 @@
-using System;
 using System.Linq.Expressions;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -22,7 +19,7 @@ public class ApplicationDbContext(
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
-    public DbSet<Newsletter> Newsletters => Set<Newsletter>();
+    public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
     public DbSet<Address> Addresses => Set<Address>();
     public DbSet<RestockSubscription> RestockSubscriptions => Set<RestockSubscription>();
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();

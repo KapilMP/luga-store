@@ -4,9 +4,9 @@ using LugaStore.Domain.Entities;
 
 namespace LugaStore.Infrastructure.Persistence.Configurations;
 
-public class NewsletterConfiguration : IEntityTypeConfiguration<Newsletter>
+public class NewsletterSubscriberConfiguration : IEntityTypeConfiguration<NewsletterSubscriber>
 {
-    public void Configure(EntityTypeBuilder<Newsletter> builder)
+    public void Configure(EntityTypeBuilder<NewsletterSubscriber> builder)
     {
         builder.HasKey(n => n.Id);
         

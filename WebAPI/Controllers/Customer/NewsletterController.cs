@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.NewsletterFeature.Commands;
-using LugaStore.Application.NewsletterFeature.Queries;
+using LugaStore.Application.Newsletter.Commands;
+using LugaStore.Application.Newsletter.Queries;
 
 namespace LugaStore.WebAPI.Controllers.Customer;
 
