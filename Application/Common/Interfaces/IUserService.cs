@@ -31,5 +31,11 @@ public interface IUserService
     
     Task<List<CustomerProfileDto>> GetCustomersAsync();
     Task<CustomerProfileDto?> GetCustomerAsync(int userId);
+    
+    // Address Management
+    Task<AddressDto> AddAddressAsync(int userId, AddressDto addressDto, CancellationToken cancellationToken = default);
+    Task DeleteAddressAsync(int userId, int addressId, CancellationToken cancellationToken = default);
+    Task<List<AddressDto>> GetAddressesAsync(int userId, CancellationToken cancellationToken = default);
 }
+
 

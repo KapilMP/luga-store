@@ -14,9 +14,9 @@ public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings)
     protected override string AuthRefreshPath => RefreshTokenPaths.PartnerRefreshPath;
 
     [HttpPost("login")]
-    public async Task<ActionResult> Login(LoginRequest request)
+    public async Task<ActionResult> Login(PartnerLoginCommand command)
     {
-        var result = await Mediator.Send(new PartnerLoginCommand(request.Email, request.Password));
+        var result = await Mediator.Send(command);
         SetAuthCookies(result.RefreshToken, AuthRefreshPath);
         return Ok(new { accessToken = result.AccessToken, user = result.User });
     }

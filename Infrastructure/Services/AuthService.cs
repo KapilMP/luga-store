@@ -25,54 +25,44 @@ public class AuthService(
 {
     private string FrontendUrl => appSettings.FrontendUrl;
 
-    public async Task<AuthResult> CustomerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
-    {
-        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.Customer, cancellationToken);
-        if (user.PasswordHash == null) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = CustomerProfileDto.From(user) };
-    }
-
-    public async Task<AuthResult> AdminLoginAsync(string email, string password, CancellationToken cancellationToken = default)
-    {
-        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.Admin, cancellationToken);
-        if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = AdminProfileDto.From(user) };
-    }
-
-    public async Task<AuthResult> PartnerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
-    {
-        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.Partner, cancellationToken);
-        if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = PartnerProfileDto.From(user) };
-    }
-
-    public async Task<AuthResult> PartnerManagerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
-    {
-        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.PartnerManager, cancellationToken);
-        if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = PartnerManagerProfileDto.From(user) };
-    }
-
-    private async Task<(string AccessToken, string RefreshToken, User User)> LoginWithRoleAsync(string email, string password, string requiredRole, CancellationToken cancellationToken)
+    public async Task<AuthResult> LoginAsync(string email, string password, string role, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email) ?? throw new NotFoundError("Email or Password is not correct");
 
         if (!user.IsActive)
             throw new UnauthorizedError("Your account has been deactivated.");
 
-        var signInResult = await signInManager.CheckPasswordSignInAsync(user, password, false);
-        if (!signInResult.Succeeded)
+        if (!await userManager.IsInRoleAsync(user, role))
             throw new NotFoundError("Email or Password is not correct");
 
-        if (!await userManager.IsInRoleAsync(user, requiredRole))
+        if (role == Roles.Customer)
+        {
+            if (user.PasswordHash == null) throw new NotFoundError("Email or Password is not correct");
+        }
+        else
+        {
+            if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
+        }
+
+        var signInResult = await signInManager.CheckPasswordSignInAsync(user, password, false);
+        if (!signInResult.Succeeded)
             throw new NotFoundError("Email or Password is not correct");
 
         var roles = await userManager.GetRolesAsync(user);
         var accessToken = GenerateAccessToken(user, roles);
         var refreshToken = GenerateRefreshToken(user);
 
-        return (accessToken, refreshToken, user);
+        BaseUserProfile profileDto = role switch
+        {
+            Roles.Admin => AdminProfileDto.From(user),
+            Roles.Partner => PartnerProfileDto.From(user),
+            Roles.PartnerManager => PartnerManagerProfileDto.From(user),
+            _ => CustomerProfileDto.From(user)
+        };
+
+        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = profileDto };
     }
+
 
     public async Task<AuthResult?> LoginWithGoogleAsync(string idToken, CancellationToken cancellationToken = default)
     {

@@ -1,10 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using LugaStore.Application.Identity.Commands;
 using LugaStore.Infrastructure.Settings;
-using LugaStore.Application.Identity;
 
 namespace LugaStore.WebAPI.Controllers.Customer;
 
@@ -15,9 +13,9 @@ public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings)
     protected override string AuthRefreshPath => RefreshTokenPaths.CustomerRefreshPath;
 
     [HttpPost("login")]
-    public async Task<ActionResult> Login(LoginRequest request)
+    public async Task<ActionResult> Login(CustomerLoginCommand command)
     {
-        var result = await Mediator.Send(new CustomerLoginCommand(request.Email, request.Password));
+        var result = await Mediator.Send(command);
         SetAuthCookies(result.RefreshToken, AuthRefreshPath);
         return Ok(new { accessToken = result.AccessToken, user = result.User });
     }

@@ -56,17 +56,30 @@ public class OrderService(IApplicationDbContext context, IAuthService authServic
 
         if (request.ShippingAddress != null)
         {
-            context.Addresses.Add(new Address
+            var existingAddress = await context.Addresses
+                .FirstOrDefaultAsync(a => a.UserId == userId && 
+                    a.Street == request.ShippingAddress.Street && 
+                    a.City == request.ShippingAddress.City && 
+                    a.ZipCode == request.ShippingAddress.ZipCode, ct);
+
+            if (existingAddress == null)
             {
-                UserId = userId,
-                FullName = request.ShippingAddress.FullName,
-                Email = request.CustomerEmail ?? string.Empty,
-                Phone = request.ShippingAddress.Phone,
-                Street = request.ShippingAddress.Street,
-                City = request.ShippingAddress.City,
-                ZipCode = request.ShippingAddress.ZipCode,
-                Label = "Shipping"
-            });
+                var count = await context.Addresses.CountAsync(a => a.UserId == userId, ct);
+                if (count >= 5)
+                    throw new BadRequestError("Users can have at most 5 addresses.");
+
+                context.Addresses.Add(new Address
+                {
+                    UserId = userId,
+                    FullName = request.ShippingAddress.FullName,
+                    Email = request.CustomerEmail ?? string.Empty,
+                    Phone = request.ShippingAddress.Phone,
+                    Street = request.ShippingAddress.Street,
+                    City = request.ShippingAddress.City,
+                    ZipCode = request.ShippingAddress.ZipCode,
+                    Label = "Shipping"
+                });
+            }
         }
 
         var order = new Order { UserId = userId, Status = OrderStatus.Pending, TotalAmount = 0 };

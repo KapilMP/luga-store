@@ -207,5 +207,70 @@ public class UserService(
 
     public Task<CustomerProfileDto?> GetCustomerAsync(int userId)
         => GetUserWithRoleAsync<CustomerProfileDto>(userId, Roles.Customer);
+
+    public async Task<List<AddressDto>> GetAddressesAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var addresses = await dbContext.Addresses
+            .AsNoTracking()
+            .Where(a => a.UserId == userId)
+            .ToListAsync(cancellationToken);
+
+        return [.. addresses.Select(a => new AddressDto
+        {
+            Id = a.Id,
+            Label = a.Label,
+            FullName = a.FullName,
+            Email = a.Email,
+            Phone = a.Phone,
+            Street = a.Street,
+            City = a.City,
+            ZipCode = a.ZipCode
+        })];
+    }
+
+    public async Task<AddressDto> AddAddressAsync(int userId, AddressDto dto, CancellationToken cancellationToken = default)
+    {
+        var count = await dbContext.Addresses.CountAsync(a => a.UserId == userId, cancellationToken);
+        if (count >= 5)
+            throw new BadRequestError("Users can have at most 5 addresses.");
+
+        var address = new Address
+        {
+            UserId = userId,
+            Label = dto.Label,
+            FullName = dto.FullName,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            Street = dto.Street,
+            City = dto.City,
+            ZipCode = dto.ZipCode
+        };
+
+        dbContext.Addresses.Add(address);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new AddressDto
+        {
+            Id = address.Id,
+            Label = address.Label,
+            FullName = address.FullName,
+            Email = address.Email,
+            Phone = address.Phone,
+            Street = address.Street,
+            City = address.City,
+            ZipCode = address.ZipCode
+        };
+    }
+
+    public async Task DeleteAddressAsync(int userId, int addressId, CancellationToken cancellationToken = default)
+    {
+        var address = await dbContext.Addresses
+            .FirstOrDefaultAsync(a => a.Id == addressId && a.UserId == userId, cancellationToken)
+            ?? throw new NotFoundError("Address not found.");
+
+        dbContext.Addresses.Remove(address);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 }
+
 

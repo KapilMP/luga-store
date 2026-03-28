@@ -6,14 +6,10 @@ namespace LugaStore.Application.Common.Interfaces;
 
 public interface IAuthService
 {
-    Task<AuthResult> CustomerLoginAsync(string email, string password, CancellationToken cancellationToken = default);
-    Task<AuthResult> AdminLoginAsync(string email, string password, CancellationToken cancellationToken = default);
-    Task<AuthResult> PartnerLoginAsync(string email, string password, CancellationToken cancellationToken = default);
-    Task<AuthResult> PartnerManagerLoginAsync(string email, string password, CancellationToken cancellationToken = default);
+    Task<AuthResult> LoginAsync(string email, string password, string role, CancellationToken cancellationToken = default);
     Task<AuthResult?> LoginWithGoogleAsync(string idToken, CancellationToken cancellationToken = default);
     Task<AuthResult?> LoginExternalAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default);
     Task<(string AccessToken, string RefreshToken)?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
-    Task<string?> GenerateRefreshTokenAsync(string email, CancellationToken cancellationToken = default);
 
     // Identity Management
     Task SendVerificationEmailAsync(string email);
