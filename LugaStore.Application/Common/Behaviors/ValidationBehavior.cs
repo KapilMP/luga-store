@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using LugaStore.Application.Common.Exceptions;
 
 namespace LugaStore.Application.Common.Behaviors;
 
@@ -22,7 +23,7 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
                 .ToList();
 
             if (failures.Count != 0)
-                throw new ValidationException(failures);
+                throw new LugaStore.Application.Common.Exceptions.ValidationException(failures);
         }
 
         return await next();

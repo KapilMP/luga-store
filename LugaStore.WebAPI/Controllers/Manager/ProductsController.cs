@@ -29,8 +29,7 @@ public class ProductsController(ISender mediator) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteOperationalProduct(int id)
     {
-        var result = await mediator.Send(new DeleteProductCommand(id, IsAdmin: true));
-        if (!result) return NotFound();
+        await mediator.Send(new DeleteProductCommand(id, IsAdmin: true));
         return NoContent();
     }
 }

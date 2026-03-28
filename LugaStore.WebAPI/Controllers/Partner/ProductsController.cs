@@ -28,19 +28,17 @@ public class ProductsController(ISender mediator) : LugaStoreControllerBase
         return CreatedAtAction(nameof(GetMyProducts), new { id }, id);
     }
 
-    [HttpPost("{id:int}/sizes")]
+    [HttpPatch("{id:int}/sizes")]
     public async Task<IActionResult> SetSizes(int id, SetSizesRequest request)
     {
-        var result = await mediator.Send(new SetProductSizesCommand(id, request.Sizes, RequestingUserId: CurrentUserId));
-        if (!result) return NotFound();
+        await mediator.Send(new SetProductSizesCommand(id, request.Sizes, RequestingUserId: CurrentUserId));
         return Ok();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteOwnedProduct(int id)
     {
-        var result = await mediator.Send(new DeleteProductCommand(id, RequestingUserId: CurrentUserId));
-        if (!result) return NotFound();
+        await mediator.Send(new DeleteProductCommand(id, RequestingUserId: CurrentUserId));
         return NoContent();
     }
 }

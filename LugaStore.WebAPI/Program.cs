@@ -171,8 +171,7 @@ app.UseExceptionHandler(err => err.Run(async ctx =>
             {
                 title = "One or more validation errors occurred.",
                 status = StatusCodes.Status400BadRequest,
-                errors = e.Errors,
-                traceId = ctx.TraceIdentifier
+                errors = e.Errors
             };
             break;
         case NotFoundError e: status = StatusCodes.Status404NotFound; response = new { error = e.Message }; break;

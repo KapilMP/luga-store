@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="Application/LugaStore.Application.csproj" />
-  <Project Path="Domain/LugaStore.Domain.csproj" />
-  <Project Path="Infrastructure/LugaStore.Infrastructure.csproj" />
-  <Project Path="WebAPI/LugaStore.WebAPI.csproj" />
+  <Project Path="LugaStore.Application/LugaStore.Application.csproj" />
+  <Project Path="LugaStore.Domain/LugaStore.Domain.csproj" />
+  <Project Path="LugaStore.Infrastructure/LugaStore.Infrastructure.csproj" />
+  <Project Path="LugaStore.WebAPI/LugaStore.WebAPI.csproj" />
 </Solution>

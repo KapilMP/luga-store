@@ -15,13 +15,8 @@ public class NewsletterController(ISender mediator) : ControllerBase
     [HttpPost("subscribe")]
     public async Task<IActionResult> Subscribe([FromBody] NewsletterRequest request)
     {
-        var result = await mediator.Send(new SubscribeCommand(request.Email));
-        return result switch
-        {
-            "already_subscribed" => Ok("You are already subscribed!"),
-            "reactivated" => Ok("Welcome back! Your subscription has been reactivated."),
-            _ => Ok("Thank you for subscribing to Luga Store updates!")
-        };
+        await mediator.Send(new SubscribeCommand(request.Email));
+        return Ok("Thank you for subscribing to Luga Store updates!");
     }
 
     [HttpGet("validate-unsubscribe/{token}")]
@@ -35,16 +30,14 @@ public class NewsletterController(ISender mediator) : ControllerBase
     [HttpPost("confirm-unsubscribe")]
     public async Task<IActionResult> ConfirmUnsubscribe([FromBody] UnsubscribeConfirmationRequest request)
     {
-        var result = await mediator.Send(new ConfirmUnsubscribeCommand(request.Token));
-        if (!result) return NotFound("Invalid or expired unsubscribe token.");
+        await mediator.Send(new ConfirmUnsubscribeCommand(request.Token));
         return Ok("You have been successfully unsubscribed.");
     }
 
     [HttpPost("unsubscribe")]
     public async Task<IActionResult> Unsubscribe([FromBody] NewsletterRequest request)
     {
-        var result = await mediator.Send(new UnsubscribeCommand(request.Email));
-        if (!result) return NotFound("Email not found.");
+        await mediator.Send(new UnsubscribeCommand(request.Email));
         return Ok("You have been unsubscribed.");
     }
 }

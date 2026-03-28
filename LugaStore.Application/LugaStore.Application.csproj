@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Domain\LugaStore.Domain.csproj" />
+    <ProjectReference Include="..\LugaStore.Domain\LugaStore.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

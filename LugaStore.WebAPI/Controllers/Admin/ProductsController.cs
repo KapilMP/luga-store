@@ -29,16 +29,14 @@ public class ProductsController(ISender mediator) : ControllerBase
     [HttpPost("{id:int}/sizes")]
     public async Task<IActionResult> SetSizes(int id, SetSizesRequest request)
     {
-        var result = await mediator.Send(new SetProductSizesCommand(id, request.Sizes, IsAdmin: true));
-        if (!result) return NotFound();
+        await mediator.Send(new SetProductSizesCommand(id, request.Sizes, IsAdmin: true));
         return Ok();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        var result = await mediator.Send(new DeleteProductCommand(id, IsAdmin: true));
-        if (!result) return NotFound();
+        await mediator.Send(new DeleteProductCommand(id, IsAdmin: true));
         return NoContent();
     }
 
