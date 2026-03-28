@@ -24,14 +24,14 @@ public class CategoriesController(ISender mediator) : LugaStoreControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CategoryUpsertRequest request, CancellationToken ct)
     {
-        var category = await mediator.Send(new CreateCategoryCommand(request.Name, request.Description, PartnerId: CurrentUserId), ct);
+        var category = await mediator.Send(new CreateCategoryCommand(request.Name, request.Slug, request.Description, PartnerId: CurrentUserId), ct);
         return Ok(category);
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, CategoryUpsertRequest request, CancellationToken ct)
     {
-        await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Description, PartnerId: CurrentUserId), ct);
+        await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Slug, request.Description, PartnerId: CurrentUserId), ct);
         return Ok();
     }
 

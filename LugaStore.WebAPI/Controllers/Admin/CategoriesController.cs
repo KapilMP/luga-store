@@ -24,13 +24,13 @@ public class CategoriesController(ISender mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CategoryUpsertRequest request, CancellationToken ct)
     {
-        return Ok(await mediator.Send(new CreateCategoryCommand(request.Name, request.Description), ct));
+        return Ok(await mediator.Send(new CreateCategoryCommand(request.Name, request.Slug, request.Description), ct));
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, CategoryUpsertRequest request, CancellationToken ct)
     {
-        await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Description), ct);
+        await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Slug, request.Description), ct);
         return Ok();
     }
 

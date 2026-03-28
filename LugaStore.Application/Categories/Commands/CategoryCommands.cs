@@ -7,8 +7,8 @@ using LugaStore.Application.Common.Exceptions;
 
 namespace LugaStore.Application.Categories.Commands;
 
-public record CreateCategoryCommand(string Name, string? Description, int? PartnerId = null) : IRequest<int>;
-public record UpdateCategoryCommand(int Id, string Name, string? Description, int? PartnerId = null) : IRequest<Unit>;
+public record CreateCategoryCommand(string Name, string Slug, string? Description, int? PartnerId = null) : IRequest<int>;
+public record UpdateCategoryCommand(int Id, string Name, string Slug, string? Description, int? PartnerId = null) : IRequest<Unit>;
 public record DeleteCategoryCommand(int Id, int? PartnerId = null) : IRequest<Unit>;
 public record ReorderCategoriesCommand(List<CategoryOrderDto> Orders, int? PartnerId = null) : IRequest<Unit>;
 public record CategoryOrderDto(int Id, int DisplayOrder);
@@ -28,6 +28,7 @@ public class CategoryCommandHandlers(IApplicationDbContext dbContext) :
         var category = new Category
         {
             Name = request.Name,
+            Slug = request.Slug,
             Description = request.Description,
             DisplayOrder = finalOrder,
             PartnerId = request.PartnerId
@@ -48,6 +49,7 @@ public class CategoryCommandHandlers(IApplicationDbContext dbContext) :
             throw new ForbiddenError("Unauthorized access to category");
 
         category.Name = request.Name;
+        category.Slug = request.Slug;
         category.Description = request.Description;
 
         await dbContext.SaveChangesAsync(cancellationToken);

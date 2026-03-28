@@ -1,6 +1,5 @@
 using FluentValidation;
 using MediatR;
-using LugaStore.Application.Common.Exceptions;
 
 namespace LugaStore.Application.Common.Behaviors;
 

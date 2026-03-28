@@ -79,13 +79,13 @@ public class PartnersController(ISender mediator) : ControllerBase
     [HttpPost("{partnerId}/categories")]
     public async Task<IActionResult> Create(int partnerId, CategoryUpsertRequest request, CancellationToken ct)
     {
-        return Ok(await mediator.Send(new CreateCategoryCommand(request.Name, request.Description, partnerId), ct));
+        return Ok(await mediator.Send(new CreateCategoryCommand(request.Name, request.Slug, request.Description, partnerId), ct));
     }
 
     [HttpPut("{partnerId}/categories/{id:int}")]
     public async Task<IActionResult> Update(int partnerId, int id, CategoryUpsertRequest request, CancellationToken ct)
     {
-        await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Description, partnerId), ct);
+        await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Slug, request.Description, partnerId), ct);
         return Ok();
     }
 

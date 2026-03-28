@@ -20,7 +20,7 @@ public class GetCategoriesQueryHandler(IApplicationDbContext dbContext) : IReque
 
         return await query
             .OrderBy(c => c.DisplayOrder)
-            .Select(c => new CategoryDto(c.Id, c.Name, c.Description, c.DisplayOrder))
+            .Select(c => new CategoryDto(c.Id, c.Name, c.Slug, c.Description, c.DisplayOrder))
             .ToListAsync(cancellationToken);
     }
 }
