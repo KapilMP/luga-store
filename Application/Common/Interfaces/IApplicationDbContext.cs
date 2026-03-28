@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.AspNetCore.Identity;
 using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Common.Interfaces;
@@ -16,5 +18,9 @@ public interface IApplicationDbContext
     DbSet<ProductSizeStock> ProductSizeStocks { get; }
     DbSet<ProductSale> ProductSales { get; }
     DbSet<CartItem> CartItems { get; }
+    DbSet<PartnerManager> PartnerManagers { get; }
+    DbSet<IdentityRole<int>> Roles { get; }
+    DbSet<IdentityUserRole<int>> UserRoles { get; }
+    DatabaseFacade Database { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -13,13 +13,13 @@ public record OrderItemRequest(int ProductId, int Quantity);
 
 [ApiController]
 [Route("customer/[controller]")]
-public class OrdersController(ISender mediator, IUserService userService) : ControllerBase
+public class OrdersController(ISender mediator, ICurrentUser currentUser) : ControllerBase
 {
     [HttpPost("checkout")]
     [AllowAnonymous]
     public async Task<IActionResult> Checkout([FromBody] CreateOrderRequest request)
     {
-        var userIdString = userService.UserId;
+        var userIdString = currentUser.UserId;
         int? userId = string.IsNullOrEmpty(userIdString) ? null : int.Parse(userIdString);
 
         var address = request.ShippingAddress is { } a
@@ -36,7 +36,7 @@ public class OrdersController(ISender mediator, IUserService userService) : Cont
     [Authorize]
     public async Task<IActionResult> GetMyHistory()
     {
-        var userId = int.Parse(userService.UserId!);
+        var userId = int.Parse(currentUser.UserId!);
         var orders = await mediator.Send(new GetMyOrdersQuery(userId));
         return Ok(orders);
     }

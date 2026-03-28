@@ -1,27 +1,23 @@
-using System.Security.Claims;
 using System.Web;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Exceptions;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Models;
 using LugaStore.Domain.Common;
 using LugaStore.Domain.Entities;
-using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Settings;
 
 namespace LugaStore.Infrastructure.Services;
 
 public class UserService(
-    IHttpContextAccessor httpContextAccessor,
+    ICurrentUser currentUser,
     UserManager<User> userManager,
     IImageService imageService,
     IEmailSender emailSender,
     IAppSettings appSettings,
-    ApplicationDbContext dbContext) : IUserService
+    IApplicationDbContext dbContext) : IUserService
 {
-    public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-    public string? Role => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
 
     public async Task<bool> SetUserActiveStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
     {
@@ -66,7 +62,7 @@ public class UserService(
     public async Task<CustomerProfileDto?> GetCustomerAsync(int id)
     {
         var roleId = await dbContext.Roles.AsNoTracking().Where(r => r.Name == Roles.Customer).Select(r => r.Id).FirstOrDefaultAsync();
-        
+
         return await dbContext.UserRoles
             .AsNoTracking()
             .Where(ur => ur.UserId == id && ur.RoleId == roleId)
@@ -164,10 +160,7 @@ public class UserService(
         {
             var user = new User
             {
-                UserName = email,
                 Email = email,
-                FirstName = firstName,
-                LastName = lastName,
                 EmailConfirmed = false
             };
 
@@ -197,7 +190,7 @@ public class UserService(
     }
 
     private async Task<User> GetCurrentUserAsync()
-        => await userManager.FindByIdAsync(UserId!) ?? throw new NotFoundError("User not found.");
+        => await userManager.FindByIdAsync(currentUser.UserId!) ?? throw new NotFoundError("User not found.");
 
     private static T MapToDto<T>(User user) where T : BaseUserProfile
     {

@@ -11,13 +11,13 @@ namespace LugaStore.WebAPI.Controllers.Customer;
 [ApiController]
 [Route("customer/[controller]")]
 [EnableRateLimiting("auth")]
-[Consumes("application/json")]
 public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
     {
         var result = await mediator.Send(new CustomerLoginCommand(request.Email, request.Password));
+        SetAuthCookies(result.RefreshToken, RefreshTokenPaths.CustomerRefreshPath);
         return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 
@@ -26,6 +26,7 @@ public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings)
     {
         var result = await mediator.Send(command);
         if (result == null) return Unauthorized("Invalid Google Token.");
+        SetAuthCookies(result.RefreshToken, RefreshTokenPaths.CustomerRefreshPath);
         return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 

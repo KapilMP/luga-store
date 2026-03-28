@@ -11,14 +11,14 @@ public class PartnerManagerConfiguration : IEntityTypeConfiguration<PartnerManag
         builder.HasKey(pm => pm.Id);
 
         builder.HasOne(pm => pm.Partner)
-            .WithMany(p => p.AssignedManagerships)
+            .WithMany(p => p.ManagerAssignments)
             .HasForeignKey(pm => pm.PartnerId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(pm => pm.Manager)
-            .WithMany(m => m.ManagedPartnerships)
+            .WithMany(m => m.PartnerAssignments)
             .HasForeignKey(pm => pm.ManagerId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(pm => pm.PartnerId);
         builder.HasIndex(pm => pm.ManagerId);

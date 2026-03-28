@@ -15,9 +15,9 @@ public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
 [ApiController]
 [Route("partner/[controller]")]
 [Authorize(Roles = Roles.Partner)]
-public class ProductsController(ISender mediator, IUserService userService) : ControllerBase
+public class ProductsController(ISender mediator, ICurrentUser currentUser) : ControllerBase
 {
-    private int CurrentUserId => int.Parse(userService.UserId!);
+    private int CurrentUserId => int.Parse(currentUser.UserId!);
 
     [HttpGet("my-creations")]
     public async Task<IActionResult> GetMyProducts()

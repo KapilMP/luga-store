@@ -11,13 +11,13 @@ namespace LugaStore.WebAPI.Controllers.Partner;
 [ApiController]
 [Route("partner/[controller]")]
 [EnableRateLimiting("auth")]
-[Consumes("application/json")]
 public class AuthController(ISender mediator, IRefreshTokenPaths cookieSettings) : BaseAuthController(cookieSettings)
 {
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest request)
     {
         var result = await mediator.Send(new PartnerLoginCommand(request.Email, request.Password));
+        SetAuthCookies(result.RefreshToken, RefreshTokenPaths.PartnerRefreshPath);
         return Ok(new { accessToken = result.AccessToken, user = result.User });
     }
 

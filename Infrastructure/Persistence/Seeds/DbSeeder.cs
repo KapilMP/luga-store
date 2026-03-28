@@ -27,7 +27,6 @@ public static class DbSeeder
         {
             var user = new User
             {
-                UserName = adminEmail,
                 Email = adminEmail,
                 EmailConfirmed = true,
                 FirstName = "System",
@@ -49,7 +48,6 @@ public static class DbSeeder
         {
             var user = new User
             {
-                UserName = managerEmail,
                 Email = managerEmail,
                 EmailConfirmed = true,
                 FirstName = "Partner",

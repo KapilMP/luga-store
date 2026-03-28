@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LugaStore.Application.Identity.Commands;
+using LugaStore.Application.Identity.Queries;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Common;
 

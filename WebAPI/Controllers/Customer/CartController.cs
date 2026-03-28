@@ -14,9 +14,9 @@ public record UpdateCartRequest(ProductSize Size, int Quantity);
 [ApiController]
 [Route("customer/[controller]")]
 [Authorize]
-public class CartController(ISender mediator, IUserService userService) : ControllerBase
+public class CartController(ISender mediator, ICurrentUser currentUser) : ControllerBase
 {
-    private int CurrentUserId => int.Parse(userService.UserId!);
+    private int CurrentUserId => int.Parse(currentUser.UserId!);
 
     [HttpGet]
     public async Task<IActionResult> GetCart()

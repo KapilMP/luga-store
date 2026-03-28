@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using LugaStore.Application;
 using LugaStore.Application.Common.Exceptions;
+using LugaStore.Application.Common.Interfaces;
 using LugaStore.Infrastructure;
 using LugaStore.Domain.Entities;
 using LugaStore.Infrastructure.Persistence.Seeds;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi;
+using LugaStore.WebAPI.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +106,10 @@ builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "C-CSRF-TOKEN";
 });
+
+// Register Current User Context
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 // Register Clean Architecture layers
 builder.Services.AddApplication();

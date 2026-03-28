@@ -1,12 +1,10 @@
-using Microsoft.AspNetCore.Http;
 using LugaStore.Application.Common.Models;
+using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Common.Interfaces;
 
 public interface IUserService
 {
-    string? UserId { get; }
-    string? Role { get; }
     Task DeleteAdminAsync(int userId, CancellationToken cancellationToken = default);
     Task<bool> SetUserActiveStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default);
     Task ActivateAdminAsync(int userId, CancellationToken cancellationToken = default);

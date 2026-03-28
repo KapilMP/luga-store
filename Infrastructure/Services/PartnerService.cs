@@ -1,6 +1,4 @@
-using System.Security.Claims;
 using System.Web;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Exceptions;
@@ -8,22 +6,19 @@ using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Models;
 using LugaStore.Domain.Common;
 using LugaStore.Domain.Entities;
-using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Settings;
 
 namespace LugaStore.Infrastructure.Services;
 
 public class PartnerService(
-    IHttpContextAccessor httpContextAccessor,
+    ICurrentUser currentUser,
     UserManager<User> userManager,
-    IAuthService authService,
-    IImageService imageService,
     IEmailSender emailSender,
     IAppSettings appSettings,
     IUserService userService,
-    ApplicationDbContext dbContext) : IPartnerService
+    IApplicationDbContext dbContext) : IPartnerService
 {
-    private string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+    private string? UserId => currentUser.UserId;
 
     #region Admin Methods
     public async Task InvitePartnerAsync(string email, CancellationToken cancellationToken = default)
@@ -285,7 +280,7 @@ public class PartnerService(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var user = new User { UserName = email, Email = email, FirstName = firstName, LastName = lastName, EmailConfirmed = false };
+            var user = new User { Email = email, EmailConfirmed = false };
             var result = await userManager.CreateAsync(user);
             if (!result.Succeeded) throw new InternalServerError("Failed to create user.");
 

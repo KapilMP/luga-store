@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Web;
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Google.Apis.Auth;
@@ -22,42 +21,39 @@ public class AuthService(
     IJwtSettings jwtSettings,
     IGoogleSettings googleSettings,
     IEmailSender emailSender,
-    IHttpContextAccessor httpContextAccessor,
-    IRefreshTokenPaths cookieSettings,
-    IAppSettings appSettings,
-    ApplicationDbContext dbContext) : IAuthService
+    IAppSettings appSettings) : IAuthService
 {
     private string FrontendUrl => appSettings.FrontendUrl;
 
     public async Task<AuthResult> CustomerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
     {
-        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.CustomerRefreshPath, Roles.Customer, cancellationToken);
+        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.Customer, cancellationToken);
         if (user.PasswordHash == null) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, User = CustomerProfileDto.From(user) };
+        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = CustomerProfileDto.From(user) };
     }
 
     public async Task<AuthResult> AdminLoginAsync(string email, string password, CancellationToken cancellationToken = default)
     {
-        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.AdminRefreshPath, Roles.Admin, cancellationToken);
+        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.Admin, cancellationToken);
         if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, User = AdminProfileDto.From(user) };
+        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = AdminProfileDto.From(user) };
     }
 
     public async Task<AuthResult> PartnerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
     {
-        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.PartnerRefreshPath, Roles.Partner, cancellationToken);
+        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.Partner, cancellationToken);
         if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, User = PartnerProfileDto.From(user) };
+        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = PartnerProfileDto.From(user) };
     }
 
     public async Task<AuthResult> PartnerManagerLoginAsync(string email, string password, CancellationToken cancellationToken = default)
     {
-        var (accessToken, user) = await LoginWithRoleAsync(email, password, cookieSettings.PartnerManagerRefreshPath, Roles.PartnerManager, cancellationToken);
+        var (accessToken, refreshToken, user) = await LoginWithRoleAsync(email, password, Roles.PartnerManager, cancellationToken);
         if (!user.EmailConfirmed) throw new NotFoundError("Email or Password is not correct");
-        return new AuthResult { AccessToken = accessToken, User = PartnerManagerProfileDto.From(user) };
+        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, User = PartnerManagerProfileDto.From(user) };
     }
 
-    private async Task<(string AccessToken, User User)> LoginWithRoleAsync(string email, string password, string refreshPath, string requiredRole, CancellationToken cancellationToken)
+    private async Task<(string AccessToken, string RefreshToken, User User)> LoginWithRoleAsync(string email, string password, string requiredRole, CancellationToken cancellationToken)
     {
         var user = await userManager.FindByEmailAsync(email) ?? throw new NotFoundError("Email or Password is not correct");
 
@@ -74,9 +70,8 @@ public class AuthService(
         var roles = await userManager.GetRolesAsync(user);
         var accessToken = GenerateAccessToken(user, roles);
         var refreshToken = GenerateRefreshToken(user);
-        SetRefreshCookie(refreshToken, refreshPath);
 
-        return (accessToken, user);
+        return (accessToken, refreshToken, user);
     }
 
     public async Task<AuthResult?> LoginWithGoogleAsync(string idToken, CancellationToken cancellationToken = default)
@@ -106,7 +101,6 @@ public class AuthService(
         {
             user = new User
             {
-                UserName = email,
                 Email = email,
                 FirstName = firstName,
                 LastName = lastName,
@@ -121,11 +115,11 @@ public class AuthService(
         var roles = await userManager.GetRolesAsync(user);
         var accessToken = GenerateAccessToken(user, roles);
         var refreshToken = GenerateRefreshToken(user);
-        SetRefreshCookie(refreshToken, cookieSettings.CustomerRefreshPath);
 
         return new AuthResult
         {
             AccessToken = accessToken,
+            RefreshToken = refreshToken,
             User = CustomerProfileDto.From(user)
         };
     }
@@ -214,7 +208,6 @@ public class AuthService(
 
         var user = new User
         {
-            UserName = email,
             Email = email,
             FirstName = firstName,
             LastName = lastName,
@@ -248,7 +241,6 @@ public class AuthService(
 
         var user = new User
         {
-            UserName = email,
             Email = email,
             FirstName = firstName,
             LastName = lastName,
@@ -279,29 +271,6 @@ public class AuthService(
         return addPassword.Succeeded;
     }
 
-    private void SetRefreshCookie(string refreshToken, string path)
-    {
-        var response = httpContextAccessor.HttpContext!.Response;
-        var csrf = Guid.NewGuid().ToString();
-
-        response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Path = path,
-            Expires = DateTime.UtcNow.AddDays(jwtSettings.RefreshTokenExpiryDays)
-        });
-
-        response.Cookies.Append("refreshCsrf", csrf, new CookieOptions
-        {
-            HttpOnly = false,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Path = path,
-            Expires = DateTime.UtcNow.AddDays(jwtSettings.RefreshTokenExpiryDays)
-        });
-    }
 
     private string GenerateAccessToken(User user, IList<string> roles)
     {
