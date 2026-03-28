@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LugaStore.Application.Identity.Commands;
 using LugaStore.Application.Identity.Queries;
+using LugaStore.Application.Categories;
+using LugaStore.Application.Categories.Commands;
+using LugaStore.Application.Categories.Queries;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.WebAPI.Controllers.Admin;
@@ -65,6 +68,39 @@ public class PartnersController(ISender mediator) : ControllerBase
     public async Task<IActionResult> DeactivatePartner(int id)
     {
         await mediator.Send(new DeactivatePartnerCommand(id));
+        return Ok();
+    }
+    [HttpGet("{partnerId}/categories")]
+    public async Task<IActionResult> GetAllCategories(int partnerId, CancellationToken ct)
+    {
+        return Ok(await mediator.Send(new GetCategoriesQuery(partnerId), ct));
+    }
+
+    [HttpPost("{partnerId}/categories")]
+    public async Task<IActionResult> Create(int partnerId, CategoryUpsertRequest request, CancellationToken ct)
+    {
+        return Ok(await mediator.Send(new CreateCategoryCommand(request.Name, request.Description, partnerId), ct));
+    }
+
+    [HttpPut("{partnerId}/categories/{id:int}")]
+    public async Task<IActionResult> Update(int partnerId, int id, CategoryUpsertRequest request, CancellationToken ct)
+    {
+        await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Description, partnerId), ct);
+        return Ok();
+    }
+
+    [HttpDelete("{partnerId}/categories/{id:int}")]
+    public async Task<IActionResult> Delete(int partnerId, int id, CancellationToken ct)
+    {
+        await mediator.Send(new DeleteCategoryCommand(id, partnerId), ct);
+        return Ok();
+    }
+
+    [HttpPost("{partnerId}/categories/reorder")]
+    public async Task<IActionResult> Reorder(int partnerId, CategoryReorderRequest request, CancellationToken ct)
+    {
+        var orders = request.Orders.Select(o => new CategoryOrderDto(o.Id, o.DisplayOrder)).ToList();
+        await mediator.Send(new ReorderCategoriesCommand(orders, partnerId), ct);
         return Ok();
     }
 }

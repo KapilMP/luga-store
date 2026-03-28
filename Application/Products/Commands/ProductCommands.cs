@@ -12,10 +12,12 @@ public class DeleteProductCommandHandler(IApplicationDbContext context) : IReque
 {
     public async Task<bool> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await context.Products.FindAsync([request.ProductId], cancellationToken);
+        var product = await context.Products
+            .Include(p => p.Categories)
+            .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
         if (product == null) return false;
 
-        if (!request.IsAdmin && product.CreatorId != request.RequestingUserId) return false;
+        if (!request.IsAdmin && !product.Categories.Any(c => c.PartnerId == request.RequestingUserId)) return false;
 
         context.Products.Remove(product);
         await context.SaveChangesAsync(cancellationToken);
@@ -30,10 +32,12 @@ public class SetProductSizesCommandHandler(IApplicationDbContext context) : IReq
 {
     public async Task<bool> Handle(SetProductSizesCommand request, CancellationToken cancellationToken)
     {
-        var product = await context.Products.FindAsync([request.ProductId], cancellationToken);
+        var product = await context.Products
+            .Include(p => p.Categories)
+            .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
         if (product == null) return false;
 
-        if (!request.IsAdmin && product.CreatorId != request.RequestingUserId) return false;
+        if (!request.IsAdmin && !product.Categories.Any(c => c.PartnerId == request.RequestingUserId)) return false;
 
         var existing = context.ProductSizeStocks.Where(s => s.ProductId == request.ProductId);
         context.ProductSizeStocks.RemoveRange(existing);
@@ -46,7 +50,7 @@ public class SetProductSizesCommandHandler(IApplicationDbContext context) : IReq
     }
 }
 
-public record CreatePartnerProductCommand(string Name, string? Description, decimal Price, ProductCategory Category, int CreatorId) : IRequest<int>;
+public record CreatePartnerProductCommand(string Name, string? Description, decimal Price, Gender Gender, List<int> CategoryIds, int PartnerId) : IRequest<int>;
 
 public class CreatePartnerProductCommandHandler(IApplicationDbContext context) : IRequestHandler<CreatePartnerProductCommand, int>
 {
@@ -57,9 +61,22 @@ public class CreatePartnerProductCommandHandler(IApplicationDbContext context) :
             Name = request.Name,
             Description = request.Description,
             Price = request.Price,
-            Category = request.Category,
-            CreatorId = request.CreatorId
+            Gender = request.Gender
         };
+
+        if (request.CategoryIds.Count > 0)
+        {
+            var categories = await context.Categories
+                .Where(c => request.CategoryIds.Contains(c.Id))
+                .ToListAsync(cancellationToken);
+
+            // Validation: all categories must belong to the partner
+            if (categories.Any(c => c.PartnerId != request.PartnerId))
+                throw new Exception("One or more categories do not belong to you.");
+
+            foreach (var category in categories)
+                product.Categories.Add(category);
+        }
 
         context.Products.Add(product);
         await context.SaveChangesAsync(cancellationToken);

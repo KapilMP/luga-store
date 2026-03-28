@@ -9,13 +9,10 @@ public class Product : BaseAuditableEntity
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public decimal ShippingCost { get; set; }
-    public ProductCategory Category { get; set; }
+    public ICollection<Category> Categories { get; set; } = [];
+    public Gender Gender { get; set; }
     public bool IsFeatured { get; set; }
     public bool IsNew { get; set; }
-
-    // Collaboration / Ownership
-    public int? CreatorId { get; set; }
-    public User? Creator { get; set; }
 
     // Relationships
     public ICollection<ProductImage> Images { get; set; } = [];

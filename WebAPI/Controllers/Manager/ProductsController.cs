@@ -8,7 +8,7 @@ using LugaStore.Domain.Enums;
 
 namespace LugaStore.WebAPI.Controllers.Manager;
 
-public record CreateProductRequest(string Name, string? Description, decimal Price, ProductCategory Category);
+public record CreateProductRequest(string Name, string? Description, decimal Price, Gender Gender, List<int> CategoryIds);
 public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
 
 [ApiController]
@@ -23,7 +23,7 @@ public class ProductsController(ISender mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> ManageProduct(CreateProductRequest request)
     {
-        var id = await mediator.Send(new CreateProductCommand(request.Name, request.Description, request.Price, request.Category));
+        var id = await mediator.Send(new CreateProductCommand(request.Name, request.Description, request.Price, request.Gender, request.CategoryIds));
         return CreatedAtAction(nameof(GetStoreProducts), new { id }, id);
     }
 

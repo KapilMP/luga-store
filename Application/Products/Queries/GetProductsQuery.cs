@@ -14,6 +14,10 @@ public class GetProductsQueryHandler(IApplicationDbContext context) : IRequestHa
 {
     public async Task<List<Product>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
     {
-        return await context.Products.ToListAsync(cancellationToken);
+        return await context.Products
+            .Include(p => p.Categories)
+                .ThenInclude(c => c.Partner)
+            .Include(p => p.SizeStocks)
+            .ToListAsync(cancellationToken);
     }
 }

@@ -15,13 +15,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.ShippingCost).HasPrecision(18, 2);
         builder.Property(p => p.Description).HasMaxLength(2048);
 
-        builder.HasOne(p => p.Creator)
-            .WithMany()
-            .HasForeignKey(p => p.CreatorId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasIndex(p => p.CreatorId);
-        builder.HasIndex(p => p.Category);
+        builder.HasIndex(p => p.Gender);
         builder.HasIndex(p => p.IsFeatured);
         builder.HasIndex(p => p.IsNew);
     }

@@ -5,11 +5,12 @@ using LugaStore.Application.Products.Commands;
 using LugaStore.Application.Products.Queries;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Common;
+
 using LugaStore.Domain.Enums;
 
 namespace LugaStore.WebAPI.Controllers.Partner;
 
-public record CreatePartnerProductRequest(string Name, string? Description, decimal Price, ProductCategory Category);
+public record CreatePartnerProductRequest(string Name, string? Description, decimal Price, Gender Gender, List<int> CategoryIds);
 public record SetSizesRequest(List<ProductSizeStockDto> Sizes);
 
 [ApiController]
@@ -26,7 +27,7 @@ public class ProductsController(ISender mediator, ICurrentUser currentUser) : Co
     [HttpPost]
     public async Task<IActionResult> CreateAsPartner(CreatePartnerProductRequest request)
     {
-        var id = await mediator.Send(new CreatePartnerProductCommand(request.Name, request.Description, request.Price, request.Category, CurrentUserId));
+        var id = await mediator.Send(new CreatePartnerProductCommand(request.Name, request.Description, request.Price, request.Gender, request.CategoryIds, CurrentUserId));
         return CreatedAtAction(nameof(GetMyProducts), new { id }, id);
     }
 

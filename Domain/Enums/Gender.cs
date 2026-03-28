@@ -1,6 +1,6 @@
 namespace LugaStore.Domain.Enums;
 
-public enum ProductCategory
+public enum Gender
 {
     Male,
     Female,

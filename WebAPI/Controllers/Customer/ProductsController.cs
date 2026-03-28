@@ -18,8 +18,10 @@ public class ProductsController(ISender mediator) : ControllerBase
             p.Name,
             p.Price,
             p.Description,
-            IsCollaboration = p.CreatorId != null,
-            CreatorName = p.Creator != null ? $"{p.Creator.FirstName} {p.Creator.LastName}" : "Luga Brand",
+            IsCollaboration = p.Categories.Any(c => c.PartnerId != null),
+            CreatorName = p.Categories.FirstOrDefault(c => c.Partner != null)?.Partner != null 
+                ? $"{p.Categories.First(c => c.Partner != null).Partner!.FirstName} {p.Categories.First(c => c.Partner != null).Partner!.LastName}" 
+                : "Luga Brand",
             Sizes = p.SizeStocks.Select(s => new { s.Size, s.Stock })
         }));
     }
