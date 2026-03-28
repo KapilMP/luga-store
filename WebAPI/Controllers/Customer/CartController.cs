@@ -25,16 +25,14 @@ public class CartController(ISender mediator) : LugaStoreControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateItem(int id, UpdateCartRequest request)
     {
-        var result = await mediator.Send(new UpdateCartItemCommand(id, CurrentUserId, request.Size, request.Quantity));
-        if (!result) return NotFound();
+        await mediator.Send(new UpdateCartItemCommand(id, CurrentUserId, request.Size, request.Quantity));
         return Ok();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> RemoveItem(int id)
     {
-        var result = await mediator.Send(new RemoveCartItemCommand(id, CurrentUserId));
-        if (!result) return NotFound();
+        await mediator.Send(new RemoveCartItemCommand(id, CurrentUserId));
         return NoContent();
     }
 
