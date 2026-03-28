@@ -28,6 +28,15 @@ public record ProductSummaryDto(
     IEnumerable<ProductImageDto> Images,
     ProductSaleDto? ActiveSale);
 
+public record ProductBrowseDto(
+    int Id,
+    string Name,
+    decimal Price,
+    string? Description,
+    bool IsCollaboration,
+    string CreatorName,
+    IEnumerable<ProductSizeStockResponseDto> Sizes);
+
 public record ProductDetailDto(
     int Id,
     string Name,

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Entities;
 using LugaStore.Application.Categories;
+using LugaStore.Application.Common.Exceptions;
 
 namespace LugaStore.Application.Categories.Commands;
 
@@ -12,7 +13,7 @@ public record DeleteCategoryCommand(int Id, int? PartnerId = null) : IRequest<Un
 public record ReorderCategoriesCommand(List<CategoryOrderDto> Orders, int? PartnerId = null) : IRequest<Unit>;
 public record CategoryOrderDto(int Id, int DisplayOrder);
 
-public class CategoryCommandHandlers(ICategoryService categoryService) : 
+public class CategoryCommandHandlers(IApplicationDbContext dbContext) : 
     IRequestHandler<CreateCategoryCommand, int>,
     IRequestHandler<UpdateCategoryCommand, Unit>,
     IRequestHandler<DeleteCategoryCommand, Unit>,
@@ -20,41 +21,70 @@ public class CategoryCommandHandlers(ICategoryService categoryService) :
 {
     public async Task<int> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
     {
-        if (request.PartnerId.HasValue)
-            return await categoryService.CreatePartnerCategoryAsync(request.PartnerId.Value, request.Name, request.Description, cancellationToken);
-        
-        return await categoryService.CreateAsync(request.Name, request.Description, cancellationToken);
+        var finalOrder = (await dbContext.Categories
+            .Where(c => c.PartnerId == request.PartnerId)
+            .MaxAsync(c => (int?)c.DisplayOrder, cancellationToken) ?? 0) + 1;
+
+        var category = new Category
+        {
+            Name = request.Name,
+            Description = request.Description,
+            DisplayOrder = finalOrder,
+            PartnerId = request.PartnerId
+        };
+
+        dbContext.Categories.Add(category);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return category.Id;
     }
 
     public async Task<Unit> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
     {
-        if (request.PartnerId.HasValue)
-            await categoryService.UpdatePartnerCategoryAsync(request.PartnerId.Value, request.Id, request.Name, request.Description, cancellationToken);
-        else 
-            await categoryService.UpdateAsync(request.Id, request.Name, request.Description, cancellationToken);
+        var category = await dbContext.Categories.FindAsync([request.Id], cancellationToken);
+        if (category == null) throw new NotFoundError("Category not found");
 
+        if (request.PartnerId.HasValue && category.PartnerId != request.PartnerId)
+            throw new ForbiddenError("Unauthorized access to category");
+
+        category.Name = request.Name;
+        category.Description = request.Description;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
 
     public async Task<Unit> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
     {
-        if (request.PartnerId.HasValue)
-            await categoryService.DeletePartnerCategoryAsync(request.PartnerId.Value, request.Id, cancellationToken);
-        else 
-            await categoryService.DeleteAsync(request.Id, cancellationToken);
+        var category = await dbContext.Categories.FindAsync([request.Id], cancellationToken);
+        if (category == null) throw new NotFoundError("Category not found");
 
+        if (request.PartnerId.HasValue && category.PartnerId != request.PartnerId)
+            throw new ForbiddenError("Unauthorized access to category");
+
+        dbContext.Categories.Remove(category);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
 
     public async Task<Unit> Handle(ReorderCategoriesCommand request, CancellationToken cancellationToken)
     {
-        var orders = request.Orders.Select(o => (o.Id, o.DisplayOrder)).ToList();
+        var ids = request.Orders.Select(o => o.Id).ToList();
+        var query = dbContext.Categories.Where(c => ids.Contains(c.Id));
         
         if (request.PartnerId.HasValue)
-            await categoryService.ReorderPartnerCategoriesAsync(request.PartnerId.Value, orders, cancellationToken);
-        else 
-            await categoryService.ReorderAsync(orders, cancellationToken);
+            query = query.Where(c => c.PartnerId == request.PartnerId);
 
+        var categories = await query.ToListAsync(cancellationToken);
+
+        foreach (var orderDto in request.Orders)
+        {
+            var category = categories.FirstOrDefault(c => c.Id == orderDto.Id);
+            if (category != null)
+                category.DisplayOrder = orderDto.DisplayOrder;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
 }

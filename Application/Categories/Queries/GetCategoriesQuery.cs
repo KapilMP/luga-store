@@ -7,13 +7,20 @@ namespace LugaStore.Application.Categories.Queries;
 
 public record GetCategoriesQuery(int? PartnerId = null) : IRequest<List<CategoryDto>>;
 
-public class GetCategoriesQueryHandler(ICategoryService categoryService) : IRequestHandler<GetCategoriesQuery, List<CategoryDto>>
+public class GetCategoriesQueryHandler(IApplicationDbContext dbContext) : IRequestHandler<GetCategoriesQuery, List<CategoryDto>>
 {
     public async Task<List<CategoryDto>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
     {
-        if (request.PartnerId.HasValue)
-            return await categoryService.GetPartnerCategoriesAsync(request.PartnerId.Value, cancellationToken);
+        var query = dbContext.Categories.AsNoTracking();
 
-        return await categoryService.GetAllAsync(cancellationToken);
+        if (request.PartnerId.HasValue)
+            query = query.Where(c => c.PartnerId == request.PartnerId);
+        else 
+            query = query.Where(c => c.PartnerId == null);
+
+        return await query
+            .OrderBy(c => c.DisplayOrder)
+            .Select(c => new CategoryDto(c.Id, c.Name, c.Description, c.DisplayOrder))
+            .ToListAsync(cancellationToken);
     }
 }

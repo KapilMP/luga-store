@@ -12,18 +12,7 @@ public class ProductsController(ISender mediator) : ControllerBase
     public async Task<IActionResult> BrowseAll()
     {
         var products = await mediator.Send(new GetProductsQuery());
-        return Ok(products.Select(p => new
-        {
-            p.Id,
-            p.Name,
-            p.Price,
-            p.Description,
-            IsCollaboration = p.Categories.Any(c => c.PartnerId != null),
-            CreatorName = p.Categories.FirstOrDefault(c => c.Partner != null)?.Partner != null 
-                ? $"{p.Categories.First(c => c.Partner != null).Partner!.FirstName} {p.Categories.First(c => c.Partner != null).Partner!.LastName}" 
-                : "Luga Brand",
-            Sizes = p.SizeStocks.Select(s => new { s.Size, s.Stock })
-        }));
+        return Ok(products);
     }
 
     [HttpGet("{id:int}")]

@@ -1,14 +1,6 @@
 <Solution>
-  <Folder Name="/Application/">
-    <Project Path="Application/LugaStore.Application.csproj" />
-  </Folder>
-  <Folder Name="/Domain/">
-    <Project Path="Domain/LugaStore.Domain.csproj" />
-  </Folder>
-  <Folder Name="/Infrastructure/">
-    <Project Path="Infrastructure/LugaStore.Infrastructure.csproj" />
-  </Folder>
-  <Folder Name="/WebAPI/">
-    <Project Path="WebAPI/LugaStore.WebAPI.csproj" />
-  </Folder>
+  <Project Path="Application/LugaStore.Application.csproj" />
+  <Project Path="Domain/LugaStore.Domain.csproj" />
+  <Project Path="Infrastructure/LugaStore.Infrastructure.csproj" />
+  <Project Path="WebAPI/LugaStore.WebAPI.csproj" />
 </Solution>
