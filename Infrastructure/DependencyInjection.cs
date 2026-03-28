@@ -33,6 +33,9 @@ public static class DependencyInjection
         services.Configure<OpeninarySettings>(configuration.GetSection("Openinary"));
         services.AddSingleton<IOpeninarySettings>(sp => sp.GetRequiredService<IOptions<OpeninarySettings>>().Value);
 
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.AddSingleton<IEmailSettings>(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value);
+
         services.AddHttpClient<IImageService, OpeninaryService>();
 
         services.AddDbContext<ApplicationDbContext>(options =>
@@ -56,7 +59,10 @@ public static class DependencyInjection
         // Messaging
         services.AddMassTransit(x =>
         {
-            x.AddConsumer<EmailConsumer>();
+            x.AddConsumer<EmailConsumer>(cfg => 
+            {
+                cfg.UseMessageRetry(r => r.Interval(1, TimeSpan.FromSeconds(5)));
+            });
 
             x.UsingRabbitMq((context, cfg) =>
             {
