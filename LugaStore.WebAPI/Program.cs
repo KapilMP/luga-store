@@ -11,30 +11,27 @@ using LugaStore.Domain.Entities;
 using LugaStore.Infrastructure.Persistence.Seeds;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi;
+using LugaStore.Infrastructure.Settings;
 using LugaStore.WebAPI.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Rate Limiting
+var rateLimitSettings = builder.Configuration.GetSection("RateLimiting").Get<RateLimitSettings>() ?? new RateLimitSettings();
 builder.Services.AddRateLimiter(options =>
 {
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.RejectionStatusCode = rateLimitSettings.RejectionStatusCode;
 
-    options.AddFixedWindowLimiter("global", opt =>
+    foreach (var policy in rateLimitSettings.Policies)
     {
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.PermitLimit = 100;
-        opt.QueueLimit = 0;
-        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-    });
-
-    options.AddFixedWindowLimiter("auth", opt =>
-    {
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.PermitLimit = 10;
-        opt.QueueLimit = 0;
-        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-    });
+        options.AddFixedWindowLimiter(policy.Key, opt =>
+        {
+            opt.Window = TimeSpan.Parse(policy.Value.Window);
+            opt.PermitLimit = policy.Value.PermitLimit;
+            opt.QueueLimit = policy.Value.QueueLimit;
+            opt.QueueProcessingOrder = Enum.Parse<QueueProcessingOrder>(policy.Value.QueueProcessingOrder);
+        });
+    }
 });
 
 // CORS

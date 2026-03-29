@@ -36,6 +36,9 @@ public static class DependencyInjection
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
         services.AddSingleton<IEmailSettings>(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value);
 
+        services.Configure<RateLimitSettings>(configuration.GetSection("RateLimiting"));
+        services.AddSingleton<IRateLimitSettings>(sp => sp.GetRequiredService<IOptions<RateLimitSettings>>().Value);
+
         services.AddHttpClient<IImageService, OpeninaryService>();
 
         services.AddDbContext<ApplicationDbContext>(options =>
