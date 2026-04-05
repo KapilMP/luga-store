@@ -1,26 +1,6 @@
-using System.Threading.Tasks;
-
-using LugaStore.Application.Common.Models;
-
 namespace LugaStore.Application.Common.Interfaces;
 
 public interface IAuthService
 {
-    Task<AuthResult> LoginAsync(string email, string password, string role, CancellationToken cancellationToken = default);
-    Task<AuthResult?> LoginWithGoogleAsync(string idToken, CancellationToken cancellationToken = default);
-    Task<AuthResult?> LoginExternalAsync(string email, string firstName, string lastName, CancellationToken cancellationToken = default);
-    Task<(string AccessToken, string RefreshToken)?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
-
-    // Identity Management
-    Task SendVerificationEmailAsync(string email);
-    Task<bool> ConfirmEmailAsync(string userId, string token, CancellationToken cancellationToken = default);
-    Task ForgotPasswordAsync(string email);
-    Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default);
-    Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
-
-
-    // User creation rules
-    Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone, CancellationToken cancellationToken = default);
-    Task<bool> RegisterAsync(string email, string password, string firstName, string lastName, string phone, CancellationToken cancellationToken = default);
-    Task<bool> AcceptInvitationAsync(string email, string token, string password, string firstName, string lastName, CancellationToken cancellationToken = default);
+    Task<bool> GuestCheckoutAsync(string email, string firstName, string lastName, string phone, CancellationToken ct);
 }

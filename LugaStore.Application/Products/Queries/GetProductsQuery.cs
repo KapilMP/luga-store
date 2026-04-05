@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Models;
+using LugaStore.Application.Common.Configurations;
 using LugaStore.Domain.Entities;
 using LugaStore.Domain.Enums;
 

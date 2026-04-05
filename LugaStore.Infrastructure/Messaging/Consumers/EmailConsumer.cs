@@ -1,10 +1,11 @@
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Models;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Entities;
-using LugaStore.Infrastructure.Settings;
+using LugaStore.Application.Common.Configurations;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -13,9 +14,10 @@ namespace LugaStore.Infrastructure.Messaging.Consumers;
 
 public class EmailConsumer(
     ILogger<EmailConsumer> logger, 
-    IEmailSettings settings,
+    IOptions<EmailConfig> options,
     IApplicationDbContext dbContext) : IConsumer<EmailSentEvent>
 {
+    private readonly EmailConfig config = options.Value;
     public async Task Consume(ConsumeContext<EmailSentEvent> context)
     {
         var message = context.Message;
@@ -47,7 +49,7 @@ public class EmailConsumer(
             log.SentCount++;
             
             var email = new MimeMessage();
-            email.From.Add(new MailboxAddress(settings.FromName, settings.FromEmail));
+            email.From.Add(new MailboxAddress(config.FromName, config.FromEmail));
             email.To.Add(MailboxAddress.Parse(message.To));
             email.Subject = message.Subject;
             
@@ -56,12 +58,12 @@ public class EmailConsumer(
 
             using var smtp = new SmtpClient();
             
-            var secureSocketOptions = settings.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
-            await smtp.ConnectAsync(settings.Host, settings.Port, secureSocketOptions);
+            var secureSocketOptions = config.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+            await smtp.ConnectAsync(config.Host, config.Port, secureSocketOptions);
 
-            if (!string.IsNullOrEmpty(settings.Username))
+            if (!string.IsNullOrEmpty(config.Username))
             {
-                await smtp.AuthenticateAsync(settings.Username, settings.Password);
+                await smtp.AuthenticateAsync(config.Username, config.Password);
             }
 
             await smtp.SendAsync(email);

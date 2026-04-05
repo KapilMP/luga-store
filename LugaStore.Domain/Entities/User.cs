@@ -8,12 +8,6 @@ public class User : IdentityUser<int>, ISoftDelete, IAuditableEntity
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
 
-    public override string? Email
-    {
-        get => base.Email;
-        set => base.Email = base.UserName = value;
-    }
-
     // Auditing
     public DateTime Created { get; set; }
     public int? CreatedBy { get; set; }

@@ -3,13 +3,17 @@ using LugaStore.Application.Common.Interfaces;
 using LugaStore.Infrastructure.Messaging.Consumers;
 using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Services;
-using LugaStore.Infrastructure.Settings;
+using LugaStore.Infrastructure.Messaging;
+using LugaStore.Infrastructure.Configurations;
+using LugaStore.Application.Common.Configurations;
+using LugaStore.Application.Common.Configurations.Validators;
 using LugaStore.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MassTransit;
+using FluentValidation;
 
 namespace LugaStore.Infrastructure;
 
@@ -17,34 +21,29 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Bind Configurations
-        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-        services.AddSingleton<IJwtSettings>(sp => sp.GetRequiredService<IOptions<JwtSettings>>().Value);
+        // Add Validators
+        services.AddValidatorsFromAssemblyContaining<JwtConfigValidator>();
 
-        services.Configure<GoogleSettings>(configuration.GetSection("Google"));
-        services.AddSingleton<IGoogleSettings>(sp => sp.GetRequiredService<IOptions<GoogleSettings>>().Value);
-
-        services.Configure<RefreshTokenPaths>(configuration.GetSection("RefreshTokenPaths"));
-        services.AddSingleton<IRefreshTokenPaths>(sp => sp.GetRequiredService<IOptions<RefreshTokenPaths>>().Value);
-
-        services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
-        services.AddSingleton<IAppSettings>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
-
-        services.Configure<OpeninarySettings>(configuration.GetSection("Openinary"));
-        services.AddSingleton<IOpeninarySettings>(sp => sp.GetRequiredService<IOptions<OpeninarySettings>>().Value);
-
-        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
-        services.AddSingleton<IEmailSettings>(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value);
-
-        services.Configure<RateLimitSettings>(configuration.GetSection("RateLimiting"));
-        services.AddSingleton<IRateLimitSettings>(sp => sp.GetRequiredService<IOptions<RateLimitSettings>>().Value);
+        // Production-Grade Strategy: AddOptionsWithValidation for all Configurations
+        services.AddOptionsWithValidation<ConnectionStringsConfig>(configuration, "ConnectionStrings");
+        services.AddOptionsWithValidation<JwtConfig>(configuration, "Jwt");
+        services.AddOptionsWithValidation<GoogleConfig>(configuration, "Google");
+        services.AddOptionsWithValidation<RefreshTokenPathsConfig>(configuration, "RefreshTokenPaths");
+        services.AddOptionsWithValidation<AppConfig>(configuration, "App");
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppConfig>>().Value);
+        services.AddOptionsWithValidation<OpeninaryConfig>(configuration, "Openinary");
+        services.AddOptionsWithValidation<EmailConfig>(configuration, "Email");
+        services.AddOptionsWithValidation<RateLimitConfig>(configuration, "RateLimit");
 
         services.AddHttpClient<IImageService, OpeninaryService>();
 
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>((sp, options) =>
+        {
+            var connectionStrings = sp.GetRequiredService<IOptions<ConnectionStringsConfig>>().Value;
             options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+                connectionStrings.Postgres,
+                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+        });
 
         services.AddIdentity<User, IdentityRole<int>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -53,23 +52,29 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IPartnerService, PartnerService>();
+        services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IEmailSender, EmailSender>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 
-        // Messaging
+        // Messaging (Best Practices: Explicit naming, robust retry)
         services.AddMassTransit(x =>
         {
-            x.AddConsumer<EmailConsumer>(cfg => 
-            {
-                cfg.UseMessageRetry(r => r.Interval(1, TimeSpan.FromSeconds(5)));
-            });
+            x.SetKebabCaseEndpointNameFormatter();
+            
+            x.AddConsumer<EmailConsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host(configuration.GetConnectionString("RabbitMq") ?? "localhost");
-                cfg.ConfigureEndpoints(context);
+                var connectionStrings = context.GetRequiredService<IOptions<ConnectionStringsConfig>>().Value;
+                cfg.Host(connectionStrings.RabbitMq);
+
+                cfg.ReceiveEndpoint(MessagingConstants.EmailQueue, e =>
+                {
+                    e.ConfigureConsumer<EmailConsumer>(context);
+                    e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
+                    e.UseScheduledRedelivery(r => r.Intervals(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(30)));
+                });
             });
         });
 

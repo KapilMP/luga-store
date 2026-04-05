@@ -178,6 +178,10 @@ namespace LugaStore.Infrastructure.Migrations
                     b.Property<int?>("PartnerId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DisplayOrder");

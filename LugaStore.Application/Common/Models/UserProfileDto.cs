@@ -20,7 +20,7 @@ public class BaseUserProfile
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string AvatarUrl { get; set; } = string.Empty;
+    public string AvatarPath { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
 
     protected static T MapBase<T>(User user, T dto) where T : BaseUserProfile
@@ -29,7 +29,7 @@ public class BaseUserProfile
         dto.FirstName = user.FirstName ?? string.Empty;
         dto.LastName = user.LastName ?? string.Empty;
         dto.Email = user.Email ?? string.Empty;
-        dto.AvatarUrl = user.AvatarPath ?? string.Empty;
+        dto.AvatarPath = user.AvatarPath ?? string.Empty;
         dto.Phone = user.PhoneNumber ?? string.Empty;
         return dto;
     }

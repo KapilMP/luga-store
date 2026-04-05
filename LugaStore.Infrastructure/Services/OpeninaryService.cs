@@ -1,12 +1,13 @@
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using LugaStore.Application.Common.Interfaces;
-using LugaStore.Infrastructure.Settings;
+using LugaStore.Application.Common.Configurations;
 
 namespace LugaStore.Infrastructure.Services;
 
-public class OpeninaryService(IOpeninarySettings settings, HttpClient httpClient) : IImageService
+public class OpeninaryService(IOptions<OpeninaryConfig> options, HttpClient httpClient) : IImageService
 {
+    private readonly OpeninaryConfig config = options.Value;
     public async Task<string> UploadAvatarAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)
     {
         using var form = new MultipartFormDataContent();
@@ -15,8 +16,8 @@ public class OpeninaryService(IOpeninarySettings settings, HttpClient httpClient
         form.Add(fileContent, "files", fileName);
         form.Add(new StringContent("[\"w_400,h_400,c_fill,f_avif,q_70\"]"), "transformations");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.BaseUrl}/upload");
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", settings.ApiKey);
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{config.BaseUrl}/upload");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.ApiKey);
         request.Content = form;
 
         var response = await httpClient.SendAsync(request, cancellationToken);

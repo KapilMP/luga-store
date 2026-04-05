@@ -131,7 +131,7 @@ components:
         email:
           type: string
           format: email
-        avatarUrl:
+        avatarPath:
           type: string
         phone:
           type: string
