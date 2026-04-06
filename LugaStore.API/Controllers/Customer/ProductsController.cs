@@ -1,12 +1,15 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Products.Queries;
+using LugaStore.Application.Features.Products.Queries;
 using LugaStore.Domain.Enums;
+using LugaStore.Application.Common.Settings;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LugaStore.API.Controllers.Customer;
 
 [ApiController]
 [Route("customer/[controller]")]
+[EnableRateLimiting(nameof(RateLimitingPolicies.Search))]
 public class ProductsController(ISender mediator) : ControllerBase
 {
     [HttpGet]

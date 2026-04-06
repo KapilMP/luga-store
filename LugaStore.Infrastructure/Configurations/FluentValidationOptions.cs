@@ -15,8 +15,11 @@ public class FluentValidationOptions<TOptions>(IServiceProvider serviceProvider,
         using var scope = serviceProvider.CreateScope();
         var validator = scope.ServiceProvider.GetService<IValidator<TOptions>>();
 
-        // If no validator is registered, we skip validation for this option
-        if (validator == null) return ValidateOptionsResult.Success;
+        // If no validator is registered, it's a configuration error since we expect a validator for all options
+        if (validator == null) 
+        {
+            return ValidateOptionsResult.Fail($"No IValidator<{typeof(TOptions).Name}> found. All options registered with FluentValidation must have a corresponding validator.");
+        }
 
         var result = validator.Validate(options);
 

@@ -1,10 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Profile.Commands;
-using LugaStore.Application.Profile.Queries;
-using LugaStore.Application.Profile.Models;
-using LugaStore.Application.UserManagement.Models;
+using LugaStore.Application.Features.Profile.Commands;
+using LugaStore.Application.Features.Profile.Queries;
+using LugaStore.Application.Features.Profile.Models;
+using LugaStore.Application.Features.UserManagement.Models;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.API.Controllers.Admin;

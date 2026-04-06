@@ -1,12 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Profile.Queries;
-using LugaStore.Application.UserManagement.Queries;
-using LugaStore.Application.UserManagement.Models;
+using LugaStore.Application.Features.Profile.Queries;
+using LugaStore.Application.Features.UserManagement.Queries;
+using LugaStore.Application.Features.UserManagement.Models;
 using LugaStore.Application.Common.Models;
-using LugaStore.Application.Orders.Commands;
-using LugaStore.Application.Orders.Queries;
+using LugaStore.Application.Features.Orders.Commands;
+using LugaStore.Application.Features.Orders.Queries;
 using LugaStore.Domain.Common;
 using LugaStore.Domain.Entities;
 
@@ -33,7 +33,7 @@ public class CustomersController(ISender mediator) : ControllerBase
     }
 
     [HttpGet("{customerId:int}/orders")]
-    public async Task<ActionResult<List<LugaStore.Application.Orders.OrderResponseDto>>> GetCustomerOrders(int customerId)
+    public async Task<ActionResult<List<LugaStore.Application.Features.Orders.OrderResponseDto>>> GetCustomerOrders(int customerId)
     {
         return await mediator.Send(new GetMyOrdersQuery(customerId));
     }

@@ -1,9 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Cart;
-using LugaStore.Application.Cart.Commands;
-using LugaStore.Application.Cart.Queries;
+using LugaStore.Application.Features.Cart;
+using LugaStore.Application.Features.Cart.Commands;
+using LugaStore.Application.Features.Cart.Queries;
 
 namespace LugaStore.API.Controllers.Customer;
 

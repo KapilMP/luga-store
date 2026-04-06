@@ -1,5 +1,5 @@
 using System.Linq;
-using LugaStore.Application.UserManagement.Models;
+using LugaStore.Application.Features.UserManagement.Models;
 using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Common.Mappings;

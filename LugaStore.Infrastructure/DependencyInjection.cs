@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Identity;
 using LugaStore.Application.Common.Interfaces;
+using LugaStore.Application.Common.Settings;
+using LugaStore.Application.Common.Settings.Validators;
 using LugaStore.Infrastructure.Messaging.Consumers;
 using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Services;
+using LugaStore.Infrastructure.ExternalServices;
 using LugaStore.Infrastructure.Messaging;
 using LugaStore.Infrastructure.Configurations;
-using LugaStore.Application.Common.Configurations;
-using LugaStore.Application.Common.Configurations.Validators;
 using LugaStore.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,57 +18,83 @@ using FluentValidation;
 
 namespace LugaStore.Infrastructure;
 
+/// <summary>
+/// Infrastructure layer dependency injection configuration for modern .NET monolith applications.
+/// </summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add Validators
+        services
+            .AddInfrastructureConfigs()
+            .AddPersistence(configuration)
+            .AddIdentity()
+            .AddMessaging()
+            .AddInfrastructureServices();
+
+        return services;
+    }
+
+    private static IServiceCollection AddInfrastructureConfigs(this IServiceCollection services)
+    {
+        // 1. Scan for all validators once
         services.AddValidatorsFromAssemblyContaining<JwtConfigValidator>();
+        services.AddValidatorsFromAssemblyContaining<LugaStore.Application.Common.Settings.Validators.RateLimitingConfigValidator>();
 
-        // Production-Grade Strategy: AddOptionsWithValidation for all Configurations
-        services.AddOptionsWithValidation<ConnectionStringsConfig>(configuration, "ConnectionStrings");
-        services.AddOptionsWithValidation<JwtConfig>(configuration, "Jwt");
-        services.AddOptionsWithValidation<GoogleConfig>(configuration, "Google");
-        services.AddOptionsWithValidation<RefreshTokenPathsConfig>(configuration, "RefreshTokenPaths");
-        services.AddOptionsWithValidation<AppConfig>(configuration, "App");
-        services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppConfig>>().Value);
-        services.AddOptionsWithValidation<OpeninaryConfig>(configuration, "Openinary");
-        services.AddOptionsWithValidation<EmailConfig>(configuration, "Email");
-        services.AddOptionsWithValidation<RateLimitConfig>(configuration, "RateLimit");
+        // 2. Register Configurations using BindConfiguration (Modern .NET idiomatic way)
+        // This also registers the direct type (e.g. JwtConfig) as a Singleton for easier DI.
+        services
+            .AddConfigWithValidation<ConnectionStringsConfig, ConnectionStringsConfigValidator>("ConnectionStrings")
+            .AddConfigWithValidation<JwtConfig, JwtConfigValidator>("Jwt")
+            .AddConfigWithValidation<GoogleConfig, GoogleConfigValidator>("Google")
+            .AddConfigWithValidation<RefreshTokenPathsConfig, RefreshTokenPathsConfigValidator>("RefreshTokenPaths")
+            .AddConfigWithValidation<AppConfig, AppConfigValidator>("App")
+            .AddConfigWithValidation<OpeninaryConfig, OpeninaryConfigValidator>("Openinary")
+            .AddConfigWithValidation<EmailConfig, EmailConfigValidator>("Email")
+            .AddConfigWithValidation<RateLimitingConfig, RateLimitingConfigValidator>("RateLimiting");
 
-        services.AddHttpClient<IImageService, OpeninaryService>();
+        return services;
+    }
 
+    private static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
+    {
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            var connectionStrings = sp.GetRequiredService<IOptions<ConnectionStringsConfig>>().Value;
-            options.UseNpgsql(
-                connectionStrings.Postgres,
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+            var config = sp.GetRequiredService<ConnectionStringsConfig>();
+            options.UseNpgsql(config.Postgres, o =>
+                o.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
         });
 
-        services.AddIdentity<User, IdentityRole<int>>()
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        services.AddHttpContextAccessor();
+        return services;
+    }
 
-        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<ITokenService, TokenService>();
-        services.AddScoped<IEmailSender, EmailSender>();
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+    private static IServiceCollection AddIdentity(this IServiceCollection services)
+    {
+        services.AddIdentityCore<User>(opt =>
+      {
+          opt.Password.RequireNonAlphanumeric = false;
+          opt.User.RequireUniqueEmail = false;
+      })
+      .AddRoles<IdentityRole<int>>()
+      .AddRoleManager<RoleManager<IdentityRole<int>>>()
+      .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        // Messaging (Best Practices: Explicit naming, robust retry)
+        return services;
+    }
+
+    private static IServiceCollection AddMessaging(this IServiceCollection services)
+    {
         services.AddMassTransit(x =>
         {
             x.SetKebabCaseEndpointNameFormatter();
-            
             x.AddConsumer<EmailConsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                var connectionStrings = context.GetRequiredService<IOptions<ConnectionStringsConfig>>().Value;
-                cfg.Host(connectionStrings.RabbitMq);
+                var config = context.GetRequiredService<ConnectionStringsConfig>();
+                cfg.Host(config.RabbitMq);
 
                 cfg.ReceiveEndpoint(MessagingConstants.EmailQueue, e =>
                 {
@@ -78,6 +105,32 @@ public static class DependencyInjection
             });
         });
 
+        return services;
+    }
+
+    private static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        services.AddHttpClient<IImageService, OpeninaryService>();
+
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IEmailSender, EmailSender>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Helper to register both IOptions<T> (idiomatic .NET pattern) and the raw T config class (easier injection).
+    /// Uses modern .NET BindConfiguration to resolve settings from the container's IConfiguration.
+    /// </summary>
+    private static IServiceCollection AddConfigWithValidation<TConfig, TValidator>(this IServiceCollection services, string sectionName)
+        where TConfig : class
+        where TValidator : class, IValidator<TConfig>
+    {
+        services.AddOptionsWithValidation<TConfig, TValidator>(sectionName);
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<TConfig>>().Value);
         return services;
     }
 }

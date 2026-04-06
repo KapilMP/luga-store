@@ -1,8 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Emails.Commands;
-using LugaStore.Application.Emails.Queries;
+using LugaStore.Application.Features.Emails.Commands;
+using LugaStore.Application.Features.Emails.Queries;
 using LugaStore.Domain.Common;
 using LugaStore.Domain.Entities;
 

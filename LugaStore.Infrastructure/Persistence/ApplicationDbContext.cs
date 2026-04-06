@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Common;
 using LugaStore.Domain.Entities;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace LugaStore.Infrastructure.Persistence;
 
@@ -58,7 +59,7 @@ public class ApplicationDbContext(
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var currentUserIdString = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserIdString = httpContextAccessor.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Sub);
         int? currentUserId = string.IsNullOrEmpty(currentUserIdString) ? null : int.Parse(currentUserIdString);
         var now = DateTime.UtcNow;
 

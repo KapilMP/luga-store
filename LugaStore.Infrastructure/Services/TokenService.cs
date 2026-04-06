@@ -2,21 +2,19 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Options;
 using LugaStore.Application.Common.Interfaces;
-using LugaStore.Application.Common.Configurations;
+using LugaStore.Application.Common.Settings;
 using LugaStore.Domain.Entities;
 
 namespace LugaStore.Infrastructure.Services;
 
-public class TokenService(IOptions<JwtConfig> options) : ITokenService
+public class TokenService(JwtConfig jwtConfig) : ITokenService
 {
-    private readonly JwtConfig _jwtConfig = options.Value;
+    private readonly JwtConfig _jwtConfig = jwtConfig;
     public string GenerateAccessToken(User user, string role)
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email!),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -45,9 +43,9 @@ public class TokenService(IOptions<JwtConfig> options) : ITokenService
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new("token_type", "refresh")
+            new(JwtRegisteredClaimNames.Typ, "refresh")
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Secret));

@@ -3,13 +3,13 @@ using System.Linq;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Invitations.Commands;
-using LugaStore.Application.UserManagement.Commands;
-using LugaStore.Application.UserManagement.Queries;
-using LugaStore.Application.Categories.Commands;
-using LugaStore.Application.Categories.Queries;
+using LugaStore.Application.Features.Invitations.Commands;
+using LugaStore.Application.Features.UserManagement.Commands;
+using LugaStore.Application.Features.UserManagement.Queries;
+using LugaStore.Application.Features.Categories.Commands;
+using LugaStore.Application.Features.Categories.Queries;
 using LugaStore.Application.Common.Models;
-using LugaStore.Application.UserManagement.Models;
+using LugaStore.Application.Features.UserManagement.Models;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.API.Controllers.Admin;
@@ -73,19 +73,19 @@ public class PartnersController(ISender mediator) : ControllerBase
     }
 
     [HttpGet("{partnerId}/categories")]
-    public async Task<ActionResult<List<LugaStore.Application.Categories.CategoryDto>>> GetAllCategories(int partnerId, CancellationToken ct)
+    public async Task<ActionResult<List<LugaStore.Application.Features.Categories.CategoryDto>>> GetAllCategories(int partnerId, CancellationToken ct)
     {
         return await mediator.Send(new GetCategoriesQuery(partnerId), ct);
     }
 
     [HttpPost("{partnerId}/categories")]
-    public async Task<ActionResult<int>> Create(int partnerId, LugaStore.Application.Categories.CategoryUpsertRequest request, CancellationToken ct)
+    public async Task<ActionResult<int>> Create(int partnerId, LugaStore.Application.Features.Categories.CategoryUpsertRequest request, CancellationToken ct)
     {
         return await mediator.Send(new CreateCategoryCommand(request.Name, request.Slug, request.Description, partnerId), ct);
     }
 
     [HttpPut("{partnerId}/categories/{id:int}")]
-    public async Task<ActionResult> Update(int partnerId, int id, LugaStore.Application.Categories.CategoryUpsertRequest request, CancellationToken ct)
+    public async Task<ActionResult> Update(int partnerId, int id, LugaStore.Application.Features.Categories.CategoryUpsertRequest request, CancellationToken ct)
     {
         await mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Slug, request.Description, partnerId), ct);
         return Ok();
@@ -99,9 +99,9 @@ public class PartnersController(ISender mediator) : ControllerBase
     }
 
     [HttpPost("{partnerId}/categories/reorder")]
-    public async Task<ActionResult> Reorder(int partnerId, LugaStore.Application.Categories.CategoryReorderRequest request, CancellationToken ct)
+    public async Task<ActionResult> Reorder(int partnerId, LugaStore.Application.Features.Categories.CategoryReorderRequest request, CancellationToken ct)
     {
-        var orders = request.Orders.Select(o => new LugaStore.Application.Categories.Commands.CategoryOrderDto(o.Id, o.DisplayOrder)).ToList();
+        var orders = request.Orders.Select(o => new LugaStore.Application.Features.Categories.Commands.CategoryOrderDto(o.Id, o.DisplayOrder)).ToList();
         await mediator.Send(new ReorderCategoriesCommand(orders, partnerId), ct);
         return Ok();
     }

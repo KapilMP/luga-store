@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Categories;
-using LugaStore.Application.Categories.Commands;
-using LugaStore.Application.Categories.Queries;
+using LugaStore.Application.Features.Categories;
+using LugaStore.Application.Features.Categories.Commands;
+using LugaStore.Application.Features.Categories.Queries;
 using MediatR;
 using LugaStore.Domain.Common;
 

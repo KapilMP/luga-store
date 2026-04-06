@@ -1,11 +1,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Invitations.Commands;
-using LugaStore.Application.UserManagement.Commands;
-using LugaStore.Application.UserManagement.Queries;
+using LugaStore.Application.Features.Invitations.Commands;
+using LugaStore.Application.Features.UserManagement.Commands;
+using LugaStore.Application.Features.UserManagement.Queries;
 using LugaStore.Application.Common.Models;
-using LugaStore.Application.UserManagement.Models;
+using LugaStore.Application.Features.UserManagement.Models;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.API.Controllers.Admin;

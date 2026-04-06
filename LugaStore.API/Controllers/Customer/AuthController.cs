@@ -1,19 +1,17 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using LugaStore.Application.Auth.Commands;
-using LugaStore.Application.Auth.Models;
-using LugaStore.Application.UserManagement.Models;
-using LugaStore.Application.Common.Configurations;
+using LugaStore.Application.Features.Auth.Commands;
+using LugaStore.Application.Features.Auth.Models;
+using LugaStore.Application.Features.UserManagement.Models;
+using LugaStore.Application.Common.Settings;
 using LugaStore.Application.Common.Interfaces;
 
 namespace LugaStore.API.Controllers.Customer;
 
 [Route("customer/[controller]")]
-[EnableRateLimiting("auth")]
+[EnableRateLimiting(nameof(RateLimitingPolicies.Auth))]
 public class AuthController(
     ISender mediator,
     IOptions<RefreshTokenPathsConfig> options,

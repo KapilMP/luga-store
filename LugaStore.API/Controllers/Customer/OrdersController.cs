@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Orders;
-using LugaStore.Application.Orders.Commands;
-using LugaStore.Application.Orders.Queries;
+using LugaStore.Application.Features.Orders;
+using LugaStore.Application.Features.Orders.Commands;
+using LugaStore.Application.Features.Orders.Queries;
 using LugaStore.Application.Common.Interfaces;
+using LugaStore.Application.Common.Settings;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LugaStore.API.Controllers.Customer;
 
@@ -14,6 +16,7 @@ public class OrdersController(ISender mediator, ICurrentUser currentUser) : Luga
 {
     [HttpPost("checkout")]
     [AllowAnonymous]
+    [EnableRateLimiting(nameof(RateLimitingPolicies.Checkout))]
     public async Task<IActionResult> Checkout([FromBody] CreateOrderRequest request)
     {
         var userIdString = currentUser.UserId;

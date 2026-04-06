@@ -1,14 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Products.Commands;
-using LugaStore.Application.Products.Queries;
+using LugaStore.Application.Features.Products.Commands;
+using LugaStore.Application.Features.Products.Queries;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Common;
 
 using LugaStore.Domain.Enums;
 
-using LugaStore.Application.Products;
+using LugaStore.Application.Features.Products;
 
 namespace LugaStore.API.Controllers.Partner;
 

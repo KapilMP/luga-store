@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Models;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Entities;
-using LugaStore.Application.Common.Configurations;
+using LugaStore.Application.Common.Settings;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -14,10 +14,10 @@ namespace LugaStore.Infrastructure.Messaging.Consumers;
 
 public class EmailConsumer(
     ILogger<EmailConsumer> logger, 
-    IOptions<EmailConfig> options,
+    EmailConfig config,
     IApplicationDbContext dbContext) : IConsumer<EmailSentEvent>
 {
-    private readonly EmailConfig config = options.Value;
+    private readonly EmailConfig config = config;
     public async Task Consume(ConsumeContext<EmailSentEvent> context)
     {
         var message = context.Message;

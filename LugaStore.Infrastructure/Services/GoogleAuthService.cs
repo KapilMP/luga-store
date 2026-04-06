@@ -1,14 +1,14 @@
 using Google.Apis.Auth;
 using LugaStore.Application.Common.Interfaces;
-using LugaStore.Application.Common.Configurations;
+using LugaStore.Application.Common.Settings;
 
 using Microsoft.Extensions.Options;
 
 namespace LugaStore.Infrastructure.Services;
 
-public class GoogleAuthService(IOptions<GoogleConfig> googleOptions) : IGoogleAuthService
+public class GoogleAuthService(GoogleConfig googleConfig) : IGoogleAuthService
 {
-    private readonly GoogleConfig _googleConfig = googleOptions.Value;
+    private readonly GoogleConfig _googleConfig = googleConfig;
 
     public async Task<GoogleUser?> ValidateTokenAsync(string idToken)
     {

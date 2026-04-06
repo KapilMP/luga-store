@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Categories.Queries;
+using LugaStore.Application.Features.Categories.Queries;
 using MediatR;
 
 namespace LugaStore.API.Controllers;
