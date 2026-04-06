@@ -1,3 +1,4 @@
+using LugaStore.Infrastructure.Messaging.Connection;
 using Microsoft.AspNetCore.Identity;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Settings;
@@ -5,8 +6,8 @@ using LugaStore.Application.Common.Settings.Validators;
 using LugaStore.Infrastructure.Messaging.Consumers;
 using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Services;
+using LugaStore.Infrastructure.Messaging.Publishers;
 using LugaStore.Infrastructure.ExternalServices;
-using LugaStore.Infrastructure.Messaging;
 using LugaStore.Infrastructure.Configurations;
 using LugaStore.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public static class DependencyInjection
             .AddInfrastructureConfigs()
             .AddPersistence(configuration)
             .AddIdentity()
-            .AddMessaging()
+            .AddMessagingByRabbitMq()
             .AddInfrastructureServices();
 
         return services;
@@ -84,37 +85,13 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddMessaging(this IServiceCollection services)
-    {
-        services.AddMassTransit(x =>
-        {
-            x.SetKebabCaseEndpointNameFormatter();
-            x.AddConsumer<EmailConsumer>();
-
-            x.UsingRabbitMq((context, cfg) =>
-            {
-                var config = context.GetRequiredService<ConnectionStringsConfig>();
-                cfg.Host(config.RabbitMq);
-
-                cfg.ReceiveEndpoint(MessagingConstants.EmailQueue, e =>
-                {
-                    e.ConfigureConsumer<EmailConsumer>(context);
-                    e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
-                    e.UseScheduledRedelivery(r => r.Intervals(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(30)));
-                });
-            });
-        });
-
-        return services;
-    }
-
     private static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
         services.AddHttpContextAccessor();
         services.AddHttpClient<IImageService, OpeninaryService>();
 
         services.AddScoped<ITokenService, TokenService>();
-        services.AddScoped<IEmailSender, EmailSender>();
+        services.AddScoped<IEmailSender, EmailPublisher>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 

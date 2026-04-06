@@ -2,9 +2,9 @@ using MassTransit;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Models;
 
-namespace LugaStore.Infrastructure.ExternalServices;
+namespace LugaStore.Infrastructure.Messaging.Publishers;
 
-public class EmailSender(IPublishEndpoint publishEndpoint) : IEmailSender
+public class EmailPublisher(IPublishEndpoint publishEndpoint) : IEmailSender
 {
     public async Task SendEmailAsync(string email, string subject, string message)
     {
