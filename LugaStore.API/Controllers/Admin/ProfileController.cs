@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using LugaStore.Application.Features.Profile.Commands;
 using LugaStore.Application.Features.Profile.Queries;
 using LugaStore.Application.Features.Profile.Models;
-using LugaStore.Application.Features.UserManagement.Models;
+using LugaStore.Application.Features.Users.Models;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.API.Controllers.Admin;

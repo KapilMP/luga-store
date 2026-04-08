@@ -1,23 +1,24 @@
+using LugaStore.Application.Features.Users.Queries;
+using LugaStore.Application.Features.Users.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Features.Invitations.Commands;
-using LugaStore.Application.Features.UserManagement.Commands;
-using LugaStore.Application.Features.UserManagement.Queries;
 using LugaStore.Application.Common.Models;
-using LugaStore.Application.Features.UserManagement.Models;
+using LugaStore.Application.Features.Users.Models;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.API.Controllers.Partner;
 
+public record InviteManagerRequest(string Email);
+
 [ApiController]
 [Route("partner/[controller]")]
 [Authorize(Roles = Roles.Partner)]
-public class ManagerController(ISender mediator) : LugaStoreControllerBase
+public class ManagerController(ISender mediator) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PaginatedList<PartnerManagerRepresentation>>> GetManagers(
-        [FromQuery] int pageNumber = 1, 
+        [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] bool? invited = null,
         [FromQuery] bool? isActive = null)
@@ -64,5 +65,11 @@ public class ManagerController(ISender mediator) : LugaStoreControllerBase
     {
         await mediator.Send(new DeletePartnerManagerCommand(GetUserId(), id));
         return NoContent();
+    }
+
+    private int GetUserId()
+    {
+        var id = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        return int.Parse(id ?? "0");
     }
 }

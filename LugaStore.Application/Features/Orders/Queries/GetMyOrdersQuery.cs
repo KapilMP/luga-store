@@ -5,6 +5,9 @@ using LugaStore.Application.Features.Orders;
 
 namespace LugaStore.Application.Features.Orders.Queries;
 
+public record OrderItemResponseDto(int ProductId, string Name, int Quantity, decimal UnitPrice, decimal Subtotal);
+public record OrderResponseDto(int Id, string Status, decimal TotalAmount, DateTime CreatedAt, IEnumerable<OrderItemResponseDto> Items);
+
 public record GetMyOrdersQuery(int UserId) : IRequest<List<OrderResponseDto>>;
 
 public class GetMyOrdersQueryHandler(IApplicationDbContext context) : IRequestHandler<GetMyOrdersQuery, List<OrderResponseDto>>

@@ -1,9 +1,9 @@
+using LugaStore.Application.Features.Users.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Exceptions;
-using LugaStore.Application.Common.Mappings;
-using LugaStore.Application.Features.UserManagement.Models;
+using LugaStore.Application.Features.Users.Models;
 using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Profile.Queries;
@@ -20,6 +20,6 @@ public class GetCustomerProfileQueryHandler(UserManager<User> userManager) :
             .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken) 
             ?? throw new NotFoundError("Profile not found.");
 
-        return user.ToCustomerRepresentation();
+        return CustomerRepresentation.ToCustomerRepresentation(user);
     }
 }

@@ -1,3 +1,4 @@
+using LugaStore.Application.Features.Users.Models;
 namespace LugaStore.Application.Features.Profile.Models;
 
 public record UpdateProfileRequest(string FirstName, string LastName, string Phone);

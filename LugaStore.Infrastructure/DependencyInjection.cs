@@ -6,7 +6,6 @@ using LugaStore.Application.Common.Settings.Validators;
 using LugaStore.Infrastructure.Messaging.Consumers;
 using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Services;
-using LugaStore.Infrastructure.Messaging.Publishers;
 using LugaStore.Infrastructure.ExternalServices;
 using LugaStore.Infrastructure.Configurations;
 using LugaStore.Domain.Entities;
@@ -91,7 +90,6 @@ public static class DependencyInjection
         services.AddHttpClient<IImageService, OpeninaryService>();
 
         services.AddScoped<ITokenService, TokenService>();
-        services.AddScoped<IEmailSender, EmailPublisher>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 

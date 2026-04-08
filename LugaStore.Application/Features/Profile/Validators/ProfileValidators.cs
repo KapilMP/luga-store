@@ -1,3 +1,4 @@
+using LugaStore.Application.Features.Users.Models;
 using FluentValidation;
 using LugaStore.Application.Features.Profile.Commands;
 

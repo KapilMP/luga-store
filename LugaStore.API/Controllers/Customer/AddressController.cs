@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Features.UserManagement.Models;
+using LugaStore.Application.Features.Users.Models;
 using LugaStore.Application.Features.Profile.Models;
 using LugaStore.Application.Features.Profile.Commands;
 using LugaStore.Application.Features.Profile.Queries;

@@ -1,6 +1,5 @@
 using MassTransit;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Models;
 using LugaStore.Application.Common.Interfaces;
@@ -13,7 +12,7 @@ using MimeKit;
 namespace LugaStore.Infrastructure.Messaging.Consumers;
 
 public class EmailConsumer(
-    ILogger<EmailConsumer> logger, 
+    ILogger<EmailConsumer> logger,
     EmailConfig config,
     IApplicationDbContext dbContext) : IConsumer<EmailSentEvent>
 {
@@ -47,17 +46,17 @@ public class EmailConsumer(
         try
         {
             log.SentCount++;
-            
+
             var email = new MimeMessage();
             email.From.Add(new MailboxAddress(config.FromName, config.FromEmail));
             email.To.Add(MailboxAddress.Parse(message.To));
             email.Subject = message.Subject;
-            
+
             var builder = new BodyBuilder { HtmlBody = message.Body };
             email.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
-            
+
             var secureSocketOptions = config.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
             await smtp.ConnectAsync(config.Host, config.Port, secureSocketOptions);
 
@@ -75,7 +74,7 @@ public class EmailConsumer(
 
             if (logger.IsEnabled(LogLevel.Information))
             {
-                logger.LogInformation("EMAIL SENT SUCCESSFULLY: LogId: {Id}, To: {To}, Attempt: {Attempt}", 
+                logger.LogInformation("EMAIL SENT SUCCESSFULLY: LogId: {Id}, To: {To}, Attempt: {Attempt}",
                     log.Id, message.To, log.SentCount);
             }
         }
@@ -85,9 +84,9 @@ public class EmailConsumer(
             log.ErrorMessage = ex.ToString();
             await dbContext.SaveChangesAsync(CancellationToken.None);
 
-            logger.LogError(ex, "FAILED TO SEND EMAIL: LogId: {Id}, To: {To}, Attempt: {Attempt}", 
+            logger.LogError(ex, "FAILED TO SEND EMAIL: LogId: {Id}, To: {To}, Attempt: {Attempt}",
                 log.Id, message.To, log.SentCount);
-            
+
             // Re-throw to trigger MassTransit retry
             throw;
         }

@@ -15,7 +15,7 @@ public class TokenService(JwtConfig jwtConfig) : ITokenService
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Email, user.Email!),
+            new(JwtRegisteredClaimNames.Email, user.Email!),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(ClaimTypes.Role, role)

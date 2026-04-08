@@ -1,8 +1,8 @@
+using LugaStore.Application.Features.Users.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using LugaStore.Application.Common.Exceptions;
-using LugaStore.Application.Common.Mappings;
-using LugaStore.Application.Features.UserManagement.Models;
+using LugaStore.Application.Features.Users.Models;
 using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Profile.Commands;
@@ -22,6 +22,6 @@ public class UpdatePartnerProfileCommandHandler(UserManager<User> userManager) :
 
         await userManager.UpdateAsync(user);
         
-        return user.ToPartnerRepresentation();
+        return PartnerRepresentation.ToPartnerRepresentation(user);
     }
 }

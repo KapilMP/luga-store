@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Features.Orders;
 using LugaStore.Application.Features.Orders.Commands;
 using LugaStore.Application.Features.Orders.Queries;
 using LugaStore.Application.Common.Interfaces;
@@ -9,6 +8,10 @@ using LugaStore.Application.Common.Settings;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace LugaStore.API.Controllers.Customer;
+
+public record CheckoutAddressRequest(string FullName, string Phone, string Street, string City, string ZipCode);
+public record OrderItemRequestDto(int ProductId, int Quantity);
+public record CreateOrderRequest(string? CustomerEmail, CheckoutAddressRequest? ShippingAddress, List<OrderItemRequestDto> Items);
 
 [ApiController]
 [Route("customer/[controller]")]

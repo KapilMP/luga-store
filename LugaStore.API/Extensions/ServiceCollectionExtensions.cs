@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.OpenApi;
@@ -9,9 +8,9 @@ using LugaStore.Infrastructure;
 using LugaStore.Infrastructure.Configurations;
 using LugaStore.Application.Common.Settings;
 using LugaStore.Infrastructure.RateLimiting;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LugaStore.API.Extensions;
 
@@ -19,6 +18,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         services.AddApplication();
         return services;
     }
@@ -26,7 +26,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddInfrastructure(configuration);
-        
+
         // JWT
         services.AddAuthentication(options =>
         {
@@ -63,10 +63,17 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
         services.AddControllers()
-            .ConfigureApiBehaviorOptions(options =>
-            {
-                options.SuppressModelStateInvalidFilter = true;
-            });
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // Disable built-in validation so that FluentValidation in MediatR is the single source of truth
+        options.SuppressModelStateInvalidFilter = true;
+    });
 
         services.AddCors();
         services.AddOptions<CorsOptions>()

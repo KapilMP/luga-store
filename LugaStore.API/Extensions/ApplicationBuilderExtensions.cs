@@ -1,8 +1,4 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
-using LugaStore.Application.Common.Exceptions;
-using Microsoft.Extensions.Hosting;
+using LugaStore.API.Middleware;
 
 namespace LugaStore.API.Extensions;
 
@@ -16,35 +12,7 @@ public static class ApplicationBuilderExtensions
             app.UseSwaggerUI();
         }
 
-        app.UseExceptionHandler(err => err.Run(async ctx =>
-        {
-            var ex = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
-            int status;
-            object response;
-
-            switch (ex)
-            {
-                case FluentValidation.ValidationException e:
-                    status = StatusCodes.Status400BadRequest;
-                    response = new
-                    {
-                        title = "One or more validation errors occurred.",
-                        status = StatusCodes.Status400BadRequest,
-                        errors = e.Errors
-                    };
-                    break;
-                case NotFoundError e: status = StatusCodes.Status404NotFound; response = new { error = e.Message }; break;
-                case ConflictError e: status = StatusCodes.Status409Conflict; response = new { error = e.Message }; break;
-                case BadRequestError e: status = StatusCodes.Status400BadRequest; response = new { error = e.Message }; break;
-                case UnauthorizedError e: status = StatusCodes.Status401Unauthorized; response = new { error = e.Message }; break;
-                case ForbiddenError e: status = StatusCodes.Status403Forbidden; response = new { error = e.Message }; break;
-                case InternalServerError e: status = StatusCodes.Status500InternalServerError; response = new { error = e.Message }; break;
-                default: status = StatusCodes.Status500InternalServerError; response = new { error = "An unexpected error occurred." }; break;
-            }
-
-            ctx.Response.StatusCode = status;
-            await ctx.Response.WriteAsJsonAsync(response);
-        }));
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         if (!app.Environment.IsDevelopment())
             app.UseHttpsRedirection();
@@ -55,7 +23,7 @@ public static class ApplicationBuilderExtensions
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.MapControllers().RequireRateLimiting("Global");
+        app.MapControllers();
 
         return app;
     }

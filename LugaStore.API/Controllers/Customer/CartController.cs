@@ -1,11 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using LugaStore.Application.Features.Cart;
 using LugaStore.Application.Features.Cart.Commands;
 using LugaStore.Application.Features.Cart.Queries;
+using LugaStore.Domain.Enums;
 
 namespace LugaStore.API.Controllers.Customer;
+
+public record AddToCartRequest(int ProductId, ProductSize Size, int Quantity);
+public record UpdateCartRequest(ProductSize Size, int Quantity);
 
 [Route("customer/[controller]")]
 [Authorize]

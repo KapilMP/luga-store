@@ -1,3 +1,4 @@
+using LugaStore.Application.Features.Users.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Exceptions;
