@@ -21,7 +21,6 @@ public class AuthController(
     ISender mediator,
     IOptions<RefreshTokenPathsConfig> options,
     IOptions<JwtConfig> jwtOptions,
-    ITokenService tokenService,
     IWebHostEnvironment environment) : ControllerBase
 {
     private string CookiePath(string role) => role switch {
@@ -38,16 +37,16 @@ public class AuthController(
 
     private async Task<IActionResult> Login(LoginRequest request, string role)
     {
-        var response = await mediator.Send(new LoginCommand(request.Email, request.Password, role));
-        SetAuthCookies(response.RefreshToken, CookiePath(role));
+        var (response, refreshToken) = await mediator.Send(new LoginCommand(request.Email, request.Password, role));
+        SetAuthCookies(refreshToken, CookiePath(role));
         return Ok(response);
     }
 
     [HttpPost("customer/auth/register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var response = await mediator.Send(new RegisterCommand(request.Email, request.Password, request.FirstName, request.LastName, request.Phone));
-        SetAuthCookies(response.RefreshToken, CookiePath(Roles.Customer));
+        var (response, refreshToken) = await mediator.Send(new RegisterCommand(request.Email, request.Password, request.FirstName, request.LastName, request.Phone));
+        SetAuthCookies(refreshToken, CookiePath(Roles.Customer));
         return Ok(response);
     }
 
@@ -61,8 +60,8 @@ public class AuthController(
         var refreshToken = Request.Cookies["refreshToken"];
         if (string.IsNullOrEmpty(refreshToken)) return Unauthorized("No refresh token");
 
-        var response = await mediator.Send(new RefreshTokenCommand(refreshToken, role));
-        SetAuthCookies(response.RefreshToken, CookiePath(role));
+        var (response, newRefreshToken) = await mediator.Send(new RefreshTokenCommand(refreshToken, role));
+        SetAuthCookies(newRefreshToken, CookiePath(role));
         return Ok(response);
     }
 

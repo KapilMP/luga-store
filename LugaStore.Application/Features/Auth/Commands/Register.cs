@@ -10,7 +10,7 @@ using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Auth.Commands;
 
-public record RegisterCommand(string Email, string Password, string FirstName, string LastName, string Phone) : IRequest<AuthResponse>;
+public record RegisterCommand(string Email, string Password, string FirstName, string LastName, string Phone) : IRequest<(AuthResponse Response, string RefreshToken)>;
 
 public class RegisterValidator : AbstractValidator<RegisterCommand>
 {
@@ -26,9 +26,9 @@ public class RegisterValidator : AbstractValidator<RegisterCommand>
 
 public class RegisterHandler(
     UserManager<User> userManager,
-    ITokenService tokenService) : IRequestHandler<RegisterCommand, AuthResponse>
+    ITokenService tokenService) : IRequestHandler<RegisterCommand, (AuthResponse Response, string RefreshToken)>
 {
-    public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken ct)
+    public async Task<(AuthResponse Response, string RefreshToken)> Handle(RegisterCommand request, CancellationToken ct)
     {
         var user = new User { Email = request.Email, UserName = request.Email, FirstName = request.FirstName, LastName = request.LastName, PhoneNumber = request.Phone };
         var result = await userManager.CreateAsync(user, request.Password);
@@ -38,6 +38,6 @@ public class RegisterHandler(
         
         var accessToken = tokenService.GenerateAccessToken(user, Roles.Customer);
         var refreshToken = tokenService.GenerateRefreshToken(user);
-        return new AuthResponse(accessToken, refreshToken, UserRepresentation.ToUserRepresentation(user));
+        return (new AuthResponse(accessToken, UserRepresentation.ToUserRepresentation(user)), refreshToken);
     }
 }

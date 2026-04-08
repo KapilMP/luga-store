@@ -9,13 +9,13 @@ using System.Security.Claims;
 
 namespace LugaStore.Application.Features.Auth.Commands;
 
-public record RefreshTokenCommand(string RefreshToken, string Role) : IRequest<AuthResponse>;
+public record RefreshTokenCommand(string RefreshToken, string Role) : IRequest<(AuthResponse Response, string RefreshToken)>;
 
 public class RefreshTokenHandler(
     UserManager<User> userManager,
-    ITokenService tokenService) : IRequestHandler<RefreshTokenCommand, AuthResponse>
+    ITokenService tokenService) : IRequestHandler<RefreshTokenCommand, (AuthResponse Response, string RefreshToken)>
 {
-    public async Task<AuthResponse> Handle(RefreshTokenCommand request, CancellationToken ct)
+    public async Task<(AuthResponse Response, string RefreshToken)> Handle(RefreshTokenCommand request, CancellationToken ct)
     {
         var principal = tokenService.GetPrincipalFromExpiredToken(request.RefreshToken) ?? throw new UnauthorizedError("Invalid token");
         var email = principal.FindFirstValue(ClaimTypes.Email);
@@ -24,6 +24,6 @@ public class RefreshTokenHandler(
 
         var accessToken = tokenService.GenerateAccessToken(user, request.Role);
         var refreshToken = tokenService.GenerateRefreshToken(user);
-        return new AuthResponse(accessToken, refreshToken, UserRepresentation.ToUserRepresentation(user));
+        return (new AuthResponse(accessToken, UserRepresentation.ToUserRepresentation(user)), refreshToken);
     }
 }

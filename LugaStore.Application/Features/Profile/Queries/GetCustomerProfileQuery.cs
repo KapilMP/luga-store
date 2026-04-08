@@ -3,7 +3,6 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Exceptions;
-using LugaStore.Application.Features.Users.Models;
 using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Profile.Queries;

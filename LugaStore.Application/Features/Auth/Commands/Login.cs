@@ -9,7 +9,7 @@ using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Auth.Commands;
 
-public record LoginCommand(string Email, string Password, string Role) : IRequest<AuthResponse>;
+public record LoginCommand(string Email, string Password, string Role) : IRequest<(AuthResponse Response, string RefreshToken)>;
 
 public class LoginValidator : AbstractValidator<LoginCommand>
 {
@@ -23,9 +23,9 @@ public class LoginValidator : AbstractValidator<LoginCommand>
 
 public class LoginHandler(
     UserManager<User> userManager,
-    ITokenService tokenService) : IRequestHandler<LoginCommand, AuthResponse>
+    ITokenService tokenService) : IRequestHandler<LoginCommand, (AuthResponse Response, string RefreshToken)>
 {
-    public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken ct)
+    public async Task<(AuthResponse Response, string RefreshToken)> Handle(LoginCommand request, CancellationToken ct)
     {
         var user = await userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundError("Invalid credentials");
         if (!user.IsActive) throw new UnauthorizedError("Account deactivated");
@@ -34,6 +34,6 @@ public class LoginHandler(
 
         var accessToken = tokenService.GenerateAccessToken(user, request.Role);
         var refreshToken = tokenService.GenerateRefreshToken(user);
-        return new AuthResponse(accessToken, refreshToken, UserRepresentation.ToUserRepresentation(user));
+        return (new AuthResponse(accessToken, UserRepresentation.ToUserRepresentation(user)), refreshToken);
     }
 }

@@ -3,7 +3,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using LugaStore.Application.Common.Exceptions;
 using LugaStore.Application.Common.Interfaces;
-using LugaStore.Application.Features.Users.Models;
 
 namespace LugaStore.Application.Features.Profile.Queries;
 
