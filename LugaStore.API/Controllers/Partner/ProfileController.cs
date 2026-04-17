@@ -27,11 +27,10 @@ public class ProfileController(ISender mediator) : LugaStoreControllerBase
         return Ok(result);
     }
 
-    [HttpPut("avatar")]
-    public async Task<IActionResult> UploadAvatar(IFormFile file)
+    [HttpGet("avatar/upload-url")]
+    public async Task<IActionResult> GetAvatarUploadUrl([FromQuery] string fileName, [FromQuery] string contentType)
     {
-        await using var stream = file.OpenReadStream();
-        var result = await mediator.Send(new UploadPartnerAvatarCommand(GetUserId(), stream, file.FileName));
+        var result = await mediator.Send(new GetPartnerAvatarUploadUrlCommand(GetUserId(), fileName, contentType));
         return Ok(result);
     }
 

@@ -22,7 +22,6 @@ public interface IApplicationDbContext
     DbSet<PartnerManager> PartnerManagers { get; }
     DbSet<IdentityRole<int>> Roles { get; }
     DbSet<IdentityUserRole<int>> UserRoles { get; }
-    DbSet<EmailLog> EmailLogs { get; }
     DatabaseFacade Database { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

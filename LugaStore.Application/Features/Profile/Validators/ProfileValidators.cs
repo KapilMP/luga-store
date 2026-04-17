@@ -34,18 +34,29 @@ public class UpdatePartnerProfileCommandValidator : AbstractValidator<UpdatePart
     }
 }
 
-public class UploadCustomerAvatarCommandValidator : AbstractValidator<UploadCustomerAvatarCommand>
+public class GetCustomerAvatarUploadUrlCommandValidator : AbstractValidator<GetCustomerAvatarUploadUrlCommand>
 {
-    public UploadCustomerAvatarCommandValidator()
+    public GetCustomerAvatarUploadUrlCommandValidator()
     {
-        RuleFor(v => v.Stream).NotNull().WithMessage("File is required.");
+        RuleFor(v => v.FileName).NotEmpty().WithMessage("File name is required.");
+        RuleFor(v => v.ContentType).NotEmpty().WithMessage("Content type is required.");
     }
 }
 
-public class UploadPartnerAvatarCommandValidator : AbstractValidator<UploadPartnerAvatarCommand>
+public class GetPartnerAvatarUploadUrlCommandValidator : AbstractValidator<GetPartnerAvatarUploadUrlCommand>
 {
-    public UploadPartnerAvatarCommandValidator()
+    public GetPartnerAvatarUploadUrlCommandValidator()
     {
-        RuleFor(v => v.Stream).NotNull().WithMessage("File is required.");
+        RuleFor(v => v.FileName).NotEmpty().WithMessage("File name is required.");
+        RuleFor(v => v.ContentType).NotEmpty().WithMessage("Content type is required.");
+    }
+}
+
+public class GetPartnerManagerAvatarUploadUrlCommandValidator : AbstractValidator<GetPartnerManagerAvatarUploadUrlCommand>
+{
+    public GetPartnerManagerAvatarUploadUrlCommandValidator()
+    {
+        RuleFor(v => v.FileName).NotEmpty().WithMessage("File name is required.");
+        RuleFor(v => v.ContentType).NotEmpty().WithMessage("Content type is required.");
     }
 }

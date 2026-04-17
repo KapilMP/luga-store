@@ -1,9 +1,7 @@
-using LugaStore.Infrastructure.Messaging.Connection;
 using Microsoft.AspNetCore.Identity;
 using LugaStore.Application.Common.Interfaces;
 using LugaStore.Application.Common.Settings;
 using LugaStore.Application.Common.Settings.Validators;
-using LugaStore.Infrastructure.Messaging.Consumers;
 using LugaStore.Infrastructure.Persistence;
 using LugaStore.Infrastructure.Services;
 using LugaStore.Infrastructure.ExternalServices;
@@ -13,8 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using MassTransit;
 using FluentValidation;
+using Resend;
 
 namespace LugaStore.Infrastructure;
 
@@ -29,7 +27,7 @@ public static class DependencyInjection
             .AddInfrastructureConfigs()
             .AddPersistence(configuration)
             .AddIdentity()
-            .AddMessagingByRabbitMq()
+            .AddResendEmail()
             .AddInfrastructureServices();
 
         return services;
@@ -49,8 +47,9 @@ public static class DependencyInjection
             .AddConfigWithValidation<GoogleConfig, GoogleConfigValidator>("Google")
             .AddConfigWithValidation<RefreshTokenPathsConfig, RefreshTokenPathsConfigValidator>("RefreshTokenPaths")
             .AddConfigWithValidation<AppConfig, AppConfigValidator>("App")
-            .AddConfigWithValidation<OpeninaryConfig, OpeninaryConfigValidator>("Openinary")
+            .AddConfigWithValidation<S3Config, S3ConfigValidator>("S3")
             .AddConfigWithValidation<EmailConfig, EmailConfigValidator>("Email")
+            .AddConfigWithValidation<ResendConfig, ResendConfigValidator>("Resend")
             .AddConfigWithValidation<RateLimitingConfig, RateLimitingConfigValidator>("RateLimiting");
 
         return services;
@@ -87,11 +86,26 @@ public static class DependencyInjection
     private static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
         services.AddHttpContextAccessor();
-        services.AddHttpClient<IImageService, OpeninaryService>();
+        services.AddScoped<IS3Service, S3Service>();
 
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IEmailService, EmailService>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddResendEmail(this IServiceCollection services)
+    {
+        services.AddOptions();
+        services.AddHttpClient<ResendClient>();
+        services.AddOptions<ResendClientOptions>()
+            .Configure<ResendConfig>((options, config) =>
+            {
+                options.ApiToken = config.ApiToken;
+            });
+        services.AddTransient<IResend, ResendClient>();
 
         return services;
     }
