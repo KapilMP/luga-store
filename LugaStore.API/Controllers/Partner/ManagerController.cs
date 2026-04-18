@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using LugaStore.Application.Common.Models;
 using LugaStore.Application.Features.Users.Models;
 using LugaStore.Domain.Common;
+using Microsoft.AspNetCore.RateLimiting;
+using LugaStore.Application.Common.Settings;
 
 namespace LugaStore.API.Controllers.Partner;
 
@@ -14,6 +16,7 @@ public record InviteManagerRequest(string Email);
 [ApiController]
 [Route("partner/[controller]")]
 [Authorize(Roles = Roles.Partner)]
+[EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
 public class ManagerController(ISender mediator) : ControllerBase
 {
     [HttpGet]
@@ -23,19 +26,19 @@ public class ManagerController(ISender mediator) : ControllerBase
         [FromQuery] bool? invited = null,
         [FromQuery] bool? isActive = null)
     {
-        return await mediator.Send(new GetPartnerManagersQuery(GetUserId(), pageNumber, pageSize, invited, isActive));
+        return await mediator.Send(new GetPartnerManagersQuery(pageNumber, pageSize, invited, isActive));
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<PartnerManagerRepresentation>> GetManager(int id)
     {
-        return await mediator.Send(new GetPartnerManagerQuery(GetUserId(), id));
+        return await mediator.Send(new GetPartnerManagerQuery(id));
     }
 
     [HttpPost("invite")]
     public async Task<ActionResult<string>> InviteManager(InviteManagerRequest request)
     {
-        await mediator.Send(new InvitePartnerManagerCommand(GetUserId(), request.Email));
+        await mediator.Send(new InvitePartnerManagerCommand(request.Email));
         return Ok("Invitation sent.");
     }
 
@@ -49,27 +52,21 @@ public class ManagerController(ISender mediator) : ControllerBase
     [HttpPatch("{id:int}/activate")]
     public async Task<ActionResult> ActivateManager(int id)
     {
-        await mediator.Send(new ActivatePartnerManagerCommand(GetUserId(), id));
+        await mediator.Send(new ActivatePartnerManagerCommand(id));
         return Ok();
     }
 
     [HttpPatch("{id:int}/deactivate")]
     public async Task<ActionResult> DeactivateManager(int id)
     {
-        await mediator.Send(new DeactivatePartnerManagerCommand(GetUserId(), id));
+        await mediator.Send(new DeactivatePartnerManagerCommand(id));
         return Ok();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteManager(int id)
     {
-        await mediator.Send(new DeletePartnerManagerCommand(GetUserId(), id));
+        await mediator.Send(new DeletePartnerManagerCommand(id));
         return NoContent();
-    }
-
-    private int GetUserId()
-    {
-        var id = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return int.Parse(id ?? "0");
     }
 }

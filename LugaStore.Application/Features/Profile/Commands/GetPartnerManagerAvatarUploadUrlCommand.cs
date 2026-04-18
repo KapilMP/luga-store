@@ -8,22 +8,24 @@ using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Profile.Commands;
 
-public record GetPartnerManagerAvatarUploadUrlCommand(int UserId, string FileName, string ContentType) : IRequest<ImageUploadUrlResponse>;
+public record GetPartnerManagerAvatarUploadUrlCommand(string FileName, string ContentType) : IRequest<ImageUploadUrlResponse>;
 
 public class GetPartnerManagerAvatarUploadUrlCommandHandler(
     UserManager<User> userManager,
-    IImageService imageService) : 
+    IS3Service s3Service,
+    ICurrentUser currentUser) : 
     IRequestHandler<GetPartnerManagerAvatarUploadUrlCommand, ImageUploadUrlResponse>
 {
     public async Task<ImageUploadUrlResponse> Handle(GetPartnerManagerAvatarUploadUrlCommand request, CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByIdAsync(request.UserId.ToString()) ?? throw new NotFoundError("Profile not found.");
+        var userId = currentUser.Id!.Value;
+        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundError("Profile not found.");
 
         var extension = Path.GetExtension(request.FileName);
-        var fileName = $"avatars/manager_{request.UserId}_{Guid.NewGuid()}{extension}";
+        var fileName = $"avatars/manager_{userId}_{Guid.NewGuid()}{extension}";
         
-        var uploadUrl = await imageService.GetPresignedUrlAsync(fileName, request.ContentType, cancellationToken);
+        var uploadUrl = s3Service.GetPreSignedUrl(request.ContentType, fileName);
         
-        return new ImageUploadUrlResponse(uploadUrl, fileName);
+        return new ImageUploadUrlResponse(uploadUrl.ToString(), fileName);
     }
 }

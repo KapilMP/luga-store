@@ -8,23 +8,23 @@ using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Users.Commands;
 
-public record ActivatePartnerManagerCommand(int PartnerId, int ManagerId) : IRequest;
+public record ActivatePartnerManagerCommand(int ManagerId) : IRequest;
 
 public class ActivatePartnerManagerValidator : AbstractValidator<ActivatePartnerManagerCommand>
 {
     public ActivatePartnerManagerValidator()
     {
-        RuleFor(x => x.PartnerId).GreaterThan(0);
         RuleFor(x => x.ManagerId).GreaterThan(0);
     }
 }
 
-public class ActivatePartnerManagerHandler(UserManager<User> userManager, IApplicationDbContext dbContext) : IRequestHandler<ActivatePartnerManagerCommand>
+public class ActivatePartnerManagerHandler(UserManager<User> userManager, IApplicationDbContext dbContext, ICurrentUser currentUser) : IRequestHandler<ActivatePartnerManagerCommand>
 {
     public async Task Handle(ActivatePartnerManagerCommand request, CancellationToken ct)
     {
+        var partnerId = currentUser.Id!.Value;
         var pm = await dbContext.PartnerManagers
-            .FirstOrDefaultAsync(x => x.PartnerId == request.PartnerId && x.ManagerId == request.ManagerId, ct)
+            .FirstOrDefaultAsync(x => x.PartnerId == partnerId && x.ManagerId == request.ManagerId, ct)
             ?? throw new NotFoundError("Partner Manager linkage not found");
 
         var user = await userManager.FindByIdAsync(request.ManagerId.ToString()) ?? throw new NotFoundError("User not found");

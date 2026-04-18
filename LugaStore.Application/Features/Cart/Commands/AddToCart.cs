@@ -7,17 +7,18 @@ using LugaStore.Domain.Enums;
 
 namespace LugaStore.Application.Features.Cart.Commands;
 
-public record AddToCartCommand(int UserId, int ProductId, ProductSize Size, int Quantity) : ICommand;
+public record AddToCartCommand(int ProductId, ProductSize Size, int Quantity) : ICommand;
 
-public class AddToCartHandler(IApplicationDbContext context) : ICommandHandler<AddToCartCommand>
+public class AddToCartHandler(IApplicationDbContext context, ICurrentUser currentUser) : ICommandHandler<AddToCartCommand>
 {
     public async Task Handle(AddToCartCommand request, CancellationToken ct)
     {
+        var userId = currentUser.Id!.Value;
         var productExists = await context.Products.AnyAsync(p => p.Id == request.ProductId, ct);
         if (!productExists) throw new NotFoundError("Product not found");
 
         var existing = await context.CartItems
-            .FirstOrDefaultAsync(c => c.UserId == request.UserId && c.ProductId == request.ProductId && c.Size == request.Size, ct);
+            .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == request.ProductId && c.Size == request.Size, ct);
 
         if (existing != null)
         {
@@ -27,7 +28,7 @@ public class AddToCartHandler(IApplicationDbContext context) : ICommandHandler<A
         {
             context.CartItems.Add(new CartItem 
             { 
-                UserId = request.UserId, 
+                UserId = userId, 
                 ProductId = request.ProductId, 
                 Size = request.Size, 
                 Quantity = request.Quantity 

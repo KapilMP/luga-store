@@ -15,7 +15,7 @@ public class OrdersController(ISender mediator) : ControllerBase
 {
     [HttpGet("customer/{customerId:int}")]
     public async Task<IActionResult> GetCustomerOrders(int customerId)
-        => Ok(await mediator.Send(new GetMyOrdersQuery(customerId)));
+        => Ok(await mediator.Send(new GetCustomerOrdersQuery(customerId)));
 
     [HttpPatch("{orderId:int}/status")]
     public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromQuery] int customerId, [FromBody] OrderStatus status)

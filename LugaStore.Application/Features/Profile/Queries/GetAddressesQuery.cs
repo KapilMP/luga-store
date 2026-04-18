@@ -6,16 +6,17 @@ using LugaStore.Application.Common.Interfaces;
 
 namespace LugaStore.Application.Features.Profile.Queries;
 
-public record GetAddressesQuery(int UserId) : IRequest<List<AddressRepresentation>>;
+public record GetAddressesQuery() : IRequest<List<AddressRepresentation>>;
 
-public class GetAddressesQueryHandler(IApplicationDbContext dbContext) : 
+public class GetAddressesQueryHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) : 
     IRequestHandler<GetAddressesQuery, List<AddressRepresentation>>
 {
     public async Task<List<AddressRepresentation>> Handle(GetAddressesQuery request, CancellationToken cancellationToken)
     {
+        var userId = currentUser.Id!.Value;
         var addresses = await dbContext.Addresses
             .AsNoTracking()
-            .Where(a => a.UserId == request.UserId)
+            .Where(a => a.UserId == userId)
             .ToListAsync(cancellationToken);
 
         return addresses.Select(a => new AddressRepresentation(

@@ -26,7 +26,7 @@ public class User : IdentityUser<int>, ISoftDelete, IAuditableEntity
     public ICollection<PartnerManager> ManagerAssignments { get; set; } = [];
 
     // Profile
-    public string? AvatarPath { get; set; }
+    public string? AvatarFileName { get; set; }
 
     // Relationships
     public ICollection<Address> Addresses { get; set; } = [];

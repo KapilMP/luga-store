@@ -7,6 +7,6 @@ public class ProductImage : BaseEntity
     public int ProductId { get; set; }
     public Product Product { get; set; } = null!;
 
-    public string ImagePath { get; set; } = string.Empty;
-    public int DisplayOrder { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public int Order { get; set; }
 }

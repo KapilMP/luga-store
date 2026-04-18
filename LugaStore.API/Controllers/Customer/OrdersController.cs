@@ -15,23 +15,21 @@ public record CreateOrderRequest(string? CustomerEmail, CheckoutAddressRequest? 
 
 [ApiController]
 [Route("customer/[controller]")]
-public class OrdersController(ISender mediator, ICurrentUser currentUser) : LugaStoreControllerBase
+[EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
+public class OrdersController(ISender mediator) : ControllerBase
 {
     [HttpPost("checkout")]
     [AllowAnonymous]
     [EnableRateLimiting(nameof(RateLimitingPolicies.Checkout))]
     public async Task<IActionResult> Checkout([FromBody] CreateOrderRequest request)
     {
-        var userIdString = currentUser.UserId;
-        int? userId = string.IsNullOrEmpty(userIdString) ? null : int.Parse(userIdString);
-
         var address = request.ShippingAddress is { } a
             ? new CheckoutAddressDto(a.FullName, a.Phone, a.Street, a.City, a.ZipCode)
             : null;
 
         var items = request.Items.Select(i => new CheckoutItemDto(i.ProductId, i.Quantity)).ToList();
 
-        var result = await mediator.Send(new CheckoutCommand(userId, request.CustomerEmail, address, items));
+        var result = await mediator.Send(new CheckoutCommand(request.CustomerEmail, address, items));
         return Ok(new { orderId = result.OrderId, status = result.Status, total = result.Total });
     }
 
@@ -39,8 +37,7 @@ public class OrdersController(ISender mediator, ICurrentUser currentUser) : Luga
     [Authorize]
     public async Task<IActionResult> GetMyHistory()
     {
-        var userId = int.Parse(currentUser.UserId!);
-        var orders = await mediator.Send(new GetMyOrdersQuery(userId));
+        var orders = await mediator.Send(new GetMyOrdersQuery());
         return Ok(orders);
     }
 }

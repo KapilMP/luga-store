@@ -7,18 +7,19 @@ using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Profile.Commands;
 
-public record AddAddressCommand(int UserId, AddressRepresentation Address) : IRequest<AddressRepresentation>;
+public record AddAddressCommand(AddressRepresentation Address) : IRequest<AddressRepresentation>;
 
-public class AddAddressCommandHandler(IApplicationDbContext dbContext) : 
+public class AddAddressCommandHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) : 
     IRequestHandler<AddAddressCommand, AddressRepresentation>
 {
     public async Task<AddressRepresentation> Handle(AddAddressCommand request, CancellationToken cancellationToken)
     {
-        var user = await dbContext.Users.Include(u => u.Addresses).FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken) ?? throw new NotFoundError("User not found.");
+        var userId = currentUser.Id!.Value;
+        var user = await dbContext.Users.Include(u => u.Addresses).FirstOrDefaultAsync(u => u.Id == userId, cancellationToken) ?? throw new NotFoundError("User not found.");
 
         var entity = new Address
         {
-            UserId = request.UserId,
+            UserId = userId,
             Label = request.Address.Label,
             FullName = request.Address.FullName,
             Email = request.Address.Email,

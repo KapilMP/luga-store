@@ -12,6 +12,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using LugaStore.Application.Common.Interfaces;
+using LugaStore.API.Services;
+
 namespace LugaStore.API.Extensions;
 
 public static class ServiceCollectionExtensions
@@ -19,6 +22,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddApplication();
         return services;
     }

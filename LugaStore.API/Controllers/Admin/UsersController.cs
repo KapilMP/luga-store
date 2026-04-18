@@ -38,7 +38,7 @@ public class UsersController(ISender mediator) : ControllerBase
     [HttpPost("partner/{partnerId:int}/invite-manager")]
     public async Task<IActionResult> InviteManager(int partnerId, [FromBody] string email)
     {
-        await mediator.Send(new InvitePartnerManagerCommand(partnerId, email));
+        await mediator.Send(new AdminInvitePartnerManagerCommand(partnerId, email));
         return Ok("Invitation sent.");
     }
 }

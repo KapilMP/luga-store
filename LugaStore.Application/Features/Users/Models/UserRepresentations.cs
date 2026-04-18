@@ -12,7 +12,7 @@ public record UserRepresentation(
     string? FirstName,
     string? LastName,
     string? Phone,
-    string? AvatarPath,
+    string? AvatarFileName,
     bool IsActive,
     bool EmailConfirmed
 )
@@ -24,7 +24,7 @@ public record UserRepresentation(
         user.FirstName, 
         user.LastName, 
         user.PhoneNumber, 
-        user.AvatarPath, 
+        user.AvatarFileName, 
         user.IsActive, 
         user.EmailConfirmed
     );
@@ -46,14 +46,14 @@ public record CustomerRepresentation(
     string? FirstName,
     string? LastName,
     string? Phone,
-    string? AvatarPath,
+    string? AvatarFileName,
     bool IsActive,
     bool EmailConfirmed,
     List<AddressRepresentation> Addresses
-) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarPath, IsActive, EmailConfirmed)
+) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarFileName, IsActive, EmailConfirmed)
 {
     public static CustomerRepresentation ToCustomerRepresentation(User user) => new(
-        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarPath, user.IsActive, user.EmailConfirmed,
+        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarFileName, user.IsActive, user.EmailConfirmed,
         user.Addresses.Select(AddressRepresentation.FromEntity).ToList()
     );
 }
@@ -65,13 +65,13 @@ public record PartnerRepresentation(
     string? FirstName,
     string? LastName,
     string? Phone,
-    string? AvatarPath,
+    string? AvatarFileName,
     bool IsActive,
     bool EmailConfirmed
-) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarPath, IsActive, EmailConfirmed)
+) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarFileName, IsActive, EmailConfirmed)
 {
     public static PartnerRepresentation ToPartnerRepresentation(User user) => new(
-        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarPath, user.IsActive, user.EmailConfirmed
+        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarFileName, user.IsActive, user.EmailConfirmed
     );
 }
 
@@ -82,13 +82,13 @@ public record PartnerManagerRepresentation(
     string? FirstName,
     string? LastName,
     string? Phone,
-    string? AvatarPath,
+    string? AvatarFileName,
     bool IsActive,
     bool EmailConfirmed
-) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarPath, IsActive, EmailConfirmed)
+) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarFileName, IsActive, EmailConfirmed)
 {
     public static PartnerManagerRepresentation ToPartnerManagerRepresentation(User user) => new(
-        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarPath, user.IsActive, user.EmailConfirmed
+        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarFileName, user.IsActive, user.EmailConfirmed
     );
 }
 
@@ -99,12 +99,12 @@ public record AdminRepresentation(
     string? FirstName,
     string? LastName,
     string? Phone,
-    string? AvatarPath,
+    string? AvatarFileName,
     bool IsActive,
     bool EmailConfirmed
-) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarPath, IsActive, EmailConfirmed)
+) : UserRepresentation(Id, CreatedAt, Email, FirstName, LastName, Phone, AvatarFileName, IsActive, EmailConfirmed)
 {
     public static AdminRepresentation ToAdminRepresentation(User user) => new(
-        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarPath, user.IsActive, user.EmailConfirmed
+        user.Id, user.Created, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarFileName, user.IsActive, user.EmailConfirmed
     );
 }

@@ -1,12 +1,22 @@
 using System.Net;
 using System.Text.Json;
-using LugaStore.Application.Common.Exceptions;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
+using LugaStore.Application.Common.Exceptions;
 
 namespace LugaStore.API.Middleware;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+public class ExceptionHandlingMiddleware(
+    RequestDelegate next,
+    ILogger<ExceptionHandlingMiddleware> logger,
+    IHostEnvironment env)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -15,70 +25,93 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An unhandled exception occurred.");
+            logger.LogError(ex,
+                "Unhandled exception occurred. TraceId: {TraceId}",
+                context.TraceIdentifier);
+
             await HandleExceptionAsync(context, ex);
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
 
-        var (statusCode, title, detail, errors) = exception switch
+        var problemDetails = exception switch
         {
-            ValidationException ex => (
-                (int)HttpStatusCode.BadRequest,
-                "Validation Error",
-                "One or more validation errors occurred.",
-                (object?)ex.Errors),
-            NotFoundError ex => (
-                (int)HttpStatusCode.NotFound,
-                "Not Found",
-                ex.Message,
-                null),
-            BadRequestError ex => (
-                (int)HttpStatusCode.BadRequest,
-                "Bad Request",
-                ex.Message,
-                null),
-            UnauthorizedError ex => (
-                (int)HttpStatusCode.Unauthorized,
-                "Unauthorized",
-                ex.Message,
-                null),
-            ForbiddenError ex => (
-                (int)HttpStatusCode.Forbidden,
-                "Forbidden",
-                ex.Message,
-                null),
-            ConflictError ex => (
-                (int)HttpStatusCode.Conflict,
-                "Conflict",
-                ex.Message,
-                null),
-            _ => (
-                (int)HttpStatusCode.InternalServerError,
-                "Internal Server Error",
-                "An unexpected error occurred on the server.",
-                null)
+            ValidationException ex => new ValidationProblemDetails(ex.Errors)
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Validation failed",
+                Detail = "One or more validation errors occurred.",
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            },
+
+            NotFoundError ex => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.NotFound,
+                Title = "Resource not found",
+                Detail = ex.Message,
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4"
+            },
+
+            BadRequestError ex => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Bad request",
+                Detail = ex.Message,
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            },
+
+            UnauthorizedAccessException => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Unauthorized,
+                Title = "Unauthorized",
+                Detail = "You are not authenticated to access this resource.",
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+            },
+
+            ForbiddenError ex => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Forbidden,
+                Title = "Forbidden",
+                Detail = ex.Message,
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
+            },
+
+            ConflictError ex => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Conflict",
+                Detail = ex.Message,
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+            },
+
+            _ => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.InternalServerError,
+                Title = "Server error",
+                Detail = env.IsDevelopment()
+                    ? exception.Message
+                    : "An unexpected error occurred.",
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
+            }
         };
 
-        context.Response.StatusCode = statusCode;
+        context.Response.StatusCode =
+            problemDetails.Status ?? (int)HttpStatusCode.InternalServerError;
 
-        var problemDetails = new ProblemDetails
-        {
-            Status = statusCode,
-            Title = title,
-            Detail = detail,
-            Instance = context.Request.Path
-        };
-
-        if (errors != null)
-        {
-            problemDetails.Extensions["errors"] = errors;
-        }
-
-        var result = JsonSerializer.Serialize(problemDetails);
-        await context.Response.WriteAsync(result);
+        await JsonSerializer.SerializeAsync(
+            context.Response.Body,
+            problemDetails,
+            problemDetails.GetType(),
+            JsonOptions);
     }
 }

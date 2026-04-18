@@ -17,10 +17,10 @@ public class RefreshTokenHandler(
 {
     public async Task<(AuthResponse Response, string RefreshToken)> Handle(RefreshTokenCommand request, CancellationToken ct)
     {
-        var principal = tokenService.GetPrincipalFromExpiredToken(request.RefreshToken) ?? throw new UnauthorizedError("Invalid token");
+        var principal = tokenService.GetPrincipalFromExpiredToken(request.RefreshToken) ?? throw new UnauthorizedAccessException("Invalid token");
         var email = principal.FindFirstValue(ClaimTypes.Email);
-        var user = await userManager.FindByEmailAsync(email!) ?? throw new UnauthorizedError("User not found");
-        if (!user.IsActive || !await userManager.IsInRoleAsync(user, request.Role)) throw new UnauthorizedError("Access denied");
+        var user = await userManager.FindByEmailAsync(email!) ?? throw new UnauthorizedAccessException("User not found");
+        if (!user.IsActive || !await userManager.IsInRoleAsync(user, request.Role)) throw new UnauthorizedAccessException("Access denied");
 
         var accessToken = tokenService.GenerateAccessToken(user, request.Role);
         var refreshToken = tokenService.GenerateRefreshToken(user);

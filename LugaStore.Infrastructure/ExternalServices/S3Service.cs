@@ -10,9 +10,9 @@ public class S3Service(S3Config config) : IS3Service
 {
     private readonly AmazonS3Client _s3Client = CreateClient(config);
 
-    public Uri GetPreSignedUrl(string contentType, string? fileName = null)
+    public Uri GetPreSignedUrl(string contentType, string fileName)
     {
-        var key = !string.IsNullOrWhiteSpace(fileName) ? $"public/{fileName}" : $"public/{Guid.NewGuid()}";
+        var key = $"public/{fileName}";
 
         var request = new GetPreSignedUrlRequest
         {
@@ -26,17 +26,24 @@ public class S3Service(S3Config config) : IS3Service
         return new Uri(_s3Client.GetPreSignedURL(request));
     }
 
-    public async Task DeletePhotoAsync(string path)
+    public async Task DeleteFileAsync(string filename)
     {
         try
         {
-            var request = new DeleteObjectRequest
+            var publicRequest = new DeleteObjectRequest
             {
                 BucketName = config.BucketName,
-                Key = path
+                Key = $"public/{filename}"
             };
+            await _s3Client.DeleteObjectAsync(publicRequest);
 
-            await _s3Client.DeleteObjectAsync(request);
+            // Fire and forget cache deletion
+            var cacheRequest = new DeleteObjectRequest
+            {
+                BucketName = config.BucketName,
+                Key = $"cache/{filename}"
+            };
+            _ = _s3Client.DeleteObjectAsync(cacheRequest);
         }
         catch (Exception)
         {

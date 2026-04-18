@@ -1,38 +1,67 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using LugaStore.Application.Common.Exceptions;
 using LugaStore.Application.Common.Interfaces;
-using LugaStore.Application.Features.Orders;
+using LugaStore.Domain.Entities;
 
 namespace LugaStore.Application.Features.Orders.Queries;
 
-public record OrderItemResponseDto(int ProductId, string Name, int Quantity, decimal UnitPrice, decimal Subtotal);
-public record OrderResponseDto(int Id, string Status, decimal TotalAmount, DateTime CreatedAt, IEnumerable<OrderItemResponseDto> Items);
+public record OrderItemRepresentation(
+    int ProductId,
+    string ProductName,
+    int Quantity,
+    decimal UnitPrice,
+    decimal Subtotal);
 
-public record GetMyOrdersQuery(int UserId) : IRequest<List<OrderResponseDto>>;
-
-public class GetMyOrdersQueryHandler(IApplicationDbContext context) : IRequestHandler<GetMyOrdersQuery, List<OrderResponseDto>>
+public record OrderRepresentation(
+    int Id,
+    DateTime CreatedAt,
+    string Status,
+    decimal TotalAmount,
+    List<OrderItemRepresentation> Items)
 {
-    public async Task<List<OrderResponseDto>> Handle(GetMyOrdersQuery request, CancellationToken cancellationToken)
+    public static OrderRepresentation ToOrderRepresentation(Order order) => new(
+        order.Id,
+        order.Created,
+        order.Status.ToString(),
+        order.TotalAmount,
+        order.Items.Select(i => new OrderItemRepresentation(
+            i.ProductId,
+            i.Product?.Name ?? "Unknown",
+            i.Quantity,
+            i.UnitPrice,
+            i.UnitPrice * i.Quantity)).ToList());
+}
+
+public record GetMyOrdersQuery() : IRequest<List<OrderRepresentation>>;
+
+public record GetCustomerOrdersQuery(int userId) : IRequest<List<OrderRepresentation>>;
+
+public class GetMyOrdersQueryHandler(IApplicationDbContext context, ICurrentUser currentUser) : IRequestHandler<GetMyOrdersQuery, List<OrderRepresentation>>
+{
+    public async Task<List<OrderRepresentation>> Handle(GetMyOrdersQuery request, CancellationToken cancellationToken)
+    {
+        var userId = currentUser.Id!.Value;
+        return await GetOrdersInternal(userId, context, cancellationToken);
+    }
+
+    internal static async Task<List<OrderRepresentation>> GetOrdersInternal(int userId, IApplicationDbContext context, CancellationToken cancellationToken)
     {
         var orders = await context.Orders
-            .AsNoTracking()
-            .Where(o => o.UserId == request.UserId)
+            .Where(o => o.UserId == userId)
             .Include(o => o.Items)
-            .ThenInclude(i => i.Product)
+                .ThenInclude(i => i.Product)
             .OrderByDescending(o => o.Created)
             .ToListAsync(cancellationToken);
-            
-        return orders.Select(o => new OrderResponseDto(
-            o.Id,
-            o.Status.ToString(),
-            o.TotalAmount,
-            o.Created,
-            o.Items.Select(i => new OrderItemResponseDto(
-                i.ProductId,
-                i.Product.Name,
-                i.Quantity,
-                i.UnitPrice,
-                i.UnitPrice * i.Quantity))
-        )).ToList();
+
+        return orders.Select(OrderRepresentation.ToOrderRepresentation).ToList();
+    }
+}
+
+public class GetCustomerOrdersQueryHandler(IApplicationDbContext context) : IRequestHandler<GetCustomerOrdersQuery, List<OrderRepresentation>>
+{
+    public async Task<List<OrderRepresentation>> Handle(GetCustomerOrdersQuery request, CancellationToken cancellationToken)
+    {
+        return await GetMyOrdersQueryHandler.GetOrdersInternal(request.userId, context, cancellationToken);
     }
 }

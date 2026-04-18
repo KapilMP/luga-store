@@ -13,10 +13,5 @@ public class CheckoutCommandValidator : AbstractValidator<CheckoutCommand>
             item.RuleFor(i => i.ProductId).GreaterThan(0);
             item.RuleFor(i => i.Quantity).GreaterThan(0);
         });
-
-        When(v => !v.UserId.HasValue, () =>
-        {
-            RuleFor(v => v.CustomerEmail).NotEmpty().EmailAddress().WithMessage("Guest checkout requires a valid email.");
-        });
     }
 }

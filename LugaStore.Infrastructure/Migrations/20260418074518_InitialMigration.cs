@@ -42,7 +42,7 @@ namespace LugaStore.Infrastructure.Migrations
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     Deleted = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    AvatarPath = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    AvatarFileName = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -61,27 +61,6 @@ namespace LugaStore.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EmailLogs",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    To = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Subject = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Body = table.Column<string>(type: "text", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
-                    MessageId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    SentCount = table.Column<int>(type: "integer", nullable: false),
-                    LastAttemptAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EmailLogs", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -391,8 +370,8 @@ namespace LugaStore.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ProductId = table.Column<int>(type: "integer", nullable: false),
-                    ImagePath = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
-                    DisplayOrder = table.Column<int>(type: "integer", nullable: false)
+                    FileName = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    Order = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -618,27 +597,6 @@ namespace LugaStore.Infrastructure.Migrations
                 column: "ProductsId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmailLogs_CreatedAt",
-                table: "EmailLogs",
-                column: "CreatedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmailLogs_MessageId",
-                table: "EmailLogs",
-                column: "MessageId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmailLogs_Status",
-                table: "EmailLogs",
-                column: "Status");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmailLogs_To",
-                table: "EmailLogs",
-                column: "To");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_NewsletterSubscribers_Email",
                 table: "NewsletterSubscribers",
                 column: "Email",
@@ -776,9 +734,6 @@ namespace LugaStore.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "CategoryProduct");
-
-            migrationBuilder.DropTable(
-                name: "EmailLogs");
 
             migrationBuilder.DropTable(
                 name: "NewsletterSubscribers");

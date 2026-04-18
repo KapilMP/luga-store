@@ -17,7 +17,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LastName)
             .HasMaxLength(64);
 
-        builder.Property(u => u.AvatarPath)
+        builder.Property(u => u.AvatarFileName)
             .HasMaxLength(512);
 
         // Indexing common filter properties

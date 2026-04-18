@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using LugaStore.Application.Features.Auth.Models;
 using LugaStore.Application.Features.Auth.Commands;
 using LugaStore.Application.Common.Settings;
-using LugaStore.Application.Common.Interfaces;
 using LugaStore.Domain.Common;
 
 namespace LugaStore.API.Controllers.Admin;

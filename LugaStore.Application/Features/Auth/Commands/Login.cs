@@ -28,7 +28,7 @@ public class LoginHandler(
     public async Task<(AuthResponse Response, string RefreshToken)> Handle(LoginCommand request, CancellationToken ct)
     {
         var user = await userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundError("Invalid credentials");
-        if (!user.IsActive) throw new UnauthorizedError("Account deactivated");
+        if (!user.IsActive) throw new UnauthorizedAccessException("Account deactivated");
         if (!await userManager.IsInRoleAsync(user, request.Role)) throw new ForbiddenError("Access denied");
         if (!await userManager.CheckPasswordAsync(user, request.Password)) throw new NotFoundError("Invalid credentials");
 

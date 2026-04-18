@@ -4,11 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using LugaStore.Application.Features.Categories;
 using LugaStore.Domain.Common;
 
+using Microsoft.AspNetCore.RateLimiting;
+using LugaStore.Application.Common.Settings;
+
 namespace LugaStore.API.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class CategoriesController(ISender mediator) : LugaStoreControllerBase
+[EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
+public class CategoriesController(ISender mediator) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)

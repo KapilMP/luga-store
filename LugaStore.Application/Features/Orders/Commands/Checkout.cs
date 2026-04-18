@@ -12,20 +12,19 @@ public record CheckoutItemDto(int ProductId, int Quantity);
 public record CheckoutResult(int OrderId, string Status, decimal Total);
 
 public record CheckoutCommand(
-    int? UserId,
     string? CustomerEmail,
     CheckoutAddressDto? ShippingAddress,
     List<CheckoutItemDto> Items) : ICommand<CheckoutResult>;
 
-public class CheckoutHandler(IApplicationDbContext context, IAuthService authService) : ICommandHandler<CheckoutCommand, CheckoutResult>
+public class CheckoutHandler(IApplicationDbContext context, IAuthService authService, ICurrentUser currentUser) : ICommandHandler<CheckoutCommand, CheckoutResult>
 {
     public async Task<CheckoutResult> Handle(CheckoutCommand request, CancellationToken ct)
     {
         int userId;
 
-        if (request.UserId.HasValue)
+        if (currentUser.Id.HasValue)
         {
-            userId = request.UserId.Value;
+            userId = currentUser.Id.Value;
         }
         else
         {

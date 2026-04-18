@@ -10,7 +10,7 @@ public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
     {
         builder.HasKey(i => i.Id);
 
-        builder.Property(i => i.ImagePath).IsRequired().HasMaxLength(512);
+        builder.Property(i => i.FileName).IsRequired().HasMaxLength(512);
 
         builder.HasOne(i => i.Product)
             .WithMany(p => p.Images)

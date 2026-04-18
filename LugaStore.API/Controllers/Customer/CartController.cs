@@ -5,44 +5,49 @@ using LugaStore.Application.Features.Cart.Commands;
 using LugaStore.Application.Features.Cart.Queries;
 using LugaStore.Domain.Enums;
 
+using Microsoft.AspNetCore.RateLimiting;
+using LugaStore.Application.Common.Settings;
+
 namespace LugaStore.API.Controllers.Customer;
 
 public record AddToCartRequest(int ProductId, ProductSize Size, int Quantity);
 public record UpdateCartRequest(ProductSize Size, int Quantity);
 
+[ApiController]
 [Route("customer/[controller]")]
 [Authorize]
-public class CartController(ISender mediator) : LugaStoreControllerBase
+[EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
+public class CartController(ISender mediator) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetCart()
-        => Ok(await mediator.Send(new GetCartQuery(GetUserId())));
+        => Ok(await mediator.Send(new GetCartQuery()));
 
     [HttpPost]
     public async Task<IActionResult> AddToCart(AddToCartRequest request)
     {
-        await mediator.Send(new AddToCartCommand(GetUserId(), request.ProductId, request.Size, request.Quantity));
+        await mediator.Send(new AddToCartCommand(request.ProductId, request.Size, request.Quantity));
         return Ok();
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateItem(int id, UpdateCartRequest request)
     {
-        await mediator.Send(new UpdateCartItemCommand(id, GetUserId(), request.Size, request.Quantity));
+        await mediator.Send(new UpdateCartItemCommand(id, request.Size, request.Quantity));
         return Ok();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> RemoveItem(int id)
     {
-        await mediator.Send(new RemoveCartItemCommand(id, GetUserId()));
+        await mediator.Send(new RemoveCartItemCommand(id));
         return NoContent();
     }
 
     [HttpDelete]
     public async Task<IActionResult> ClearCart()
     {
-        await mediator.Send(new ClearCartCommand(GetUserId()));
+        await mediator.Send(new ClearCartCommand());
         return NoContent();
     }
 }
