@@ -17,7 +17,7 @@ public class UpdateManagerProfileCommandHandler(UserManager<User> userManager, I
 {
     public async Task<ManagerRepresentation> Handle(UpdateManagerProfileCommand request, CancellationToken cancellationToken)
     {
-        var userId = currentUser.Id!.Value;
+        var userId = currentUser.Id;
         var user = await userManager.Users
             .Include(u => u.ManagedShops)
             .ThenInclude(ms => ms.Shop)

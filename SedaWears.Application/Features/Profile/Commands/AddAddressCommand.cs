@@ -7,9 +7,17 @@ using SedaWears.Domain.Entities;
 
 namespace SedaWears.Application.Features.Profile.Commands;
 
-public record AddAddressCommand(AddressRepresentation Address) : IRequest<AddressRepresentation>;
+public record AddAddressCommand(
+    string Label,
+    string FullName,
+    string Email,
+    string Phone,
+    string Street,
+    string City,
+    string ZipCode
+) : IRequest<AddressRepresentation>;
 
-public class AddAddressCommandHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) : 
+public class AddAddressCommandHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) :
     IRequestHandler<AddAddressCommand, AddressRepresentation>
 {
     public async Task<AddressRepresentation> Handle(AddAddressCommand request, CancellationToken cancellationToken)
@@ -20,13 +28,13 @@ public class AddAddressCommandHandler(IApplicationDbContext dbContext, ICurrentU
         var entity = new Address
         {
             UserId = userId,
-            Label = request.Address.Label,
-            FullName = request.Address.FullName,
-            Email = request.Address.Email,
-            Phone = request.Address.Phone,
-            Street = request.Address.Address,
-            City = request.Address.City,
-            ZipCode = request.Address.ZipCode
+            Label = request.Label,
+            FullName = request.FullName,
+            Email = request.Email,
+            Phone = request.Phone,
+            Street = request.Street,
+            City = request.City,
+            ZipCode = request.ZipCode
         };
 
         user.Addresses.Add(entity);

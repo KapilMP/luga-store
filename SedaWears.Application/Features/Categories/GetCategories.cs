@@ -2,15 +2,15 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Interfaces;
 
+using SedaWears.Application.Features.Categories.Models;
+
 namespace SedaWears.Application.Features.Categories;
 
-public record CategoryDto(int Id, string Name, string Slug, string? Description, int DisplayOrder);
+public record GetCategoriesQuery(int? ShopId = null) : IRequest<List<CategoryRepresentation>>;
 
-public record GetCategoriesQuery(int? ShopId = null) : IRequest<List<CategoryDto>>;
-
-public class GetCategoriesHandler(IApplicationDbContext dbContext) : IRequestHandler<GetCategoriesQuery, List<CategoryDto>>
+public class GetCategoriesHandler(IApplicationDbContext dbContext) : IRequestHandler<GetCategoriesQuery, List<CategoryRepresentation>>
 {
-    public async Task<List<CategoryDto>> Handle(GetCategoriesQuery request, CancellationToken ct)
+    public async Task<List<CategoryRepresentation>> Handle(GetCategoriesQuery request, CancellationToken ct)
     {
         var query = dbContext.Categories.AsNoTracking();
 
@@ -21,7 +21,7 @@ public class GetCategoriesHandler(IApplicationDbContext dbContext) : IRequestHan
 
         return await query
             .OrderBy(c => c.DisplayOrder)
-            .Select(c => new CategoryDto(c.Id, c.Name, c.Slug, c.Description, c.DisplayOrder))
+            .Select(c => new CategoryRepresentation(c.Id, c.Name, c.Slug, c.Description, c.DisplayOrder))
             .ToListAsync(ct);
     }
 }

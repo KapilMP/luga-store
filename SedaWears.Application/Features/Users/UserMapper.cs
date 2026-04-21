@@ -11,31 +11,18 @@ public static class UserMapper
         var personalInfo = user.ToPersonalInfo();
         var status = new UserStatus(user.IsActive, user.EmailConfirmed);
 
-        CreatorRepresentation? createdBy = null;
-        if (user.CreatedBy != null)
-        {
-            createdBy = new CreatorRepresentation(
-                user.CreatedBy.Id,
-                user.CreatedBy.ToPersonalInfo()
-            );
-        }
-
         return user.Role switch
         {
-            UserRole.Admin => new AdminRepresentation(user.Id, user.CreatedAt, createdBy, personalInfo, status),
+            UserRole.Admin => new AdminRepresentation(user.Id, personalInfo, status),
 
             UserRole.Owner => new OwnerRepresentation(
                 user.Id,
-                user.CreatedAt,
-                createdBy,
                 personalInfo,
                 status
             ),
 
             UserRole.Manager => new ManagerRepresentation(
                 user.Id,
-                user.CreatedAt,
-                createdBy,
                 personalInfo,
                 status,
                 user.ManagedShops
@@ -49,8 +36,6 @@ public static class UserMapper
 
             UserRole.Customer => new CustomerRepresentation(
                 user.Id,
-                user.CreatedAt,
-                createdBy,
                 personalInfo,
                 status,
                 user.Addresses.Select(a => new AddressRepresentation(

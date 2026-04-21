@@ -27,16 +27,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         // Indexing common filter properties
         builder.HasIndex(u => u.IsActive);
-        builder.HasIndex(u => u.IsDeleted);
-
-        builder.HasOne(u => u.CreatedBy)
-            .WithMany()
-            .HasForeignKey(u => u.CreatedById)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(u => u.LastModifiedBy)
-            .WithMany()
-            .HasForeignKey(u => u.LastModifiedById)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(u => u.IsDeleted).HasFilter("\"IsDeleted\" = false");
     }
 }

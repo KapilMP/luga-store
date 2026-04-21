@@ -11,7 +11,7 @@ public class ClearCartHandler(IApplicationDbContext context, ICurrentUser curren
 {
     public async Task Handle(ClearCartCommand request, CancellationToken ct)
     {
-        var userId = currentUser.Id!.Value;
+        var userId = currentUser.Id;
         var items = context.CartItems.Where(c => c.UserId == userId);
         context.CartItems.RemoveRange(items);
         await context.SaveChangesAsync(ct);

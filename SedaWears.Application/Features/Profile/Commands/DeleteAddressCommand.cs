@@ -13,7 +13,7 @@ public class DeleteAddressCommandHandler(IApplicationDbContext dbContext, ICurre
 {
     public async Task Handle(DeleteAddressCommand request, CancellationToken cancellationToken)
     {
-        var userId = currentUser.Id!.Value;
+        var userId = currentUser.Id;
         var address = await dbContext.Addresses
             .FirstOrDefaultAsync(a => a.Id == request.AddressId && a.UserId == userId, cancellationToken)
             ?? throw new NotFoundException("Address not found.");

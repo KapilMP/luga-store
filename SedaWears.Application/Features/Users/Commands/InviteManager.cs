@@ -19,7 +19,9 @@ public class InviteManagerValidator : AbstractValidator<InviteManagerCommand>
 {
     public InviteManagerValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email address is required.")
+            .EmailAddress().WithMessage("Please enter a valid email address.");
     }
 }
 
@@ -27,8 +29,12 @@ public class AdminInviteShopManagerValidator : AbstractValidator<AdminInviteShop
 {
     public AdminInviteShopManagerValidator()
     {
-        RuleFor(x => x.ShopId).GreaterThan(0);
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.ShopId)
+            .GreaterThan(0).WithMessage("A valid shop identifier is required.");
+            
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email address is required.")
+            .EmailAddress().WithMessage("Please enter a valid email address.");
     }
 }
 

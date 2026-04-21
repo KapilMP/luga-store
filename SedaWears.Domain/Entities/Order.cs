@@ -4,7 +4,7 @@ using SedaWears.Domain.Common;
 
 namespace SedaWears.Domain.Entities;
 
-public class Order : BaseAuditableEntity
+public class Order : BaseEntity
 {
     public int? UserId { get; set; }
     public User? User { get; set; }

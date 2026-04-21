@@ -11,7 +11,7 @@ namespace SedaWears.Application.Features.Profile.Commands;
 
 public record UpdateAdminProfileCommand(string FirstName, string LastName, string Phone, string? AvatarFileName) : IRequest<AdminRepresentation>;
 
-public class UpdateAdminProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) : 
+public class UpdateAdminProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) :
     IRequestHandler<UpdateAdminProfileCommand, AdminRepresentation>
 {
     public async Task<AdminRepresentation> Handle(UpdateAdminProfileCommand request, CancellationToken cancellationToken)
@@ -33,7 +33,7 @@ public class UpdateAdminProfileCommandHandler(UserManager<User> userManager, IS3
         }
 
         await userManager.UpdateAsync(user);
-        
+
         return (AdminRepresentation)user.ToUserRepresentation();
     }
 }

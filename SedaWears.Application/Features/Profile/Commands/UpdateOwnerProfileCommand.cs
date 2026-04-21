@@ -16,7 +16,7 @@ public class UpdateOwnerProfileCommandHandler(UserManager<User> userManager, IS3
 {
     public async Task<OwnerRepresentation> Handle(UpdateOwnerProfileCommand request, CancellationToken cancellationToken)
     {
-        var userId = currentUser.Id!.Value;
+        var userId = currentUser.Id;
         var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("Profile not found.");
 
         user.FirstName = request.FirstName;

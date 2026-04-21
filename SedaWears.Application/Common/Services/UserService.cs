@@ -20,7 +20,7 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         CancellationToken ct = default) where T : BaseUserRepresentation
     {
         var query = dbContext.Users
-            .Include(u => u.CreatedBy)
+            
             .Where(u => u.Role == role && u.Id != currentUser.Id && !u.IsDeleted);
 
         if (isActive.HasValue)
@@ -44,14 +44,13 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
             {
                 "name" => isDescending ? query.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName) : query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName),
                 "email" => isDescending ? query.OrderByDescending(u => u.Email) : query.OrderBy(u => u.Email),
-                "created" => isDescending ? query.OrderByDescending(u => u.CreatedAt) : query.OrderBy(u => u.CreatedAt),
-                "status" => isDescending ? query.OrderByDescending(u => u.IsActive).ThenByDescending(u => u.EmailConfirmed) : query.OrderBy(u => u.IsActive).ThenBy(u => u.EmailConfirmed),
-                _ => query.OrderByDescending(u => u.CreatedAt)
+                "createdat" => isDescending ? query.OrderByDescending(u => u.Id) : query.OrderBy(u => u.Id),
+                _ => query.OrderByDescending(u => u.Id)
             };
         }
         else
         {
-            query = query.OrderByDescending(u => u.CreatedAt);
+            query = query.OrderByDescending(u => u.Id);
         }
 
         var totalCount = await query.CountAsync(ct);
@@ -80,14 +79,13 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
             .Include(sm => sm.Manager)
             .ThenInclude(m => m.ManagedShops)
             .ThenInclude(ms => ms.Shop)
-            .Include(sm => sm.Manager.CreatedBy)
             .AsQueryable();
 
         if (isActive.HasValue)
             query = query.Where(sm => sm.Manager.IsActive == isActive.Value);
 
-        var invitedFilter = isInvited ?? false;
-        query = query.Where(sm => sm.Manager.EmailConfirmed == !invitedFilter);
+        if (isInvited.HasValue)
+            query = query.Where(sm => sm.Manager.EmailConfirmed == !isInvited.Value);
 
         if (!string.IsNullOrEmpty(sortBy))
         {
@@ -96,14 +94,13 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
             {
                 "name" => isDescending ? query.OrderByDescending(sm => sm.Manager.FirstName).ThenByDescending(sm => sm.Manager.LastName) : query.OrderBy(sm => sm.Manager.FirstName).ThenBy(sm => sm.Manager.LastName),
                 "email" => isDescending ? query.OrderByDescending(sm => sm.Manager.Email) : query.OrderBy(sm => sm.Manager.Email),
-                "createdat" => isDescending ? query.OrderByDescending(sm => sm.CreatedAt) : query.OrderBy(sm => sm.CreatedAt),
-                "status" => isDescending ? query.OrderByDescending(sm => sm.Manager.IsActive).ThenByDescending(sm => sm.Manager.EmailConfirmed) : query.OrderBy(sm => sm.Manager.IsActive).ThenBy(sm => sm.Manager.EmailConfirmed),
-                _ => query.OrderByDescending(sm => sm.CreatedAt)
+                "createdat" => isDescending ? query.OrderByDescending(sm => sm.Id) : query.OrderBy(sm => sm.Id),
+                _ => query.OrderByDescending(sm => sm.Id)
             };
         }
         else
         {
-            query = query.OrderByDescending(sm => sm.CreatedAt);
+            query = query.OrderByDescending(sm => sm.Id);
         }
 
         var totalCount = await query.CountAsync(ct);

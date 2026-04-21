@@ -1,3 +1,4 @@
+using SedaWears.Application.Features.Users.Models;
 
 namespace SedaWears.Application.Features.Shops.Models;
 
@@ -7,14 +8,5 @@ public record ShopRepresentation(
     string Slug,
     string? Description,
     string? LogoUrl,
-    bool IsActive,
-    DateTime CreatedAt,
-    List<ShopOwnerSummary> Owners
-);
-
-public record ShopOwnerSummary(
-    int Id,
-    string FirstName,
-    string LastName,
-    string Email
+    bool IsActive
 );

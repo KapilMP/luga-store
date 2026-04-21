@@ -9,12 +9,15 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
     public void Configure(EntityTypeBuilder<Category> builder)
     {
         builder.Property(t => t.Name)
-            .HasMaxLength(64)
+            .HasMaxLength(100)
             .IsRequired();
 
         builder.Property(t => t.Slug)
-            .HasMaxLength(128)
+            .HasMaxLength(100)
             .IsRequired();
+
+        builder.Property(t => t.Description)
+            .HasMaxLength(300);
 
         // 1. Unique index for shop-specific categories
         builder.HasIndex(t => new { t.ShopId, t.Name })

@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Interfaces;
@@ -70,22 +69,6 @@ public class ApplicationDbContext(
             {
                 entry.State = EntityState.Modified;
                 entry.Entity.IsDeleted = true;
-                entry.Entity.DeletedAt = now;
-            }
-        }
-
-        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedAt = now;
-                    entry.Entity.CreatedById = currentUserId;
-                    break;
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedAt = now;
-                    entry.Entity.LastModifiedById = currentUserId;
-                    break;
             }
         }
 

@@ -15,14 +15,12 @@ public record OrderItemRepresentation(
 
 public record OrderRepresentation(
     int Id,
-    DateTime CreatedAt,
     string Status,
     decimal TotalAmount,
     List<OrderItemRepresentation> Items)
 {
     public static OrderRepresentation ToOrderRepresentation(Order order) => new(
         order.Id,
-        order.CreatedAt,
         order.Status.ToString(),
         order.TotalAmount,
         order.Items.Select(i => new OrderItemRepresentation(
@@ -51,7 +49,7 @@ public class GetMyOrdersQueryHandler(IApplicationDbContext context, ICurrentUser
             .Where(o => o.UserId == userId)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
-            .OrderByDescending(o => o.CreatedAt)
+            .OrderByDescending(o => o.Id)
             .ToListAsync(cancellationToken);
 
         return orders.Select(OrderRepresentation.ToOrderRepresentation).ToList();

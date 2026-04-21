@@ -3,7 +3,7 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.Domain.Entities;
 
-public class Product : BaseAuditableEntity
+public class Product : BaseEntity
 {
     public string Name { get; set; } = null!;
     public string? Description { get; set; }

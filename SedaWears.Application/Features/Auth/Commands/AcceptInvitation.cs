@@ -23,12 +23,25 @@ public class AcceptInvitationValidator : AbstractValidator<AcceptInvitationComma
 {
     public AcceptInvitationValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
-        RuleFor(x => x.Token).NotEmpty();
-        RuleFor(x => x.FirstName).NotEmpty();
-        RuleFor(x => x.LastName).NotEmpty();
-        RuleFor(x => x.Password).NotEmpty().MinimumLength(6);
-        RuleFor(x => x.Role).NotEmpty();
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email address is required.")
+            .EmailAddress().WithMessage("Please enter a valid email address.");
+
+        RuleFor(x => x.Token)
+            .NotEmpty().WithMessage("Security token is required.");
+
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First name is required.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last name is required.");
+
+        RuleFor(x => x.Password)
+            .NotEmpty().WithMessage("Password is required.")
+            .MinimumLength(6).WithMessage("Password must be at least 6 characters long.");
+
+        RuleFor(x => x.Role)
+            .NotEmpty().WithMessage("User role is required.");
     }
 }
 

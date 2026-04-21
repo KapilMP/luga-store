@@ -6,23 +6,40 @@ using SedaWears.Application.Common.Models;
 
 namespace SedaWears.Application.Features.Shops.Queries;
 
-public record GetShopsQuery(int PageNumber = 1, int PageSize = 10, bool? IsActive = null) : IRequest<PaginatedList<ShopRepresentation>>;
+public record GetShopsQuery(
+    int PageNumber = 1, 
+    int PageSize = 10, 
+    bool? IsActive = null,
+    string? SortBy = null,
+    string? SortOrder = "desc") : IRequest<PaginatedList<ShopRepresentation>>;
 
 public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopsQuery, PaginatedList<ShopRepresentation>>
 {
     public async Task<PaginatedList<ShopRepresentation>> Handle(GetShopsQuery request, CancellationToken ct)
     {
         var query = dbContext.Shops
-            .Include(s => s.Owners)
-            .ThenInclude(o => o.Owner)
             .AsNoTracking();
 
         if (request.IsActive.HasValue)
             query = query.Where(s => s.IsActive == request.IsActive.Value);
 
+        if (!string.IsNullOrEmpty(request.SortBy))
+        {
+            var isDescending = request.SortOrder?.ToLower() == "desc";
+            query = request.SortBy.ToLower() switch
+            {
+                "name" => isDescending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
+                "slug" => isDescending ? query.OrderByDescending(s => s.Slug) : query.OrderBy(s => s.Slug),
+                _ => isDescending ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id)
+            };
+        }
+        else
+        {
+            query = query.OrderByDescending(s => s.Id);
+        }
+
         var totalCount = await query.CountAsync(ct);
         var items = await query
-            .OrderByDescending(s => s.CreatedAt)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(s => new ShopRepresentation(
@@ -31,9 +48,7 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
                 s.Slug,
                 s.Description,
                 s.LogoFileName,
-                s.IsActive,
-                s.CreatedAt,
-                s.Owners.Select(o => new ShopOwnerSummary(o.OwnerId, o.Owner.FirstName ?? string.Empty, o.Owner.LastName ?? string.Empty, o.Owner.Email ?? string.Empty)).ToList()
+                s.IsActive
             ))
             .ToListAsync(ct);
 

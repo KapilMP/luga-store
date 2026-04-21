@@ -14,7 +14,8 @@ public class ActivateManagerValidator : AbstractValidator<ActivateManagerCommand
 {
     public ActivateManagerValidator()
     {
-        RuleFor(x => x.ManagerId).GreaterThan(0);
+        RuleFor(x => x.ManagerId)
+            .GreaterThan(0).WithMessage("A valid manager identifier is required.");
     }
 }
 

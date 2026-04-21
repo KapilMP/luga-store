@@ -12,7 +12,7 @@ public class UpdateCartItemHandler(IApplicationDbContext context, ICurrentUser c
 {
     public async Task Handle(UpdateCartItemCommand request, CancellationToken ct)
     {
-        var userId = currentUser.Id!.Value;
+        var userId = currentUser.Id;
         var item = await context.CartItems.FirstOrDefaultAsync(c => c.Id == request.ItemId && c.UserId == userId, ct) 
             ?? throw new NotFoundException("Cart item not found");
         item.Size = request.Size;

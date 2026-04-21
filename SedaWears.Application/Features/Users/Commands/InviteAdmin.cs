@@ -17,8 +17,8 @@ public class InviteAdminValidator : AbstractValidator<InviteAdminCommand>
     public InviteAdminValidator()
     {
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Enter valid email address")
-            .EmailAddress().WithMessage("Enter valid email address");
+            .NotEmpty().WithMessage("Email address is required.")
+            .EmailAddress().WithMessage("Please enter a valid email address.");
     }
 }
 
@@ -26,7 +26,6 @@ public class InviteAdminHandler(
     UserManager<User> userManager,
     IEmailService emailService,
     IUserCuckooFilter cuckooFilter,
-    ICurrentUser currentUser,
     AppConfig appConfig) : IRequestHandler<InviteAdminCommand>
 {
     public async Task Handle(InviteAdminCommand request, CancellationToken ct)
@@ -55,8 +54,7 @@ public class InviteAdminHandler(
                 FirstName = "",
                 LastName = "",
                 IsActive = true,
-                Role = UserRole.Admin,
-                CreatedById = currentUser.Id
+                Role = UserRole.Admin
             };
 
             var result = await userManager.CreateAsync(user);

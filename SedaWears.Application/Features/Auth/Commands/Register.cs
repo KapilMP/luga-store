@@ -16,11 +16,22 @@ public class RegisterValidator : AbstractValidator<RegisterCommand>
 {
     public RegisterValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
-        RuleFor(x => x.Password).NotEmpty().MinimumLength(6);
-        RuleFor(x => x.FirstName).NotEmpty();
-        RuleFor(x => x.LastName).NotEmpty();
-        RuleFor(x => x.Phone).NotEmpty();
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email address is required.")
+            .EmailAddress().WithMessage("Please enter a valid email address.");
+
+        RuleFor(x => x.Password)
+            .NotEmpty().WithMessage("Password is required.")
+            .MinimumLength(6).WithMessage("Password must be at least 6 characters long.");
+
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First name is required.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last name is required.");
+
+        RuleFor(x => x.Phone)
+            .NotEmpty().WithMessage("Phone number is required.");
     }
 }
 

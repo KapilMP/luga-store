@@ -2,7 +2,7 @@ using SedaWears.Domain.Common;
 
 namespace SedaWears.Domain.Entities;
 
-public class Shop : BaseAuditableEntity
+public class Shop : BaseEntity, ISoftDelete
 {
     public string Name { get; set; } = null!;
     public string Slug { get; set; } = null!;
@@ -11,6 +11,7 @@ public class Shop : BaseAuditableEntity
     public string? LogoFileName { get; set; }
 
     public bool IsActive { get; set; } = true;
+    public bool IsDeleted { get; set; }
 
     // Relationships
     public ICollection<ShopOwner> Owners { get; set; } = [];

@@ -2,7 +2,7 @@ using SedaWears.Domain.Common;
 
 namespace SedaWears.Domain.Entities;
 
-public class Address : BaseAuditableEntity
+public class Address : BaseEntity
 {
     public string Label { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;

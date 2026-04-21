@@ -99,15 +99,6 @@ namespace SedaWears.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -118,19 +109,10 @@ namespace SedaWears.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -154,7 +136,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Addresses", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.CartItem", b =>
@@ -189,7 +171,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("UserId", "ProductId", "Size")
                         .IsUnique();
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Category", b =>
@@ -200,42 +182,25 @@ namespace SedaWears.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("ShopId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -259,7 +224,7 @@ namespace SedaWears.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("\"ShopId\" IS NOT NULL");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.NewsletterSubscriber", b =>
@@ -270,31 +235,13 @@ namespace SedaWears.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsSubscribed")
                         .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
 
                     b.Property<int>("ShopId")
                         .HasColumnType("integer");
@@ -314,7 +261,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("ShopId", "Email")
                         .IsUnique();
 
-                    b.ToTable("NewsletterSubscribers");
+                    b.ToTable("NewsletterSubscribers", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Order", b =>
@@ -324,24 +271,6 @@ namespace SedaWears.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
 
                     b.Property<int>("ShopId")
                         .HasColumnType("integer");
@@ -360,15 +289,13 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
-
                     b.HasIndex("ShopId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.OrderItem", b =>
@@ -398,7 +325,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Product", b =>
@@ -412,26 +339,14 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("Gender")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsFeatured")
                         .HasColumnType("boolean");
@@ -439,16 +354,10 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Property<bool>("IsNew")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
@@ -477,7 +386,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ShopId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ProductImage", b =>
@@ -503,7 +412,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ProductSale", b =>
@@ -513,15 +422,6 @@ namespace SedaWears.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal?>("DiscountPercent")
                         .HasPrecision(5, 2)
@@ -537,15 +437,6 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("integer");
 
@@ -560,7 +451,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ProductId", "IsActive");
 
-                    b.ToTable("ProductSales");
+                    b.ToTable("ProductSales", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ProductSizeStock", b =>
@@ -587,7 +478,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("ProductId", "Size")
                         .IsUnique();
 
-                    b.ToTable("ProductSizeStocks");
+                    b.ToTable("ProductSizeStocks", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.RestockSubscription", b =>
@@ -632,7 +523,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("Email", "ProductId", "Size")
                         .IsUnique();
 
-                    b.ToTable("RestockSubscriptions");
+                    b.ToTable("RestockSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Shop", b =>
@@ -646,18 +537,9 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Property<string>("BannerFileName")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -665,33 +547,35 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
-
                     b.Property<string>("LogoFileName")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("IsActive");
 
-                    b.HasIndex("Slug")
-                        .IsUnique();
+                    b.HasIndex("IsDeleted")
+                        .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Shops");
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("Shops", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ShopManager", b =>
@@ -702,32 +586,14 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Property<int>("ManagerId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
                         .HasColumnType("integer");
 
                     b.HasKey("ShopId", "ManagerId");
 
                     b.HasIndex("ManagerId");
 
-                    b.ToTable("ShopManagers");
+                    b.ToTable("ShopManagers", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ShopOwner", b =>
@@ -738,32 +604,14 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
                         .HasColumnType("integer");
 
                     b.HasKey("ShopId", "OwnerId");
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("ShopOwners");
+                    b.ToTable("ShopOwners", (string)null);
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.User", b =>
@@ -785,15 +633,6 @@ namespace SedaWears.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -811,12 +650,6 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedById")
-                        .HasColumnType("integer");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -861,13 +694,10 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedById");
-
                     b.HasIndex("IsActive");
 
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("LastModifiedById");
+                    b.HasIndex("IsDeleted")
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -1107,23 +937,6 @@ namespace SedaWears.Infrastructure.Migrations
                     b.Navigation("Owner");
 
                     b.Navigation("Shop");
-                });
-
-            modelBuilder.Entity("SedaWears.Domain.Entities.User", b =>
-                {
-                    b.HasOne("SedaWears.Domain.Entities.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("SedaWears.Domain.Entities.User", "LastModifiedBy")
-                        .WithMany()
-                        .HasForeignKey("LastModifiedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("LastModifiedBy");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Category", b =>

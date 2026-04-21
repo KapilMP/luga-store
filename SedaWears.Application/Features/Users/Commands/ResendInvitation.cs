@@ -17,7 +17,8 @@ public class ResendInvitationValidator : AbstractValidator<ResendInvitationComma
 {
     public ResendInvitationValidator()
     {
-        RuleFor(x => x.UserId).GreaterThan(0);
+        RuleFor(x => x.UserId)
+            .GreaterThan(0).WithMessage("A valid user identifier is required.");
     }
 }
 

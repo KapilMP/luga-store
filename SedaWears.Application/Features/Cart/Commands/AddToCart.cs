@@ -26,12 +26,12 @@ public class AddToCartHandler(IApplicationDbContext context, ICurrentUser curren
         }
         else
         {
-            context.CartItems.Add(new CartItem 
-            { 
-                UserId = userId, 
-                ProductId = request.ProductId, 
-                Size = request.Size, 
-                Quantity = request.Quantity 
+            context.CartItems.Add(new CartItem
+            {
+                UserId = userId,
+                ProductId = request.ProductId,
+                Size = request.Size,
+                Quantity = request.Quantity
             });
         }
 

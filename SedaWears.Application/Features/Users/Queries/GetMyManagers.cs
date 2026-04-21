@@ -5,7 +5,7 @@ using SedaWears.Application.Features.Users.Models;
 
 namespace SedaWears.Application.Features.Users.Queries;
 
-public record GetMyManagersQuery(int PageNumber = 1, int PageSize = 10, bool? Invited = null, bool? IsActive = null) 
+public record GetMyManagersQuery(int PageNumber = 1, int PageSize = 10, bool? Invited = null, bool? IsActive = null, string? SortBy = null, string? SortOrder = "desc")
     : IRequest<PaginatedList<ManagerRepresentation>>;
 
 public class GetMyManagersHandler(IUserService userService, ICurrentUser currentUser) : IRequestHandler<GetMyManagersQuery, PaginatedList<ManagerRepresentation>>
@@ -15,10 +15,12 @@ public class GetMyManagersHandler(IUserService userService, ICurrentUser current
         var shopId = currentUser.ShopId ?? throw new UnauthorizedAccessException("Shop context missing. Please provide X-Shop-ID header.");
 
         return await userService.GetShopManagersAsync(
-            shopId, 
-            request.PageNumber, 
-            request.PageSize, 
-            request.IsActive, 
-            request.Invited, ct);
+            shopId,
+            request.PageNumber,
+            request.PageSize,
+            request.IsActive,
+            request.Invited,
+            request.SortBy,
+            request.SortOrder, ct);
     }
 }

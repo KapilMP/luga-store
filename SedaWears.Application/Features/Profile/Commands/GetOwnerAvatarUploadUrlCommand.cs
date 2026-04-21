@@ -13,7 +13,7 @@ public record GetOwnerAvatarUploadUrlCommand(string FileName, string ContentType
 public class GetOwnerAvatarUploadUrlCommandHandler(
     UserManager<User> userManager,
     IS3Service s3Service,
-    ICurrentUser currentUser) : 
+    ICurrentUser currentUser) :
     IRequestHandler<GetOwnerAvatarUploadUrlCommand, ImageUploadUrlResponse>
 {
     public async Task<ImageUploadUrlResponse> Handle(GetOwnerAvatarUploadUrlCommand request, CancellationToken cancellationToken)
@@ -23,9 +23,9 @@ public class GetOwnerAvatarUploadUrlCommandHandler(
 
         var extension = Path.GetExtension(request.FileName);
         var fileName = $"avatars/partner_{userId}_{Guid.NewGuid()}{extension}";
-        
+
         var uploadUrl = s3Service.GetPreSignedUrl(request.ContentType, fileName);
-        
+
         return new ImageUploadUrlResponse(uploadUrl.ToString(), fileName);
     }
 }

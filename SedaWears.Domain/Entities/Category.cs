@@ -2,7 +2,7 @@ using SedaWears.Domain.Common;
 
 namespace SedaWears.Domain.Entities;
 
-public class Category : BaseAuditableEntity
+public class Category : BaseEntity
 {
     public string Name { get; set; } = null!;
     public string? Description { get; set; }

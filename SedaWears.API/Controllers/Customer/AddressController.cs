@@ -26,10 +26,8 @@ public class AddressController(ISender mediator) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AddressRepresentation>> AddAddress(AddressRequest request)
     {
-        var representation = new AddressRepresentation(
-            0, request.Label, request.FullName, request.Email, request.Phone, request.Street, request.City, request.ZipCode);
-        
-        return await mediator.Send(new AddAddressCommand(representation));
+        return await mediator.Send(new AddAddressCommand(
+            request.Label, request.FullName, request.Email, request.Phone, request.Street, request.City, request.ZipCode));
     }
 
     [HttpDelete("{id:int}")]

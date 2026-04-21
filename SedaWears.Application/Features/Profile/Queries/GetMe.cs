@@ -18,10 +18,10 @@ public class GetMeHandler(
 {
     public async Task<BaseUserRepresentation> Handle(GetMeQuery request, CancellationToken ct)
     {
-        var userId = currentUser.Id!.Value;
-        var role = currentUser.Role!.Value;
+        var userId = currentUser.Id;
+        var role = currentUser.Role;
 
-        var query = userManager.Users.Include(u => u.CreatedBy).AsQueryable();
+        var query = userManager.Users.AsQueryable();
 
         if (role == UserRole.Customer)
         {

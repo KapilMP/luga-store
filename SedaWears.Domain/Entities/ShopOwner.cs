@@ -2,7 +2,7 @@ using SedaWears.Domain.Common;
 
 namespace SedaWears.Domain.Entities;
 
-public class ShopOwner : BaseAuditableEntity
+public class ShopOwner : BaseEntity
 {
     public int ShopId { get; set; }
     public Shop Shop { get; set; } = null!;

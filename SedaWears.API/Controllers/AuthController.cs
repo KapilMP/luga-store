@@ -3,13 +3,18 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
-using SedaWears.Application.Features.Auth.Models;
 using SedaWears.Application.Features.Auth.Commands;
 using SedaWears.Application.Features.Auth.Queries;
 using SedaWears.Application.Common.Settings;
 using SedaWears.Application.Common.Interfaces;
 
 namespace SedaWears.API.Controllers;
+
+public record LoginRequest(string Email, string Password);
+public record RegisterRequest(string Email, string Password, string FirstName, string LastName, string Phone);
+public record ForgotPasswordRequest(string Email);
+public record ResetPasswordRequest(string Email, string Token, string NewPassword);
+public record AcceptInvitationRequest(string Email, string Token, string FirstName, string LastName, string Password, string Role);
 
 [ApiController]
 [Route("[controller]")]
@@ -77,7 +82,7 @@ public class AuthController(
     public async Task<IActionResult> Forgot(ForgotPasswordRequest req)
     {
         await mediator.Send(new ForgotPasswordCommand(req.Email));
-        return Ok();
+        return Ok(new { Message = "A reset password link has been sent to your email if it exists in our system." });
     }
 
     [HttpPost("reset-password")]
@@ -97,7 +102,7 @@ public class AuthController(
             request.LastName,
             request.Password,
             request.Role));
-        
+
         SetAuthCookies(refreshToken, RefreshPath);
         return Ok(response);
     }

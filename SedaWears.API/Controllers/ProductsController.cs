@@ -5,6 +5,7 @@ using SedaWears.Application.Features.Products.Commands;
 using SedaWears.Application.Features.Products.Queries;
 using SedaWears.Domain.Common;
 using SedaWears.Domain.Enums;
+using SedaWears.Application.Features.Products.Models;
 
 namespace SedaWears.API.Controllers;
 
@@ -26,13 +27,13 @@ public class ProductsController(ISender mediator) : ControllerBase
     [HttpPost]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Create(ProductUpsertRequest request)
-        => Ok(await mediator.Send(new CreateProductCommand(request.Name, request.Description, request.Price, request.CategoryId, request.Sizes.Select(s => new ProductSizeCommandDto(s.Size, s.Stock)).ToList())));
+        => Ok(await mediator.Send(new CreateProductCommand(request.Name, request.Description, request.Price, request.CategoryId, request.Sizes.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList())));
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Update(int id, ProductUpsertRequest request)
     {
-        await mediator.Send(new UpdateProductCommand(id, request.Name, request.Description, request.Price, request.CategoryId, request.Sizes.Select(s => new ProductSizeCommandDto(s.Size, s.Stock)).ToList()));
+        await mediator.Send(new UpdateProductCommand(id, request.Name, request.Description, request.Price, request.CategoryId, request.Sizes.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList()));
         return Ok();
     }
 

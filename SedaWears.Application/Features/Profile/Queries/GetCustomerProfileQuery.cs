@@ -17,7 +17,7 @@ public class GetCustomerProfileQueryHandler(UserManager<User> userManager, ICurr
 {
     public async Task<CustomerRepresentation> Handle(GetCustomerProfileQuery request, CancellationToken cancellationToken)
     {
-        var userId = currentUser.Id!.Value;
+        var userId = currentUser.Id;
         var user = await userManager.Users
             .Include(u => u.Addresses)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken) 

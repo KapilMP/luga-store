@@ -7,6 +7,11 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers;
 
+public record UpdateUserRequest(string FirstName, string LastName, bool? IsActive, string? NewPassword);
+public record InviteAdminRequest(string Email);
+public record InviteOwnerRequest(string Email);
+public record InviteShopManagerRequest(string Email);
+
 [ApiController]
 [Route("")]
 public class UsersController(ISender mediator) : ControllerBase
@@ -14,9 +19,9 @@ public class UsersController(ISender mediator) : ControllerBase
     [HttpGet("admins")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> GetAdmins(
-        [FromQuery] int pageNumber = 1, 
-        [FromQuery] int pageSize = 10, 
-        [FromQuery] bool? isActive = null, 
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool? isActive = null,
         [FromQuery] bool? isInvited = false,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
@@ -57,9 +62,9 @@ public class UsersController(ISender mediator) : ControllerBase
     [HttpGet("owners")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> GetOwners(
-        [FromQuery] int pageNumber = 1, 
-        [FromQuery] int pageSize = 10, 
-        [FromQuery] bool? isActive = null, 
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool? isActive = null,
         [FromQuery] bool? isInvited = false,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
@@ -68,9 +73,9 @@ public class UsersController(ISender mediator) : ControllerBase
     [HttpGet("customers")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> GetCustomers(
-        [FromQuery] int pageNumber = 1, 
-        [FromQuery] int pageSize = 10, 
-        [FromQuery] bool? isActive = null, 
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool? isActive = null,
         [FromQuery] bool? isInvited = false,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
@@ -79,10 +84,10 @@ public class UsersController(ISender mediator) : ControllerBase
     [HttpGet("shops/{shopId:int}/managers")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> GetShopManagersByShopId(
-        [FromRoute] int shopId, 
-        [FromQuery] int pageNumber = 1, 
-        [FromQuery] int pageSize = 10, 
-        [FromQuery] bool? isActive = null, 
+        [FromRoute] int shopId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool? isActive = null,
         [FromQuery] bool? invited = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
@@ -162,8 +167,3 @@ public class UsersController(ISender mediator) : ControllerBase
     }
 }
 
-
-public record UpdateUserRequest(string FirstName, string LastName, bool? IsActive, string? NewPassword);
-public record InviteAdminRequest(string Email);
-public record InviteOwnerRequest(string Email);
-public record InviteShopManagerRequest(string Email);

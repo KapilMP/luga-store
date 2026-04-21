@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SedaWears.Application.Features.Categories;
 using SedaWears.Domain.Enums;
-
 using Microsoft.AspNetCore.RateLimiting;
 using SedaWears.Application.Common.Settings;
 
 namespace SedaWears.API.Controllers;
+
+public record CategoryUpsertRequest(string Name, string Slug, string? Description);
+public record CategoryOrderRequest(int Id, int DisplayOrder);
 
 [ApiController]
 [Route("[controller]")]
@@ -51,10 +53,10 @@ public class CategoriesController(ISender mediator) : ControllerBase
 
     [HttpPost("reorder")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> Reorder(CategoryReorderRequest request, CancellationToken ct)
+    public async Task<IActionResult> Reorder(List<CategoryOrderRequest> request, CancellationToken ct)
     {
-        var orders = request.Orders.Select(o => new CategoryOrderDto(o.Id, o.DisplayOrder)).ToList();
-        await mediator.Send(new ReorderCategoriesCommand(orders), ct);
+        var commandOrders = request.Select(o => new ReorderCategoryItem(o.Id, o.DisplayOrder)).ToList();
+        await mediator.Send(new ReorderCategoriesCommand(commandOrders), ct);
         return Ok();
     }
 }

@@ -22,7 +22,7 @@ public class GetUserHandler(
         var userId = request.Id ?? currentUser.Id!.Value;
 
         var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("User not found.");
-        
+
         if (user.Role != role) throw new NotFoundException($"{role} not found.");
 
         var query = userManager.Users;

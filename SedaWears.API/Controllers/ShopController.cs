@@ -23,11 +23,6 @@ public class ShopController(ISender mediator) : ControllerBase
     public async Task<ActionResult<ShopRepresentation>> GetShop(int id)
         => Ok(await mediator.Send(new GetShopQuery(id)));
 
-    [HttpPost]
-    [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<ActionResult<int>> Create(CreateShopCommand command)
-        => Ok(await mediator.Send(command));
-
     [HttpPatch("{id:int}")]
     [Authorize(Roles = nameof(UserRole.Admin) + "," + nameof(UserRole.Owner))]
     public async Task<ActionResult> Update(int id, UpdateShopRequest request)
