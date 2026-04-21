@@ -6,7 +6,14 @@ using SedaWears.Application.Common.Models;
 
 namespace SedaWears.Application.Features.Users.Queries;
 
-public record GetShopManagersByShopIdQuery(int ShopId, int PageNumber = 1, int PageSize = 10, bool? Invited = null, bool? IsActive = null) 
+public record GetShopManagersByShopIdQuery(
+    int ShopId, 
+    int PageNumber = 1, 
+    int PageSize = 10, 
+    bool? Invited = null, 
+    bool? IsActive = null,
+    string? SortBy = null,
+    string? SortOrder = "desc") 
     : IRequest<PaginatedList<ManagerRepresentation>>;
 
 public class GetShopManagersByShopIdHandler(IUserService userService) : IRequestHandler<GetShopManagersByShopIdQuery, PaginatedList<ManagerRepresentation>>
@@ -18,6 +25,8 @@ public class GetShopManagersByShopIdHandler(IUserService userService) : IRequest
             request.PageNumber, 
             request.PageSize, 
             request.IsActive, 
-            request.Invited, ct);
+            request.Invited,
+            request.SortBy,
+            request.SortOrder, ct);
     }
 }

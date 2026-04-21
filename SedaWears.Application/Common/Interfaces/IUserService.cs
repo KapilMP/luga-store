@@ -12,6 +12,8 @@ public interface IUserService
         int pageSize, 
         bool? isActive = null, 
         bool? isInvited = null,
+        string? sortBy = null,
+        string? sortOrder = "desc",
         CancellationToken ct = default) where T : BaseUserRepresentation;
 
     Task<PaginatedList<ManagerRepresentation>> GetShopManagersAsync(
@@ -20,5 +22,7 @@ public interface IUserService
         int pageSize, 
         bool? isActive = null, 
         bool? isInvited = null,
+        string? sortBy = null,
+        string? sortOrder = "desc",
         CancellationToken ct = default);
 }

@@ -39,7 +39,7 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUse
     {
         get
         {
-            var role = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+            var role = httpContextAccessor.HttpContext?.User?.FindFirstValue("role");
             return Enum.TryParse<UserRole>(role, out var result) ? result : null;
         }
     }

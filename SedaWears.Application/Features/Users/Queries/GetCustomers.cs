@@ -6,7 +6,13 @@ using SedaWears.Application.Common.Models;
 
 namespace SedaWears.Application.Features.Users.Queries;
 
-public record GetCustomersQuery(int PageNumber = 1, int PageSize = 10, bool? IsActive = null, bool? IsInvited = null) 
+public record GetCustomersQuery(
+    int PageNumber = 1, 
+    int PageSize = 10, 
+    bool? IsActive = null, 
+    bool? IsInvited = null,
+    string? SortBy = null,
+    string? SortOrder = "desc") 
     : IRequest<PaginatedList<CustomerRepresentation>>;
 
 public class GetCustomersHandler(IUserService userService) : IRequestHandler<GetCustomersQuery, PaginatedList<CustomerRepresentation>>
@@ -18,6 +24,8 @@ public class GetCustomersHandler(IUserService userService) : IRequestHandler<Get
             request.PageNumber, 
             request.PageSize, 
             request.IsActive, 
-            request.IsInvited, ct);
+            request.IsInvited,
+            request.SortBy,
+            request.SortOrder, ct);
     }
 }

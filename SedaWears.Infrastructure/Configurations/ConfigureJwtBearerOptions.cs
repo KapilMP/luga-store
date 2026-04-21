@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -23,8 +24,7 @@ public class ConfigureJwtBearerOptions(JwtConfig jwtConfig) : IConfigureNamedOpt
             ValidIssuer = _jwtConfig.Issuer,
             ValidAudience = _jwtConfig.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Secret)),
-            ClockSkew = TimeSpan.FromMinutes(5),
-            NameClaimType = "email",
+            NameClaimType = JwtRegisteredClaimNames.Sub,
             RoleClaimType = "role"
         };
     }

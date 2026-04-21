@@ -46,7 +46,7 @@ public class ManagerController(ISender mediator) : ControllerBase
     [HttpPost("{id:int}/resend-invitation")]
     public async Task<ActionResult<string>> ResendInvitation(int id)
     {
-        await mediator.Send(new ResendManagerInvitationCommand(id));
+        await mediator.Send(new ResendInvitationCommand(id, UserRole.Manager));
         return Ok("Invitation resent.");
     }
 

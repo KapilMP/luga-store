@@ -39,7 +39,7 @@ public static class DependencyInjection
     {
         // 1. Scan for all validators once
         services.AddValidatorsFromAssemblyContaining<JwtConfigValidator>();
-        services.AddValidatorsFromAssemblyContaining<SedaWears.Application.Common.Settings.Validators.RateLimitingConfigValidator>();
+        services.AddValidatorsFromAssemblyContaining<RateLimitingConfigValidator>();
 
         // 2. Register Configurations using BindConfiguration (Modern .NET idiomatic way)
         // This also registers the direct type (e.g. JwtConfig) as a Singleton for easier DI.
