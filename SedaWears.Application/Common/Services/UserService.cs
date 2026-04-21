@@ -19,7 +19,7 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
     {
         var query = dbContext.Users
             .Include(u => u.CreatedBy)
-            .Where(u => u.Role == role && u.Id != currentUser.Id);
+            .Where(u => u.Role == role && u.Id != currentUser.Id && !u.IsDeleted);
 
         if (isActive.HasValue)
             query = query.Where(u => u.IsActive == isActive.Value);

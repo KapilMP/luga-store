@@ -1,8 +1,6 @@
 using SedaWears.Application.Features.Users;
-using SedaWears.Application.Features.Users.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using SedaWears.Application.Common.Exceptions;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Features.Auth.Models;
 using SedaWears.Domain.Entities;

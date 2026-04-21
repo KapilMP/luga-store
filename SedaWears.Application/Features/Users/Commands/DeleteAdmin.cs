@@ -22,10 +22,10 @@ public class DeleteAdminHandler(UserManager<User> userManager, IUserCuckooFilter
 {
     public async Task Handle(DeleteAdminCommand request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(request.Id.ToString()) ?? throw new NotFoundException("Admin not found.");
+        var user = await userManager.FindByIdAsync(request.Id.ToString());
 
-        if (user.Role != UserRole.Admin)
-            throw new BadRequestException("User is not an Admin.");
+        if (user is null || user.Role != UserRole.Admin)
+            throw new NotFoundException("Admin not found.");
 
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);
