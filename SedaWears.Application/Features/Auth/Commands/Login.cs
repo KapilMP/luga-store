@@ -5,6 +5,7 @@ using FluentValidation;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Features.Auth.Models;
 using SedaWears.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace SedaWears.Application.Features.Auth.Commands;
 
@@ -27,8 +28,10 @@ public class LoginHandler(
     public async Task<(AuthResponse Response, string RefreshToken)> Handle(LoginCommand request, CancellationToken ct)
     {
         var role = originContext.CurrentRole;
-        var user = await userManager.FindByEmailAsync(request.Email) ?? throw new UnauthorizedAccessException("Incorrect email or password");
-        if (!user.Role.Equals(role)) throw new UnauthorizedAccessException("Incorrect email or password");
+        var user = await userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == role, ct)
+            ?? throw new UnauthorizedAccessException("Incorrect email or password");
+        
         if (!await userManager.CheckPasswordAsync(user, request.Password)) throw new UnauthorizedAccessException("Incorrect email or password");
 
         var accessToken = tokenService.GenerateAccessToken(user);

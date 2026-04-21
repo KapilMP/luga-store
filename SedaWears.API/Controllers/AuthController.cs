@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using SedaWears.Application.Features.Auth.Models;
 using SedaWears.Application.Features.Auth.Commands;
+using SedaWears.Application.Features.Auth.Queries;
 using SedaWears.Application.Common.Settings;
 using SedaWears.Application.Common.Interfaces;
 
@@ -84,6 +85,28 @@ public class AuthController(
     {
         await mediator.Send(new ResetPasswordCommand(req.Email, req.Token, req.NewPassword));
         return Ok();
+    }
+
+    [HttpPost("accept-invitation")]
+    public async Task<IActionResult> AcceptInvitation(AcceptInvitationRequest request)
+    {
+        var (response, refreshToken) = await mediator.Send(new AcceptInvitationCommand(
+            request.Email,
+            request.Token,
+            request.FirstName,
+            request.LastName,
+            request.Password,
+            request.Role));
+        
+        SetAuthCookies(refreshToken, RefreshPath);
+        return Ok(response);
+    }
+
+    [HttpGet("invitation-details")]
+    public async Task<IActionResult> GetInvitationDetails([FromQuery] string email, [FromQuery] string token)
+    {
+        var response = await mediator.Send(new GetInvitationDetailsQuery(email, token));
+        return Ok(response);
     }
 
     private void SetAuthCookies(string token, string path)
