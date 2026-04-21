@@ -2,13 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch LugaStore.API",
+      "name": "Launch SedaWears.API",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/LugaStore.API/bin/Debug/net10.0/LugaStore.API.dll",
+      "program": "${workspaceFolder}/SedaWears.API/bin/Debug/net10.0/SedaWears.API.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/LugaStore.API",
+      "cwd": "${workspaceFolder}/SedaWears.API",
       "stopAtEntry": false,
       "console": "internalConsole",
       "env": {

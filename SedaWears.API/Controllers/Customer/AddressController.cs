@@ -1,0 +1,41 @@
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SedaWears.Application.Features.Users.Models;
+using SedaWears.Application.Features.Profile.Models;
+using SedaWears.Application.Features.Profile.Commands;
+using SedaWears.Application.Features.Profile.Queries;
+using SedaWears.Domain.Enums;
+using Microsoft.AspNetCore.RateLimiting;
+using SedaWears.Application.Common.Settings;
+
+namespace SedaWears.API.Controllers.Customer;
+
+[ApiController]
+[Route("customer/[controller]")]
+[Authorize(Roles = nameof(UserRole.Customer))]
+[EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
+public class AddressController(ISender mediator) : ControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<List<AddressRepresentation>>> GetAddresses()
+    {
+        return await mediator.Send(new GetAddressesQuery());
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<AddressRepresentation>> AddAddress(AddressRequest request)
+    {
+        var representation = new AddressRepresentation(
+            0, request.Label, request.FullName, request.Email, request.Phone, request.Street, request.City, request.ZipCode);
+        
+        return await mediator.Send(new AddAddressCommand(representation));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> DeleteAddress(int id)
+    {
+        await mediator.Send(new DeleteAddressCommand(id));
+        return NoContent();
+    }
+}

@@ -1,0 +1,133 @@
+using Microsoft.AspNetCore.Identity;
+using SedaWears.Application.Common.Interfaces;
+using SedaWears.Application.Common.Settings;
+using SedaWears.Application.Common.Settings.Validators;
+using SedaWears.Infrastructure.Persistence;
+using SedaWears.Infrastructure.Services;
+using SedaWears.Infrastructure.ExternalServices;
+using SedaWears.Infrastructure.Configurations;
+using SedaWears.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using FluentValidation;
+using Resend;
+using StackExchange.Redis;
+
+namespace SedaWears.Infrastructure;
+
+/// <summary>
+/// Infrastructure layer dependency injection configuration for modern .NET monolith applications.
+/// </summary>
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        services
+            .AddInfrastructureConfigs()
+            .AddPersistence(configuration)
+            .AddIdentity()
+            .AddRedis()
+            .AddResendEmail()
+            .AddInfrastructureServices();
+
+        return services;
+    }
+
+    private static IServiceCollection AddInfrastructureConfigs(this IServiceCollection services)
+    {
+        // 1. Scan for all validators once
+        services.AddValidatorsFromAssemblyContaining<JwtConfigValidator>();
+        services.AddValidatorsFromAssemblyContaining<SedaWears.Application.Common.Settings.Validators.RateLimitingConfigValidator>();
+
+        // 2. Register Configurations using BindConfiguration (Modern .NET idiomatic way)
+        // This also registers the direct type (e.g. JwtConfig) as a Singleton for easier DI.
+        services
+            .AddConfigWithValidation<ConnectionStringsConfig, ConnectionStringsConfigValidator>("ConnectionStrings")
+            .AddConfigWithValidation<JwtConfig, JwtConfigValidator>("Jwt")
+            .AddConfigWithValidation<GoogleConfig, GoogleConfigValidator>("Google")
+            .AddConfigWithValidation<RefreshTokenPathsConfig, RefreshTokenPathsConfigValidator>("RefreshTokenPaths")
+            .AddConfigWithValidation<AppConfig, AppConfigValidator>("App")
+            .AddConfigWithValidation<S3Config, S3ConfigValidator>("S3")
+            .AddConfigWithValidation<EmailConfig, EmailConfigValidator>("Email")
+            .AddConfigWithValidation<ResendConfig, ResendConfigValidator>("Resend")
+            .AddConfigWithValidation<RateLimitingConfig, RateLimitingConfigValidator>("RateLimiting");
+
+        return services;
+    }
+
+    private static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<ApplicationDbContext>((sp, options) =>
+        {
+            var config = sp.GetRequiredService<ConnectionStringsConfig>();
+            options.UseNpgsql(config.Postgres, o =>
+                o.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+        });
+
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
+        return services;
+    }
+
+    private static IServiceCollection AddIdentity(this IServiceCollection services)
+    {
+        services.AddIdentityCore<User>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+        return services;
+    }
+
+    private static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+    {
+        services.AddScoped<IS3Service, S3Service>();
+
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IUserCuckooFilter, UserCuckooFilter>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddResendEmail(this IServiceCollection services)
+    {
+        services.AddOptions();
+        services.AddHttpClient<ResendClient>();
+        services.AddOptions<ResendClientOptions>()
+            .Configure<ResendConfig>((options, config) =>
+            {
+                options.ApiToken = config.ApiKey;
+            });
+        services.AddTransient<IResend, ResendClient>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddRedis(this IServiceCollection services)
+    {
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var config = sp.GetRequiredService<ConnectionStringsConfig>();
+            return ConnectionMultiplexer.Connect(config.Redis);
+        });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Helper to register both IOptions<T> (idiomatic .NET pattern) and the raw T config class (easier injection).
+    /// Uses modern .NET BindConfiguration to resolve settings from the container's IConfiguration.
+    /// </summary>
+    private static IServiceCollection AddConfigWithValidation<TConfig, TValidator>(this IServiceCollection services, string sectionName)
+        where TConfig : class
+        where TValidator : class, IValidator<TConfig>
+    {
+        services.AddOptionsWithValidation<TConfig, TValidator>(sectionName);
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<TConfig>>().Value);
+        return services;
+    }
+}

@@ -1,0 +1,27 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.AspNetCore.Identity;
+using SedaWears.Domain.Entities;
+
+namespace SedaWears.Application.Common.Interfaces;
+
+public interface IApplicationDbContext
+{
+    DbSet<Category> Categories { get; }
+    DbSet<Product> Products { get; }
+    DbSet<User> Users { get; }
+    DbSet<Order> Orders { get; }
+    DbSet<OrderItem> OrderItems { get; }
+    DbSet<NewsletterSubscriber> NewsletterSubscribers { get; }
+    DbSet<Address> Addresses { get; }
+    DbSet<RestockSubscription> RestockSubscriptions { get; }
+    DbSet<ProductImage> ProductImages { get; }
+    DbSet<ProductSizeStock> ProductSizeStocks { get; }
+    DbSet<ProductSale> ProductSales { get; }
+    DbSet<CartItem> CartItems { get; }
+    DbSet<Shop> Shops { get; }
+    DbSet<ShopOwner> ShopOwners { get; }
+    DbSet<ShopManager> ShopManagers { get; }
+    DatabaseFacade Database { get; }
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+}
