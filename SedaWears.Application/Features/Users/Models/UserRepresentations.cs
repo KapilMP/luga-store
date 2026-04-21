@@ -10,7 +10,8 @@ public record PersonalInfo(
 );
 
 public record UserStatus(
-    bool IsActive
+    bool IsActive,
+    bool IsEmailConfirmed
 );
 
 public record AddressRepresentation(
@@ -24,9 +25,15 @@ public record AddressRepresentation(
     string ZipCode
 );
 
+public record CreatorRepresentation(
+    int Id,
+    PersonalInfo PersonalInfo
+);
+
 public abstract record BaseUserRepresentation(
     int Id,
     DateTime CreatedAt,
+    CreatorRepresentation? CreatedBy,
     PersonalInfo PersonalInfo,
     UserStatus Status
 );
@@ -40,29 +47,33 @@ public record ShopSummary(
 public record AdminRepresentation(
     int Id,
     DateTime CreatedAt,
+    CreatorRepresentation? CreatedBy,
     PersonalInfo PersonalInfo,
     UserStatus Status
-) : BaseUserRepresentation(Id, CreatedAt, PersonalInfo, Status);
+) : BaseUserRepresentation(Id, CreatedAt, CreatedBy, PersonalInfo, Status);
 
 public record OwnerRepresentation(
     int Id,
     DateTime CreatedAt,
+    CreatorRepresentation? CreatedBy,
     PersonalInfo PersonalInfo,
     UserStatus Status
-) : BaseUserRepresentation(Id, CreatedAt, PersonalInfo, Status);
+) : BaseUserRepresentation(Id, CreatedAt, CreatedBy, PersonalInfo, Status);
 
 public record ManagerRepresentation(
     int Id,
     DateTime CreatedAt,
+    CreatorRepresentation? CreatedBy,
     PersonalInfo PersonalInfo,
     UserStatus Status,
     List<ShopSummary> Shops
-) : BaseUserRepresentation(Id, CreatedAt, PersonalInfo, Status);
+) : BaseUserRepresentation(Id, CreatedAt, CreatedBy, PersonalInfo, Status);
 
 public record CustomerRepresentation(
     int Id,
     DateTime CreatedAt,
+    CreatorRepresentation? CreatedBy,
     PersonalInfo PersonalInfo,
     UserStatus Status,
     List<AddressRepresentation> SavedAddresses
-) : BaseUserRepresentation(Id, CreatedAt, PersonalInfo, Status);
+) : BaseUserRepresentation(Id, CreatedAt, CreatedBy, PersonalInfo, Status);

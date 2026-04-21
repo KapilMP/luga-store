@@ -16,7 +16,9 @@ public class InviteAdminValidator : AbstractValidator<InviteAdminCommand>
 {
     public InviteAdminValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().WithMessage("Enter valid email address").EmailAddress().WithMessage("Enter valid email address");
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Enter valid email address")
+            .EmailAddress().WithMessage("Enter valid email address");
     }
 }
 
@@ -24,16 +26,13 @@ public class InviteAdminHandler(
     UserManager<User> userManager,
     IEmailService emailService,
     IUserCuckooFilter cuckooFilter,
+    ICurrentUser currentUser,
     AppConfig appConfig) : IRequestHandler<InviteAdminCommand>
 {
     public async Task Handle(InviteAdminCommand request, CancellationToken ct)
     {
         User? user = null;
 
-        // Optimized check: If definitely not in Admin filter, we skip the initial "find by email" 
-        // if we are sure we only care about existing admins. 
-        // However, since Identity requires unique emails globally, we still need to check if the user exists at all.
-        // But if they are an admin, they will BE in this filter.
         if (await cuckooFilter.ExistsAsync(request.Email, UserRole.Admin))
         {
             user = await userManager.FindByEmailAsync(request.Email);
@@ -42,15 +41,12 @@ public class InviteAdminHandler(
         if (user != null && user.Role == UserRole.Admin)
         {
             if (!user.EmailConfirmed)
-            {
-                throw new BadRequestException("User is already Invited.");
-            }
+                throw new BadRequestException("Email is already invited.");
             else
-            {
-                throw new BadRequestException("User is already an Admin.");
-            }
+                throw new BadRequestException("Email is already in use.");
         }
-        else
+
+        if (user == null)
         {
             user = new User
             {
@@ -59,7 +55,8 @@ public class InviteAdminHandler(
                 FirstName = "",
                 LastName = "",
                 IsActive = true,
-                Role = UserRole.Admin
+                Role = UserRole.Admin,
+                CreatedById = currentUser.Id
             };
 
             var result = await userManager.CreateAsync(user);
@@ -67,14 +64,14 @@ public class InviteAdminHandler(
                 throw new BadRequestException(result.Errors.First().Description);
 
             await cuckooFilter.AddAsync(user.Email!, UserRole.Admin);
+
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            var url = $"{appConfig.FrontendUrl}/accept-invitation?email={user.Email}&token={HttpUtility.UrlEncode(token)}";
+
+            await emailService.SendEmailAsync(
+                user.Email!,
+                "SedaWears Admin Invitation",
+                $"<p>You have been invited as an Admin to SedaWears.</p><p>Click <a href='{url}'>here</a> to accept the invitation and set your password.</p>");
         }
-
-        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var url = $"{appConfig.FrontendUrl}/accept-invitation?email={user.Email}&token={HttpUtility.UrlEncode(token)}";
-
-        await emailService.SendEmailAsync(
-            user.Email!,
-            "SedaWears Admin Invitation",
-            $"<p>You have been invited as an Admin to SedaWears.</p><p>Click <a href='{url}'>here</a> to accept the invitation and set your password.</p>");
     }
 }

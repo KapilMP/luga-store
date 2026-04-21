@@ -13,7 +13,7 @@ public class UsersController(ISender mediator) : ControllerBase
 {
     [HttpGet("admins")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> GetAdmins([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] bool? isActive = null, [FromQuery] bool? isInvited = null)
+    public async Task<IActionResult> GetAdmins([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] bool? isActive = null, [FromQuery] bool? isInvited = false)
         => Ok(await mediator.Send(new GetAdminsQuery(pageNumber, pageSize, isActive, isInvited)));
 
     [HttpPost("admins/invite")]
@@ -50,12 +50,12 @@ public class UsersController(ISender mediator) : ControllerBase
 
     [HttpGet("owners")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> GetOwners([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] bool? isActive = null, [FromQuery] bool? isInvited = null)
+    public async Task<IActionResult> GetOwners([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] bool? isActive = null, [FromQuery] bool? isInvited = false)
         => Ok(await mediator.Send(new GetOwnersQuery(pageNumber, pageSize, isActive, isInvited)));
 
     [HttpGet("customers")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> GetCustomers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] bool? isActive = null, [FromQuery] bool? isInvited = null)
+    public async Task<IActionResult> GetCustomers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] bool? isActive = null, [FromQuery] bool? isInvited = false)
         => Ok(await mediator.Send(new GetCustomersQuery(pageNumber, pageSize, isActive, isInvited)));
 
     [HttpGet("shops/{shopId:int}/managers")]

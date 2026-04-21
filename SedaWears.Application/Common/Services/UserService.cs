@@ -14,10 +14,11 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         int pageNumber,
         int pageSize,
         bool? isActive = null,
-        bool? isInvited = null,
+        bool? isInvited = false,
         CancellationToken ct = default) where T : BaseUserRepresentation
     {
         var query = dbContext.Users
+            .Include(u => u.CreatedBy)
             .Where(u => u.Role == role && u.Id != currentUser.Id);
 
         if (isActive.HasValue)
@@ -58,14 +59,15 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
             .Include(sm => sm.Manager)
             .ThenInclude(m => m.ManagedShops)
             .ThenInclude(ms => ms.Shop)
+            .Include(sm => sm.Manager.CreatedBy)
             .OrderByDescending(sm => sm.CreatedAt)
             .AsQueryable();
 
         if (isActive.HasValue)
             query = query.Where(sm => sm.Manager.IsActive == isActive.Value);
 
-        if (isInvited.HasValue)
-            query = query.Where(sm => sm.Manager.EmailConfirmed == !isInvited.Value);
+        var invitedFilter = isInvited ?? false;
+        query = query.Where(sm => sm.Manager.EmailConfirmed == !invitedFilter);
 
         var totalCount = await query.CountAsync(ct);
         var sms = await query.Skip((pageNumber - 1) * pageSize)

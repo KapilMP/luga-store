@@ -29,7 +29,14 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(u => u.IsActive);
         builder.HasIndex(u => u.IsDeleted);
 
-        // If you want to automatically filter deleted users:
-        // builder.HasQueryFilter(u => !u.IsDeleted); // This is already handled globally in ApplicationDbContext
+        builder.HasOne(u => u.CreatedBy)
+            .WithMany()
+            .HasForeignKey(u => u.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(u => u.LastModifiedBy)
+            .WithMany()
+            .HasForeignKey(u => u.LastModifiedById)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

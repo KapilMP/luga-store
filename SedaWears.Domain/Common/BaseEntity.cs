@@ -5,9 +5,9 @@ namespace SedaWears.Domain.Common;
 public interface IAuditableEntity
 {
     DateTime CreatedAt { get; set; }
-    int? CreatedBy { get; set; }
+    int? CreatedById { get; set; }
     DateTime? LastModifiedAt { get; set; }
-    int? LastModifiedBy { get; set; }
+    int? LastModifiedById { get; set; }
 }
 
 public interface ISoftDelete
@@ -24,9 +24,9 @@ public abstract class BaseEntity
 public abstract class BaseAuditableEntity : BaseEntity, IAuditableEntity, ISoftDelete
 {
     public DateTime CreatedAt { get; set; }
-    public int? CreatedBy { get; set; }
+    public int? CreatedById { get; set; }
     public DateTime? LastModifiedAt { get; set; }
-    public int? LastModifiedBy { get; set; }
+    public int? LastModifiedById { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
 }

@@ -80,11 +80,11 @@ public class ApplicationDbContext(
             {
                 case EntityState.Added:
                     entry.Entity.CreatedAt = now;
-                    entry.Entity.CreatedBy = currentUserId;
+                    entry.Entity.CreatedById = currentUserId;
                     break;
                 case EntityState.Modified:
                     entry.Entity.LastModifiedAt = now;
-                    entry.Entity.LastModifiedBy = currentUserId;
+                    entry.Entity.LastModifiedById = currentUserId;
                     break;
             }
         }
