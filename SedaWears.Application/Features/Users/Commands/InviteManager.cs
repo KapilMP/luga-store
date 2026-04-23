@@ -62,19 +62,14 @@ public class InviteManagerHandler(
     {
         var shop = await dbContext.Shops.FirstOrDefaultAsync(s => s.Id == shopId, ct) ?? throw new NotFoundException("Shop not found.");
 
-        var user = await userManager.FindByEmailAsync(email);
+        // Find user with specific role (multiple users can have same email with different roles)
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == email && u.Role == UserRole.Manager && !u.IsDeleted, ct);
+
         using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
         try
         {
-            if (user != null)
-            {
-                if (user.Role != UserRole.Manager)
-                {
-                    user.Role = UserRole.Manager;
-                    await userManager.UpdateAsync(user);
-                }
-            }
-            else
+            if (user == null)
             {
                 user = new User 
                 { 
@@ -89,11 +84,13 @@ public class InviteManagerHandler(
                 if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);
             }
 
-            if (!await dbContext.ShopManagers.AnyAsync(sm => sm.ShopId == shopId && sm.ManagerId == user.Id, ct))
+            if (await dbContext.ShopManagers.AnyAsync(sm => sm.ShopId == shopId && sm.ManagerId == user.Id, ct))
             {
-                dbContext.ShopManagers.Add(new ShopManager { ShopId = shopId, ManagerId = user.Id });
-                await dbContext.SaveChangesAsync(ct);
+                throw new BadRequestException("User is already a manager of this shop.");
             }
+
+            dbContext.ShopManagers.Add(new ShopManager { ShopId = shopId, ManagerId = user.Id });
+            await dbContext.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
         catch { await transaction.RollbackAsync(ct); throw; }

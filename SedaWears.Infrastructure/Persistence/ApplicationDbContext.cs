@@ -1,19 +1,15 @@
 using System.Linq.Expressions;
-using System.Security.Claims;
 using System.Reflection;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Common;
 using SedaWears.Domain.Entities;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace SedaWears.Infrastructure.Persistence;
 
 public class ApplicationDbContext(
-    DbContextOptions<ApplicationDbContext> options,
-    IHttpContextAccessor httpContextAccessor) : IdentityUserContext<User, int>(options), IApplicationDbContext
+    DbContextOptions<ApplicationDbContext> options) : IdentityUserContext<User, int>(options), IApplicationDbContext
 {
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
@@ -44,7 +40,6 @@ public class ApplicationDbContext(
             }
         }
 
-        // Apply All Fluent API Entity Configurations (Clean Architecture Pattern)
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
 
@@ -59,16 +54,14 @@ public class ApplicationDbContext(
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var currentUserIdString = httpContextAccessor.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Sub);
-        int? currentUserId = string.IsNullOrEmpty(currentUserIdString) ? null : int.Parse(currentUserIdString);
-        var now = DateTime.UtcNow;
-
         foreach (var entry in ChangeTracker.Entries<ISoftDelete>())
         {
             if (entry.State == EntityState.Deleted)
             {
                 entry.State = EntityState.Modified;
                 entry.Entity.IsDeleted = true;
+                if (entry.Entity is Shop shop) shop.IsActive = false;
+                if (entry.Entity is User user) user.IsActive = false;
             }
         }
 

@@ -1,4 +1,3 @@
-using SedaWears.Application.Features.Users.Models;
 
 namespace SedaWears.Application.Features.Shops.Models;
 
@@ -7,6 +6,8 @@ public record ShopRepresentation(
     string Name,
     string Slug,
     string? Description,
-    string? LogoUrl,
-    bool IsActive
+    string? LogoFileName,
+    string? BannerFileName,
+    bool IsActive,
+    bool? IsDeleted
 );

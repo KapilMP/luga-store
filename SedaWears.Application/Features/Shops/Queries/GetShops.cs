@@ -7,9 +7,8 @@ using SedaWears.Application.Common.Models;
 namespace SedaWears.Application.Features.Shops.Queries;
 
 public record GetShopsQuery(
-    int PageNumber = 1, 
-    int PageSize = 10, 
-    bool? IsActive = null,
+    int PageNumber = 1,
+    int PageSize = 10,
     string? SortBy = null,
     string? SortOrder = "desc") : IRequest<PaginatedList<ShopRepresentation>>;
 
@@ -18,10 +17,8 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
     public async Task<PaginatedList<ShopRepresentation>> Handle(GetShopsQuery request, CancellationToken ct)
     {
         var query = dbContext.Shops
+            .IgnoreQueryFilters()
             .AsNoTracking();
-
-        if (request.IsActive.HasValue)
-            query = query.Where(s => s.IsActive == request.IsActive.Value);
 
         if (!string.IsNullOrEmpty(request.SortBy))
         {
@@ -30,6 +27,8 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
             {
                 "name" => isDescending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
                 "slug" => isDescending ? query.OrderByDescending(s => s.Slug) : query.OrderBy(s => s.Slug),
+                "isActive" => isDescending ? query.OrderByDescending(s => s.IsActive) : query.OrderBy(s => s.IsActive),
+                "isDeleted" => isDescending ? query.OrderByDescending(s => s.IsDeleted) : query.OrderBy(s => s.IsDeleted),
                 _ => isDescending ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id)
             };
         }
@@ -48,7 +47,9 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
                 s.Slug,
                 s.Description,
                 s.LogoFileName,
-                s.IsActive
+                s.BannerFileName,
+                s.IsActive,
+                s.IsDeleted
             ))
             .ToListAsync(ct);
 
