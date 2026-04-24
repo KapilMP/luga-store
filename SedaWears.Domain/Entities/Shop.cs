@@ -11,6 +11,7 @@ public class Shop : BaseEntity, ISoftDelete
     public string? LogoFileName { get; set; }
 
     public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsDeleted { get; set; }
 
     // Relationships

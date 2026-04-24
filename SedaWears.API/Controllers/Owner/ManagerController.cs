@@ -25,9 +25,10 @@ public class ManagerController(ISender mediator) : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] bool? invited = null,
-        [FromQuery] bool? isActive = null)
+        [FromQuery] string sortBy = "createdAt",
+        [FromQuery] string sortOrder = "desc")
     {
-        return await mediator.Send(new GetMyManagersQuery(pageNumber, pageSize, invited, isActive));
+        return await mediator.Send(new GetMyManagersQuery(pageNumber, pageSize, invited, sortBy, sortOrder));
     }
 
     [HttpGet("{id:int}")]

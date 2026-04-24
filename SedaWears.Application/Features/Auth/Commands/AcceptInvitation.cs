@@ -17,7 +17,7 @@ public record AcceptInvitationCommand(
     string FirstName,
     string LastName,
     string Password,
-    string Role) : IRequest<(AuthResponse Response, string RefreshToken)>;
+    string Role) : IRequest;
 
 public class AcceptInvitationValidator : AbstractValidator<AcceptInvitationCommand>
 {
@@ -46,16 +46,15 @@ public class AcceptInvitationValidator : AbstractValidator<AcceptInvitationComma
 }
 
 public class AcceptInvitationHandler(
-    UserManager<User> userManager,
-    ITokenService tokenService) : IRequestHandler<AcceptInvitationCommand, (AuthResponse Response, string RefreshToken)>
+    UserManager<User> userManager) : IRequestHandler<AcceptInvitationCommand>
 {
-    public async Task<(AuthResponse Response, string RefreshToken)> Handle(AcceptInvitationCommand request, CancellationToken ct)
+    public async Task Handle(AcceptInvitationCommand request, CancellationToken ct)
     {
         if (!Enum.TryParse<UserRole>(request.Role, true, out var roleEnum))
             throw new BadRequestException("Invalid role provided.");
 
         var user = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == roleEnum, ct)
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == roleEnum && u.IsActive, ct)
             ?? throw new NotFoundException("User not found.");
 
         if (user.EmailConfirmed)
@@ -67,6 +66,7 @@ public class AcceptInvitationHandler(
 
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
+        user.CreatedAt = DateTime.UtcNow;
 
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
@@ -75,10 +75,5 @@ public class AcceptInvitationHandler(
         var passwordResult = await userManager.AddPasswordAsync(user, request.Password);
         if (!passwordResult.Succeeded)
             throw new BadRequestException(passwordResult.Errors.First().Description);
-
-        var accessToken = tokenService.GenerateAccessToken(user);
-        var refreshToken = tokenService.GenerateRefreshToken(user);
-
-        return (new AuthResponse(accessToken, user.ToUserRepresentation()), refreshToken);
     }
 }

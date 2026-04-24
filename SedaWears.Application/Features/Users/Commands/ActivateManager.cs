@@ -29,7 +29,9 @@ public class ActivateManagerHandler(UserManager<User> userManager, IApplicationD
             .FirstOrDefaultAsync(x => x.ShopId == shopId && x.ManagerId == request.ManagerId, ct)
             ?? throw new NotFoundException("Shop Manager linkage not found");
 
-        var user = await userManager.FindByIdAsync(request.ManagerId.ToString()) ?? throw new NotFoundException("User not found");
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == request.ManagerId && u.Role == Domain.Enums.UserRole.Manager, ct)
+            ?? throw new NotFoundException("User not found");
         user.IsActive = true;
         await userManager.UpdateAsync(user);
     }

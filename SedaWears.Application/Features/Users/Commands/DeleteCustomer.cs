@@ -5,6 +5,7 @@ using SedaWears.Application.Common.Exceptions;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Entities;
 using SedaWears.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace SedaWears.Application.Features.Users.Commands;
 
@@ -21,14 +22,14 @@ public class DeleteCustomerValidator : AbstractValidator<DeleteCustomerCommand>
 
 public class DeleteCustomerHandler(
     UserManager<User> userManager, 
+    IApplicationDbContext dbContext,
     IUserCuckooFilter cuckooFilter) : IRequestHandler<DeleteCustomerCommand>
 {
     public async Task Handle(DeleteCustomerCommand request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(request.Id.ToString()) ?? throw new NotFoundException("Customer not found.");
-        
-        if (user.Role != UserRole.Customer)
-            throw new BadRequestException("User is not a Customer.");
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == request.Id && u.Role == UserRole.Customer, ct)
+            ?? throw new NotFoundException("Customer not found.");
 
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);

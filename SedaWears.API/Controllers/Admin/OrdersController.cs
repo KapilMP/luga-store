@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SedaWears.Application.Features.Orders.Commands;
 using SedaWears.Application.Features.Orders.Queries;
-using SedaWears.Domain.Common;
 using SedaWears.Domain.Entities;
 
 using SedaWears.Domain.Enums;

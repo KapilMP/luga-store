@@ -95,16 +95,15 @@ public class AuthController(
     [HttpPost("accept-invitation")]
     public async Task<IActionResult> AcceptInvitation(AcceptInvitationRequest request)
     {
-        var (response, refreshToken) = await mediator.Send(new AcceptInvitationCommand(
+        await mediator.Send(new AcceptInvitationCommand(
             request.Email,
             request.Token,
             request.FirstName,
             request.LastName,
             request.Password,
             request.Role));
-
-        SetAuthCookies(refreshToken, RefreshPath);
-        return Ok(response);
+            
+        return Ok(new { Message = "Invitation accepted successfully. You can now login with your credentials." });
     }
 
     [HttpGet("invitation-details")]

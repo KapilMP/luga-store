@@ -1,5 +1,3 @@
-using SedaWears.Application.Common.Settings;
-using SedaWears.Application.Features.Users.Models;
 using MediatR;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;

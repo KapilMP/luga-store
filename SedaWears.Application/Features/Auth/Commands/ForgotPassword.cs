@@ -31,7 +31,7 @@ public class ForgotPasswordHandler(
     {
         var role = originContext.CurrentRole;
         var user = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == role, ct);
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == role && u.IsActive, ct);
 
         if (user == null) return;
 

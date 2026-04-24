@@ -7,11 +7,10 @@ using SedaWears.Application.Common.Models;
 namespace SedaWears.Application.Features.Users.Queries;
 
 public record GetAdminsQuery(
-    int PageNumber = 1, 
-    int PageSize = 10, 
-    bool? IsActive = null, 
+    int PageNumber = 1,
+    int PageSize = 10,
     bool? IsInvited = null,
-    string? SortBy = null,
+    string? SortBy = "createdAt",
     string? SortOrder = "desc")
     : IRequest<PaginatedList<AdminRepresentation>>;
 
@@ -23,7 +22,6 @@ public class GetAdminsHandler(IUserService userService) : IRequestHandler<GetAdm
             UserRole.Admin,
             request.PageNumber,
             request.PageSize,
-            request.IsActive,
             request.IsInvited,
             request.SortBy,
             request.SortOrder, ct);

@@ -25,7 +25,8 @@ public class GetShopHandler(IApplicationDbContext dbContext) : IRequestHandler<G
             shop.LogoFileName,
             shop.BannerFileName,
             shop.IsActive,
-            shop.IsDeleted
+            shop.IsDeleted,
+            shop.CreatedAt
         );
     }
 }

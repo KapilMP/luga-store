@@ -13,18 +13,20 @@ public static class UserMapper
 
         return user.Role switch
         {
-            UserRole.Admin => new AdminRepresentation(user.Id, personalInfo, status),
+            UserRole.Admin => new AdminRepresentation(user.Id, personalInfo, status, user.CreatedAt),
 
             UserRole.Owner => new OwnerRepresentation(
                 user.Id,
                 personalInfo,
-                status
+                status,
+                user.CreatedAt
             ),
 
             UserRole.Manager => new ManagerRepresentation(
                 user.Id,
                 personalInfo,
                 status,
+                user.CreatedAt,
                 user.ManagedShops
                     .Where(ms => ms.Shop.IsActive)
                     .Select(ms => new ShopSummary(
@@ -38,6 +40,7 @@ public static class UserMapper
                 user.Id,
                 personalInfo,
                 status,
+                user.CreatedAt,
                 user.Addresses.Select(a => new AddressRepresentation(
                     a.Id, a.Label, a.FullName, a.Email, a.Phone, a.Street, a.City, a.ZipCode
                 )).ToList()

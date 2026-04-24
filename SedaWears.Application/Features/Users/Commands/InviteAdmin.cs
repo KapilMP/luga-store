@@ -6,6 +6,7 @@ using SedaWears.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using System.Web;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 
 namespace SedaWears.Application.Features.Users.Commands;
@@ -24,6 +25,7 @@ public class InviteAdminValidator : AbstractValidator<InviteAdminCommand>
 
 public class InviteAdminHandler(
     UserManager<User> userManager,
+    IApplicationDbContext dbContext,
     IEmailService emailService,
     IUserCuckooFilter cuckooFilter,
     AppConfig appConfig) : IRequestHandler<InviteAdminCommand>
@@ -34,10 +36,11 @@ public class InviteAdminHandler(
 
         if (await cuckooFilter.ExistsAsync(request.Email, UserRole.Admin))
         {
-            user = await userManager.FindByEmailAsync(request.Email);
+            user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == UserRole.Admin, ct);
         }
 
-        if (user != null && user.Role == UserRole.Admin)
+        if (user != null)
         {
             if (!user.EmailConfirmed)
                 throw new BadRequestException("Email is already invited.");

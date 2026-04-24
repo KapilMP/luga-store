@@ -33,7 +33,8 @@ public record PartialUserRepresentation(
 public abstract record BaseUserRepresentation(
     int Id,
     PersonalInfo PersonalInfo,
-    UserStatus Status
+    UserStatus Status,
+    DateTime CreatedAt
 );
 
 public record ShopSummary(
@@ -45,25 +46,29 @@ public record ShopSummary(
 public record AdminRepresentation(
     int Id,
     PersonalInfo PersonalInfo,
-    UserStatus Status
-) : BaseUserRepresentation(Id, PersonalInfo, Status);
+    UserStatus Status,
+    DateTime CreatedAt
+) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
 
 public record OwnerRepresentation(
     int Id,
     PersonalInfo PersonalInfo,
-    UserStatus Status
-) : BaseUserRepresentation(Id, PersonalInfo, Status);
+    UserStatus Status,
+    DateTime CreatedAt
+) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
 
 public record ManagerRepresentation(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
+    DateTime CreatedAt,
     List<ShopSummary> Shops
-) : BaseUserRepresentation(Id, PersonalInfo, Status);
+) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
 
 public record CustomerRepresentation(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
+    DateTime CreatedAt,
     List<AddressRepresentation> SavedAddresses
-) : BaseUserRepresentation(Id, PersonalInfo, Status);
+) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);

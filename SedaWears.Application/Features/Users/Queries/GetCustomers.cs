@@ -7,12 +7,11 @@ using SedaWears.Application.Common.Models;
 namespace SedaWears.Application.Features.Users.Queries;
 
 public record GetCustomersQuery(
-    int PageNumber = 1, 
-    int PageSize = 10, 
-    bool? IsActive = null, 
+    int PageNumber = 1,
+    int PageSize = 10,
     bool? IsInvited = null,
-    string? SortBy = null,
-    string? SortOrder = "desc") 
+    string? SortBy = "createdAt",
+    string? SortOrder = "desc")
     : IRequest<PaginatedList<CustomerRepresentation>>;
 
 public class GetCustomersHandler(IUserService userService) : IRequestHandler<GetCustomersQuery, PaginatedList<CustomerRepresentation>>
@@ -20,10 +19,9 @@ public class GetCustomersHandler(IUserService userService) : IRequestHandler<Get
     public async Task<PaginatedList<CustomerRepresentation>> Handle(GetCustomersQuery request, CancellationToken ct)
     {
         return await userService.GetUsersByRoleAsync<CustomerRepresentation>(
-            UserRole.Customer, 
-            request.PageNumber, 
-            request.PageSize, 
-            request.IsActive, 
+            UserRole.Customer,
+            request.PageNumber,
+            request.PageSize,
             request.IsInvited,
             request.SortBy,
             request.SortOrder, ct);

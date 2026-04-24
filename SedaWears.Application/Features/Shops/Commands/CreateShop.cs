@@ -5,7 +5,13 @@ using SedaWears.Domain.Entities;
 
 namespace SedaWears.Application.Features.Shops.Commands;
 
-public record CreateShopCommand(string Name, string Slug, string? Description) : IRequest;
+public record CreateShopCommand(
+    string Name,
+    string Slug,
+    string? Description,
+    bool IsActive,
+    string? LogoFileName = null,
+    string? BannerFileName = null) : IRequest;
 
 public class CreateShopValidator : AbstractValidator<CreateShopCommand>
 {
@@ -23,6 +29,12 @@ public class CreateShopValidator : AbstractValidator<CreateShopCommand>
             .MinimumLength(10).WithMessage("Description must be at least 10 characters long.")
             .MaximumLength(500).WithMessage("Description must not exceed 300 characters.")
             .When(x => !string.IsNullOrEmpty(x.Description));
+
+        RuleFor(x => x.LogoFileName)
+            .MaximumLength(255).WithMessage("Logo file name must not exceed 255 characters.");
+
+        RuleFor(x => x.BannerFileName)
+            .MaximumLength(255).WithMessage("Banner file name must not exceed 255 characters.");
     }
 }
 
@@ -35,7 +47,9 @@ public class CreateShopHandler(IApplicationDbContext dbContext) : IRequestHandle
             Name = request.Name,
             Slug = request.Slug,
             Description = request.Description,
-            IsActive = true
+            LogoFileName = request.LogoFileName,
+            BannerFileName = request.BannerFileName,
+            IsActive = request.IsActive
         };
 
         dbContext.Shops.Add(shop);

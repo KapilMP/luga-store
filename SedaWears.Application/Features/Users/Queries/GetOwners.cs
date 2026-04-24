@@ -7,12 +7,11 @@ using SedaWears.Application.Common.Models;
 namespace SedaWears.Application.Features.Users.Queries;
 
 public record GetOwnersQuery(
-    int PageNumber = 1, 
-    int PageSize = 10, 
-    bool? IsActive = null, 
+    int PageNumber = 1,
+    int PageSize = 10,
     bool? IsInvited = null,
-    string? SortBy = null,
-    string? SortOrder = "desc") 
+    string? SortBy = "createdAt",
+    string? SortOrder = "desc")
     : IRequest<PaginatedList<OwnerRepresentation>>;
 
 public class GetOwnersHandler(IUserService userService) : IRequestHandler<GetOwnersQuery, PaginatedList<OwnerRepresentation>>
@@ -20,10 +19,9 @@ public class GetOwnersHandler(IUserService userService) : IRequestHandler<GetOwn
     public async Task<PaginatedList<OwnerRepresentation>> Handle(GetOwnersQuery request, CancellationToken ct)
     {
         return await userService.GetUsersByRoleAsync<OwnerRepresentation>(
-            UserRole.Owner, 
-            request.PageNumber, 
+            UserRole.Owner,
+            request.PageNumber,
             request.PageSize,
-            request.IsActive, 
             request.IsInvited,
             request.SortBy,
             request.SortOrder, ct);

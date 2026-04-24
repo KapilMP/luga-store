@@ -31,11 +31,9 @@ public class ResendInvitationHandler(
 {
     public async Task Handle(ResendInvitationCommand request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(request.UserId.ToString())
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == request.UserId && u.Role == request.role, ct)
             ?? throw new NotFoundException("User not found");
-
-        if (user.Role != request.role)
-            throw new BadRequestException($"{nameof(request.role)} not found.");
 
         if (user.EmailConfirmed)
             throw new BadRequestException("This user has already accepted their invitation.");

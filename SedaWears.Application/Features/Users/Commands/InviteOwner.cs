@@ -68,9 +68,8 @@ public class InviteOwnerHandler(
             shopName = shop.Name;
         }
 
-        // Find user with specific role (multiple users can have same email with different roles)
         var user = await dbContext.Users
-            .FirstOrDefaultAsync(u => u.Email == email && u.Role == UserRole.Owner && !u.IsDeleted, ct);
+            .FirstOrDefaultAsync(u => u.Email == email && u.Role == UserRole.Owner, ct);
 
         using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
         try
@@ -115,7 +114,7 @@ public class InviteOwnerHandler(
         var url = $"{appConfig.FrontendUrl}/accept-invitation?email={user.Email}&token={HttpUtility.UrlEncode(token)}";
 
         var subject = shopName != null ? $"SedaWears Owner Invitation for {shopName}" : "SedaWears Owner Invitation";
-        var body = shopName != null 
+        var body = shopName != null
             ? $"<p>You have been invited as an Owner for <b>{shopName}</b> on SedaWears.</p><p>Click <a href='{url}'>here</a> to accept the invitation and set your password.</p>"
             : $"<p>You have been invited as an Owner to SedaWears.</p><p>Click <a href='{url}'>here</a> to accept the invitation and set your password.</p>";
 

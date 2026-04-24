@@ -9,5 +9,6 @@ public record ShopRepresentation(
     string? LogoFileName,
     string? BannerFileName,
     bool IsActive,
-    bool? IsDeleted
+    bool? IsDeleted,
+    DateTime CreatedAt
 );

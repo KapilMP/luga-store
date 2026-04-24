@@ -13,18 +13,13 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         UserRole role,
         int pageNumber,
         int pageSize,
-        bool? isActive = null,
         bool? isInvited = null,
         string? sortBy = null,
         string? sortOrder = "desc",
         CancellationToken ct = default) where T : BaseUserRepresentation
     {
         var query = dbContext.Users
-            
-            .Where(u => u.Role == role && u.Id != currentUser.Id && !u.IsDeleted);
-
-        if (isActive.HasValue)
-            query = query.Where(u => u.IsActive == isActive.Value);
+            .Where(u => u.Role == role && u.Id != currentUser.Id);
 
         if (isInvited.HasValue)
             query = query.Where(u => u.EmailConfirmed == !isInvited.Value);
@@ -44,13 +39,14 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
             {
                 "name" => isDescending ? query.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName) : query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName),
                 "email" => isDescending ? query.OrderByDescending(u => u.Email) : query.OrderBy(u => u.Email),
-                "createdat" => isDescending ? query.OrderByDescending(u => u.Id) : query.OrderBy(u => u.Id),
-                _ => query.OrderByDescending(u => u.Id)
+                "isactive" => isDescending ? query.OrderByDescending(u => u.IsActive) : query.OrderBy(u => u.IsActive),
+                "createdat" => isDescending ? query.OrderByDescending(u => u.CreatedAt) : query.OrderBy(u => u.CreatedAt),
+                _ => query.OrderByDescending(u => u.CreatedAt)
             };
         }
         else
         {
-            query = query.OrderByDescending(u => u.Id);
+            query = query.OrderByDescending(u => u.CreatedAt);
         }
 
         var totalCount = await query.CountAsync(ct);
@@ -67,7 +63,6 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         int shopId,
         int pageNumber,
         int pageSize,
-        bool? isActive = null,
         bool? isInvited = null,
         string? sortBy = null,
         string? sortOrder = "desc",
@@ -81,9 +76,6 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
             .ThenInclude(ms => ms.Shop)
             .AsQueryable();
 
-        if (isActive.HasValue)
-            query = query.Where(sm => sm.Manager.IsActive == isActive.Value);
-
         if (isInvited.HasValue)
             query = query.Where(sm => sm.Manager.EmailConfirmed == !isInvited.Value);
 
@@ -94,13 +86,14 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
             {
                 "name" => isDescending ? query.OrderByDescending(sm => sm.Manager.FirstName).ThenByDescending(sm => sm.Manager.LastName) : query.OrderBy(sm => sm.Manager.FirstName).ThenBy(sm => sm.Manager.LastName),
                 "email" => isDescending ? query.OrderByDescending(sm => sm.Manager.Email) : query.OrderBy(sm => sm.Manager.Email),
-                "createdat" => isDescending ? query.OrderByDescending(sm => sm.Id) : query.OrderBy(sm => sm.Id),
-                _ => query.OrderByDescending(sm => sm.Id)
+                "isactive" => isDescending ? query.OrderByDescending(sm => sm.Manager.IsActive) : query.OrderBy(sm => sm.Manager.IsActive),
+                "createdat" => isDescending ? query.OrderByDescending(sm => sm.Manager.CreatedAt) : query.OrderBy(sm => sm.Manager.CreatedAt),
+                _ => query.OrderByDescending(sm => sm.Manager.CreatedAt)
             };
         }
         else
         {
-            query = query.OrderByDescending(sm => sm.Id);
+            query = query.OrderByDescending(sm => sm.Manager.CreatedAt);
         }
 
         var totalCount = await query.CountAsync(ct);

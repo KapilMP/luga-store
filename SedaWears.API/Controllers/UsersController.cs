@@ -9,6 +9,7 @@ namespace SedaWears.API.Controllers;
 
 public record UpdateUserRequest(string FirstName, string LastName, bool? IsActive, string? NewPassword);
 public record InviteAdminRequest(string Email);
+public record UpdateAdminRequest(bool IsActive);
 public record InviteOwnerRequest(string Email);
 public record InviteShopManagerRequest(string Email);
 
@@ -21,17 +22,24 @@ public class UsersController(ISender mediator) : ControllerBase
     public async Task<IActionResult> GetAdmins(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] bool? isActive = null,
         [FromQuery] bool? isInvited = false,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
-        => Ok(await mediator.Send(new GetAdminsQuery(pageNumber, pageSize, isActive, isInvited, sortBy, sortOrder)));
+        => Ok(await mediator.Send(new GetAdminsQuery(pageNumber, pageSize, isInvited, sortBy, sortOrder)));
 
     [HttpPost("admins/invite")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> InviteAdmin([FromBody] InviteAdminRequest request)
     {
         await mediator.Send(new InviteAdminCommand(request.Email));
+        return NoContent();
+    }
+
+    [HttpPatch("admins/{id:int}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    public async Task<IActionResult> UpdateAdmin(int id, [FromBody] UpdateAdminRequest request)
+    {
+        await mediator.Send(new SetUserActiveStatusCommand(id, request.IsActive));
         return NoContent();
     }
 
@@ -64,22 +72,20 @@ public class UsersController(ISender mediator) : ControllerBase
     public async Task<IActionResult> GetOwners(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] bool? isActive = null,
         [FromQuery] bool? isInvited = false,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
-        => Ok(await mediator.Send(new GetOwnersQuery(pageNumber, pageSize, isActive, isInvited, sortBy, sortOrder)));
+        => Ok(await mediator.Send(new GetOwnersQuery(pageNumber, pageSize, isInvited, sortBy, sortOrder)));
 
     [HttpGet("customers")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> GetCustomers(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] bool? isActive = null,
         [FromQuery] bool? isInvited = false,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
-        => Ok(await mediator.Send(new GetCustomersQuery(pageNumber, pageSize, isActive, isInvited, sortBy, sortOrder)));
+        => Ok(await mediator.Send(new GetCustomersQuery(pageNumber, pageSize, isInvited, sortBy, sortOrder)));
 
     [HttpGet("shops/{shopId:int}/managers")]
     [Authorize(Roles = nameof(UserRole.Admin))]
@@ -87,11 +93,10 @@ public class UsersController(ISender mediator) : ControllerBase
         [FromRoute] int shopId,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] bool? isActive = null,
         [FromQuery] bool? invited = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = "desc")
-        => Ok(await mediator.Send(new GetShopManagersByShopIdQuery(shopId, pageNumber, pageSize, invited, isActive, sortBy, sortOrder)));
+        => Ok(await mediator.Send(new GetShopManagersByShopIdQuery(shopId, pageNumber, pageSize, invited, sortBy, sortOrder)));
 
     [HttpGet("{id:int}")]
     [Authorize]

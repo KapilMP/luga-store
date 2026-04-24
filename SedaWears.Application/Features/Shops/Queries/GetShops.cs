@@ -9,7 +9,7 @@ namespace SedaWears.Application.Features.Shops.Queries;
 public record GetShopsQuery(
     int PageNumber = 1,
     int PageSize = 10,
-    string? SortBy = null,
+    string? SortBy = "createdAt",
     string? SortOrder = "desc") : IRequest<PaginatedList<ShopRepresentation>>;
 
 public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopsQuery, PaginatedList<ShopRepresentation>>
@@ -27,14 +27,15 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
             {
                 "name" => isDescending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
                 "slug" => isDescending ? query.OrderByDescending(s => s.Slug) : query.OrderBy(s => s.Slug),
-                "isActive" => isDescending ? query.OrderByDescending(s => s.IsActive) : query.OrderBy(s => s.IsActive),
-                "isDeleted" => isDescending ? query.OrderByDescending(s => s.IsDeleted) : query.OrderBy(s => s.IsDeleted),
-                _ => isDescending ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id)
+                "isactive" => isDescending ? query.OrderByDescending(s => s.IsActive) : query.OrderBy(s => s.IsActive),
+                "isdeleted" => isDescending ? query.OrderByDescending(s => s.IsDeleted) : query.OrderBy(s => s.IsDeleted),
+                "createdat" => isDescending ? query.OrderByDescending(s => s.CreatedAt) : query.OrderBy(s => s.CreatedAt),
+                _ => isDescending ? query.OrderByDescending(s => s.CreatedAt) : query.OrderBy(s => s.CreatedAt)
             };
         }
         else
         {
-            query = query.OrderByDescending(s => s.Id);
+            query = query.OrderByDescending(s => s.CreatedAt);
         }
 
         var totalCount = await query.CountAsync(ct);
@@ -49,7 +50,8 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
                 s.LogoFileName,
                 s.BannerFileName,
                 s.IsActive,
-                s.IsDeleted
+                s.IsDeleted,
+                s.CreatedAt
             ))
             .ToListAsync(ct);
 

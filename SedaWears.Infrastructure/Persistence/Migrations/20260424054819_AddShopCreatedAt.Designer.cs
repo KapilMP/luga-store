@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SedaWears.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace SedaWears.Infrastructure.Migrations
+namespace SedaWears.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424054819_AddShopCreatedAt")]
+    partial class AddShopCreatedAt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -136,7 +139,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses", (string)null);
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.CartItem", b =>
@@ -171,7 +174,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("UserId", "ProductId", "Size")
                         .IsUnique();
 
-                    b.ToTable("CartItems", (string)null);
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Category", b =>
@@ -224,7 +227,7 @@ namespace SedaWears.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("\"ShopId\" IS NOT NULL");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.NewsletterSubscriber", b =>
@@ -261,7 +264,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("ShopId", "Email")
                         .IsUnique();
 
-                    b.ToTable("NewsletterSubscribers", (string)null);
+                    b.ToTable("NewsletterSubscribers");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Order", b =>
@@ -295,7 +298,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.OrderItem", b =>
@@ -325,7 +328,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Product", b =>
@@ -386,7 +389,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ShopId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ProductImage", b =>
@@ -412,7 +415,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages", (string)null);
+                    b.ToTable("ProductImages");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ProductSale", b =>
@@ -451,7 +454,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ProductId", "IsActive");
 
-                    b.ToTable("ProductSales", (string)null);
+                    b.ToTable("ProductSales");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ProductSizeStock", b =>
@@ -478,7 +481,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("ProductId", "Size")
                         .IsUnique();
 
-                    b.ToTable("ProductSizeStocks", (string)null);
+                    b.ToTable("ProductSizeStocks");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.RestockSubscription", b =>
@@ -523,7 +526,7 @@ namespace SedaWears.Infrastructure.Migrations
                     b.HasIndex("Email", "ProductId", "Size")
                         .IsUnique();
 
-                    b.ToTable("RestockSubscriptions", (string)null);
+                    b.ToTable("RestockSubscriptions");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.Shop", b =>
@@ -578,7 +581,7 @@ namespace SedaWears.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Shops", (string)null);
+                    b.ToTable("Shops");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ShopManager", b =>
@@ -596,7 +599,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("ManagerId");
 
-                    b.ToTable("ShopManagers", (string)null);
+                    b.ToTable("ShopManagers");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.ShopOwner", b =>
@@ -614,7 +617,7 @@ namespace SedaWears.Infrastructure.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("ShopOwners", (string)null);
+                    b.ToTable("ShopOwners");
                 });
 
             modelBuilder.Entity("SedaWears.Domain.Entities.User", b =>

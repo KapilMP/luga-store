@@ -33,7 +33,7 @@ public class LoginHandler(
     {
         var role = originContext.CurrentRole;
         var user = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == role, ct)
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == role && u.IsActive, ct)
             ?? throw new UnauthorizedAccessException("Incorrect email or password");
         
         if (!await userManager.CheckPasswordAsync(user, request.Password)) throw new UnauthorizedAccessException("Incorrect email or password");

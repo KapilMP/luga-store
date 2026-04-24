@@ -5,6 +5,7 @@ using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
 using SedaWears.Domain.Enums;
 using SedaWears.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace SedaWears.Application.Features.Users.Commands;
 
@@ -18,14 +19,16 @@ public class DeleteAdminValidator : AbstractValidator<DeleteAdminCommand>
     }
 }
 
-public class DeleteAdminHandler(UserManager<User> userManager, IUserCuckooFilter cuckooFilter) : IRequestHandler<DeleteAdminCommand>
+public class DeleteAdminHandler(
+    UserManager<User> userManager,
+    IApplicationDbContext dbContext,
+    IUserCuckooFilter cuckooFilter) : IRequestHandler<DeleteAdminCommand>
 {
     public async Task Handle(DeleteAdminCommand request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(request.Id.ToString());
-
-        if (user is null || user.Role != UserRole.Admin)
-            throw new NotFoundException("Admin not found.");
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == request.Id && u.Role == UserRole.Admin, ct)
+            ?? throw new NotFoundException("Admin not found.");
 
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);

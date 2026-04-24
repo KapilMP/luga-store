@@ -7,7 +7,14 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.Application.Features.Shops.Commands;
 
-public record UpdateShopCommand(int Id, string Name, string Slug, string? Description, bool? IsActive) : IRequest;
+public record UpdateShopCommand(
+    int Id,
+    string Name,
+    string Slug,
+    string? Description,
+    bool? IsActive,
+    string? LogoFileName = null,
+    string? BannerFileName = null) : IRequest;
 
 public class UpdateShopValidator : AbstractValidator<UpdateShopCommand>
 {
@@ -25,6 +32,12 @@ public class UpdateShopValidator : AbstractValidator<UpdateShopCommand>
             .MinimumLength(10).WithMessage("Description must be at least 10 characters long.")
             .MaximumLength(500).WithMessage("Description must not exceed 500 characters.")
             .When(x => !string.IsNullOrEmpty(x.Description));
+
+        RuleFor(x => x.LogoFileName)
+            .MaximumLength(255).WithMessage("Logo file name must not exceed 255 characters.");
+
+        RuleFor(x => x.BannerFileName)
+            .MaximumLength(255).WithMessage("Banner file name must not exceed 255 characters.");
     }
 }
 
@@ -46,6 +59,8 @@ public class UpdateShopHandler(IApplicationDbContext dbContext, ICurrentUser cur
         shop.Name = request.Name;
         shop.Slug = request.Slug;
         shop.Description = request.Description;
+        shop.LogoFileName = request.LogoFileName;
+        shop.BannerFileName = request.BannerFileName;
 
         if (request.IsActive.HasValue && currentUser.Role == UserRole.Admin)
         {
