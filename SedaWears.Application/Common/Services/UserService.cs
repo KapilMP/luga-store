@@ -27,8 +27,8 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         if (role == UserRole.Customer)
             query = query.Include(u => u.Addresses);
 
-        if (role == UserRole.Manager)
-            query = query.Include(u => u.ManagedShops).ThenInclude(ms => ms.Shop);
+        if (role == UserRole.Manager || role == UserRole.Owner)
+            query = query.Include(u => u.ShopMemberships).ThenInclude(sm => sm.Shop);
 
         query = query.AsNoTracking();
 
@@ -68,40 +68,40 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         string? sortOrder = "desc",
         CancellationToken ct = default)
     {
-        var query = dbContext.ShopManagers
+        var query = dbContext.ShopMembers
             .AsNoTracking()
-            .Where(sm => sm.ShopId == shopId && sm.ManagerId != currentUser.Id)
-            .Include(sm => sm.Manager)
-            .ThenInclude(m => m.ManagedShops)
-            .ThenInclude(ms => ms.Shop)
+            .Where(sm => sm.ShopId == shopId && sm.UserId != currentUser.Id && sm.User.Role == UserRole.Manager)
+            .Include(sm => sm.User)
+            .ThenInclude(u => u.ShopMemberships)
+            .ThenInclude(sm => sm.Shop)
             .AsQueryable();
 
         if (isInvited.HasValue)
-            query = query.Where(sm => sm.Manager.EmailConfirmed == !isInvited.Value);
+            query = query.Where(sm => sm.User.EmailConfirmed == !isInvited.Value);
 
         if (!string.IsNullOrEmpty(sortBy))
         {
             var isDescending = sortOrder?.ToLower() == "desc";
             query = sortBy.ToLower() switch
             {
-                "name" => isDescending ? query.OrderByDescending(sm => sm.Manager.FirstName).ThenByDescending(sm => sm.Manager.LastName) : query.OrderBy(sm => sm.Manager.FirstName).ThenBy(sm => sm.Manager.LastName),
-                "email" => isDescending ? query.OrderByDescending(sm => sm.Manager.Email) : query.OrderBy(sm => sm.Manager.Email),
-                "isactive" => isDescending ? query.OrderByDescending(sm => sm.Manager.IsActive) : query.OrderBy(sm => sm.Manager.IsActive),
-                "createdat" => isDescending ? query.OrderByDescending(sm => sm.Manager.CreatedAt) : query.OrderBy(sm => sm.Manager.CreatedAt),
-                _ => query.OrderByDescending(sm => sm.Manager.CreatedAt)
+                "name" => isDescending ? query.OrderByDescending(sm => sm.User.FirstName).ThenByDescending(sm => sm.User.LastName) : query.OrderBy(sm => sm.User.FirstName).ThenBy(sm => sm.User.LastName),
+                "email" => isDescending ? query.OrderByDescending(sm => sm.User.Email) : query.OrderBy(sm => sm.User.Email),
+                "isactive" => isDescending ? query.OrderByDescending(sm => sm.User.IsActive) : query.OrderBy(sm => sm.User.IsActive),
+                "createdat" => isDescending ? query.OrderByDescending(sm => sm.User.CreatedAt) : query.OrderBy(sm => sm.User.CreatedAt),
+                _ => query.OrderByDescending(sm => sm.User.CreatedAt)
             };
         }
         else
         {
-            query = query.OrderByDescending(sm => sm.Manager.CreatedAt);
+            query = query.OrderByDescending(sm => sm.User.CreatedAt);
         }
 
         var totalCount = await query.CountAsync(ct);
-        var sms = await query.Skip((pageNumber - 1) * pageSize)
-                             .Take(pageSize)
-                             .ToListAsync(ct);
+        var members = await query.Skip((pageNumber - 1) * pageSize)
+                                 .Take(pageSize)
+                                 .ToListAsync(ct);
 
-        var mappedList = sms.Select(sm => (ManagerRepresentation)sm.Manager.ToUserRepresentation()).ToList();
+        var mappedList = members.Select(sm => (ManagerRepresentation)sm.User.ToUserRepresentation()).ToList();
 
         return new PaginatedList<ManagerRepresentation>(mappedList, totalCount, pageNumber, pageSize);
     }

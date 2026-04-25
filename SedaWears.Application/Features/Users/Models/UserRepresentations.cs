@@ -54,7 +54,8 @@ public record OwnerRepresentation(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    List<ShopSummary> Shops
 ) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
 
 public record ManagerRepresentation(

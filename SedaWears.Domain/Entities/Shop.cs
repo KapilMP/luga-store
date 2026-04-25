@@ -15,7 +15,6 @@ public class Shop : BaseEntity, ISoftDelete
     public bool IsDeleted { get; set; }
 
     // Relationships
-    public ICollection<ShopOwner> Owners { get; set; } = [];
-    public ICollection<ShopManager> Managers { get; set; } = [];
+    public ICollection<ShopMember> Members { get; set; } = [];
     public ICollection<Product> Products { get; set; } = [];
 }

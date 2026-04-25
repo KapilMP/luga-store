@@ -11,12 +11,12 @@ namespace SedaWears.Application.Features.Profile.Commands;
 
 public record UpdateOwnerProfileCommand(string FirstName, string LastName, string Phone, string? AvatarFileName) : IRequest<OwnerRepresentation>;
 
-public class UpdateOwnerProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) : 
+public class UpdateOwnerProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) :
     IRequestHandler<UpdateOwnerProfileCommand, OwnerRepresentation>
 {
     public async Task<OwnerRepresentation> Handle(UpdateOwnerProfileCommand request, CancellationToken cancellationToken)
     {
-        var userId = currentUser.Id;
+        var userId = currentUser.Id!.Value;
         var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("Profile not found.");
 
         user.FirstName = request.FirstName;
@@ -33,7 +33,7 @@ public class UpdateOwnerProfileCommandHandler(UserManager<User> userManager, IS3
         }
 
         await userManager.UpdateAsync(user);
-        
+
         return (OwnerRepresentation)user.ToUserRepresentation();
     }
 }

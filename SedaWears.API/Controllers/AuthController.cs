@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using SedaWears.Application.Features.Auth.Commands;
-using SedaWears.Application.Features.Auth.Queries;
+using SedaWears.Application.Features.Invitations.Commands;
+using SedaWears.Application.Features.Invitations.Queries;
 using SedaWears.Application.Common.Settings;
 using SedaWears.Application.Common.Interfaces;
 
@@ -14,7 +15,7 @@ public record LoginRequest(string Email, string Password);
 public record RegisterRequest(string Email, string Password, string FirstName, string LastName, string Phone);
 public record ForgotPasswordRequest(string Email);
 public record ResetPasswordRequest(string Email, string Token, string NewPassword);
-public record AcceptInvitationRequest(string Email, string Token, string FirstName, string LastName, string Password, string Role);
+public record AcceptInvitationRequest(int? ShopId, string Email, string Token, string FirstName, string LastName, string Password);
 
 [ApiController]
 [Route("[controller]")]
@@ -96,13 +97,13 @@ public class AuthController(
     public async Task<IActionResult> AcceptInvitation(AcceptInvitationRequest request)
     {
         await mediator.Send(new AcceptInvitationCommand(
+            request.ShopId,
             request.Email,
             request.Token,
             request.FirstName,
             request.LastName,
-            request.Password,
-            request.Role));
-            
+            request.Password));
+
         return Ok(new { Message = "Invitation accepted successfully. You can now login with your credentials." });
     }
 

@@ -9,7 +9,7 @@ public class NewsletterSubscriberConfiguration : IEntityTypeConfiguration<Newsle
     public void Configure(EntityTypeBuilder<NewsletterSubscriber> builder)
     {
         builder.HasKey(n => n.Id);
-        
+
         builder.Property(n => n.Email)
             .IsRequired()
             .HasMaxLength(256);

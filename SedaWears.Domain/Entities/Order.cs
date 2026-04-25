@@ -14,7 +14,7 @@ public class Order : BaseEntity
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public decimal TotalAmount { get; set; }
-    
+
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }
 
@@ -22,10 +22,10 @@ public class OrderItem : BaseEntity
 {
     public int OrderId { get; set; }
     public Order Order { get; set; } = null!;
-    
+
     public int ProductId { get; set; }
     public Product Product { get; set; } = null!;
-    
+
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
 }

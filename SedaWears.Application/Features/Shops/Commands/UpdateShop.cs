@@ -3,7 +3,6 @@ using FluentValidation;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Common.Exceptions;
 using Microsoft.EntityFrameworkCore;
-using SedaWears.Domain.Enums;
 
 namespace SedaWears.Application.Features.Shops.Commands;
 
@@ -12,7 +11,7 @@ public record UpdateShopCommand(
     string Name,
     string Slug,
     string? Description,
-    bool? IsActive,
+    bool IsActive,
     string? LogoFileName = null,
     string? BannerFileName = null) : IRequest;
 
@@ -41,31 +40,19 @@ public class UpdateShopValidator : AbstractValidator<UpdateShopCommand>
     }
 }
 
-public class UpdateShopHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) : IRequestHandler<UpdateShopCommand>
+public class UpdateShopHandler(IApplicationDbContext dbContext) : IRequestHandler<UpdateShopCommand>
 {
     public async Task Handle(UpdateShopCommand request, CancellationToken ct)
     {
         var shop = await dbContext.Shops
-            .Include(s => s.Owners)
             .FirstOrDefaultAsync(s => s.Id == request.Id, ct) ?? throw new NotFoundException("Shop not found");
-
-        // Authorization check
-        if (currentUser.Role != UserRole.Admin)
-        {
-            var isOwner = shop.Owners.Any(o => o.OwnerId == currentUser.Id);
-            if (!isOwner) throw new NotFoundException("Shop not found.");
-        }
 
         shop.Name = request.Name;
         shop.Slug = request.Slug;
         shop.Description = request.Description;
-        shop.LogoFileName = request.LogoFileName;
-        shop.BannerFileName = request.BannerFileName;
-
-        if (request.IsActive.HasValue && currentUser.Role == UserRole.Admin)
-        {
-            shop.IsActive = request.IsActive.Value;
-        }
+        shop.LogoFileName = request.LogoFileName ?? shop.LogoFileName;
+        shop.BannerFileName = request.BannerFileName ?? shop.BannerFileName;
+        shop.IsActive = request.IsActive;
 
         await dbContext.SaveChangesAsync(ct);
     }

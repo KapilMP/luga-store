@@ -27,7 +27,7 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
 
         // A user can only have one entry for the same product and size
         builder.HasIndex(c => new { c.UserId, c.ProductId, c.Size }).IsUnique();
-        
+
         builder.HasIndex(c => c.ShopId);
     }
 }

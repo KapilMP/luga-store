@@ -1,11 +1,11 @@
-using SedaWears.Application.Features.Auth.Models;
+using SedaWears.Application.Features.Invitations.Models;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace SedaWears.Application.Features.Auth.Queries;
+namespace SedaWears.Application.Features.Invitations.Queries;
 
 public record GetInvitationDetailsQuery(string Email, string Token) : IRequest<InvitationDetailsResponse>;
 

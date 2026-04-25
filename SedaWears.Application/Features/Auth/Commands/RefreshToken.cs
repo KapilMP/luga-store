@@ -12,7 +12,6 @@ namespace SedaWears.Application.Features.Auth.Commands;
 public record RefreshTokenCommand(string RefreshToken) : IRequest<(AuthResponse Response, string RefreshToken)>;
 
 public class RefreshTokenHandler(
-    UserManager<User> userManager,
     IApplicationDbContext dbContext,
     ITokenService tokenService,
     IOriginContext originContext) : IRequestHandler<RefreshTokenCommand, (AuthResponse Response, string RefreshToken)>

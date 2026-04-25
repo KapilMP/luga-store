@@ -23,8 +23,7 @@ public class ApplicationDbContext(
     public DbSet<ProductSale> ProductSales => Set<ProductSale>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Shop> Shops => Set<Shop>();
-    public DbSet<ShopOwner> ShopOwners => Set<ShopOwner>();
-    public DbSet<ShopManager> ShopManagers => Set<ShopManager>();
+    public DbSet<ShopMember> ShopMembers => Set<ShopMember>();
     DbSet<User> IApplicationDbContext.Users => Users;
 
     protected override void OnModelCreating(ModelBuilder builder)

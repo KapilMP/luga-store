@@ -20,8 +20,7 @@ public interface IApplicationDbContext
     DbSet<ProductSale> ProductSales { get; }
     DbSet<CartItem> CartItems { get; }
     DbSet<Shop> Shops { get; }
-    DbSet<ShopOwner> ShopOwners { get; }
-    DbSet<ShopManager> ShopManagers { get; }
+    DbSet<ShopMember> ShopMembers { get; }
     DatabaseFacade Database { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

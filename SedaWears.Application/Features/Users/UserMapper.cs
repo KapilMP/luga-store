@@ -19,7 +19,14 @@ public static class UserMapper
                 user.Id,
                 personalInfo,
                 status,
-                user.CreatedAt
+                user.CreatedAt,
+                user.ShopMemberships
+                    .Where(sm => sm.Shop.IsActive)
+                    .Select(sm => new ShopSummary(
+                        sm.ShopId,
+                        sm.Shop.Name,
+                        sm.Shop.LogoFileName
+                    )).ToList()
             ),
 
             UserRole.Manager => new ManagerRepresentation(
@@ -27,12 +34,12 @@ public static class UserMapper
                 personalInfo,
                 status,
                 user.CreatedAt,
-                user.ManagedShops
-                    .Where(ms => ms.Shop.IsActive)
-                    .Select(ms => new ShopSummary(
-                        ms.ShopId,
-                        ms.Shop.Name,
-                        ms.Shop.LogoFileName
+                user.ShopMemberships
+                    .Where(sm => sm.Shop.IsActive)
+                    .Select(sm => new ShopSummary(
+                        sm.ShopId,
+                        sm.Shop.Name,
+                        sm.Shop.LogoFileName
                     )).ToList()
             ),
 

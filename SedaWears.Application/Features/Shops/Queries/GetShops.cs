@@ -1,3 +1,4 @@
+using System;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Interfaces;
@@ -10,7 +11,8 @@ public record GetShopsQuery(
     int PageNumber = 1,
     int PageSize = 10,
     string? SortBy = "createdAt",
-    string? SortOrder = "desc") : IRequest<PaginatedList<ShopRepresentation>>;
+    string? SortOrder = "desc",
+    string? Search = null) : IRequest<PaginatedList<ShopRepresentation>>;
 
 public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopsQuery, PaginatedList<ShopRepresentation>>
 {
@@ -19,6 +21,13 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
         var query = dbContext.Shops
             .IgnoreQueryFilters()
             .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var searchTerm = request.Search.Trim();
+            query = query.Where(s => s.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                     s.Slug.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
 
         if (!string.IsNullOrEmpty(request.SortBy))
         {

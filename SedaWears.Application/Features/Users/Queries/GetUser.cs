@@ -28,7 +28,7 @@ public class GetUserHandler(
         var query = userManager.Users;
 
         if (role == UserRole.Customer) query = query.Include(u => u.Addresses);
-        if (role == UserRole.Manager) query = query.Include(u => u.ManagedShops).ThenInclude(ms => ms.Shop);
+        if (role == UserRole.Manager) query = query.Include(u => u.ShopMemberships).ThenInclude(ms => ms.Shop);
 
         user = await query.FirstOrDefaultAsync(u => u.Id == userId, ct) ?? user;
 

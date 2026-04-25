@@ -10,14 +10,11 @@ public class User : IdentityUser<int>, ISoftDelete
     public string LastName { get; set; } = string.Empty;
     public bool IsDeleted { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool? IsAdminInvitationAccepted { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public UserRole Role { get; set; }
-
-    // Profile
     public string? AvatarFileName { get; set; }
 
-    // Relationships
-    public ICollection<ShopOwner> OwnedShops { get; set; } = [];
-    public ICollection<ShopManager> ManagedShops { get; set; } = [];
+    public ICollection<ShopMember> ShopMemberships { get; set; } = [];
     public ICollection<Address> Addresses { get; set; } = [];
 }

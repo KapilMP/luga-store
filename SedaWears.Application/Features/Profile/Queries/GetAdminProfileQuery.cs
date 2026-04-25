@@ -15,7 +15,7 @@ public class GetAdminProfileQueryHandler(UserManager<User> userManager, ICurrent
 {
     public async Task<AdminRepresentation> Handle(GetAdminProfileQuery request, CancellationToken cancellationToken)
     {
-        var userId = currentUser.Id;
+        var userId = currentUser.Id!.Value;
         var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("Profile not found.");
 
         return (AdminRepresentation)user.ToUserRepresentation();

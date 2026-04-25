@@ -29,7 +29,7 @@ public class GetMeHandler(
         }
         else if (role == UserRole.Manager)
         {
-            query = query.Include(u => u.ManagedShops).ThenInclude(ms => ms.Shop);
+            query = query.Include(u => u.ShopMemberships).ThenInclude(ms => ms.Shop);
         }
 
         var user = await query.FirstOrDefaultAsync(u => u.Id == userId && u.Role == role, ct)

@@ -5,21 +5,20 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
-using SedaWears.Domain.Common;
 using SedaWears.Application.Common.Interfaces;
 
 namespace SedaWears.Application.Features.Profile.Commands;
 
 public record UpdateManagerProfileCommand(string FirstName, string LastName, string Phone, string? AvatarFileName) : IRequest<ManagerRepresentation>;
 
-public class UpdateManagerProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) : 
+public class UpdateManagerProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) :
     IRequestHandler<UpdateManagerProfileCommand, ManagerRepresentation>
 {
     public async Task<ManagerRepresentation> Handle(UpdateManagerProfileCommand request, CancellationToken cancellationToken)
     {
         var userId = currentUser.Id;
         var user = await userManager.Users
-            .Include(u => u.ManagedShops)
+            .Include(u => u.ShopMemberships)
             .ThenInclude(ms => ms.Shop)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
             ?? throw new NotFoundException("Profile not found.");
@@ -38,7 +37,7 @@ public class UpdateManagerProfileCommandHandler(UserManager<User> userManager, I
         }
 
         await userManager.UpdateAsync(user);
-        
+
         return (ManagerRepresentation)user.ToUserRepresentation();
     }
 }

@@ -16,7 +16,7 @@ public class GetManagerProfileQueryHandler(UserManager<User> userManager, ICurre
     public async Task<ManagerRepresentation> Handle(GetManagerProfileQuery request, CancellationToken cancellationToken)
     {
         var user = await userManager.Users
-            .Include(u => u.ManagedShops)
+            .Include(u => u.ShopMemberships)
             .ThenInclude(ms => ms.Shop)
             .FirstOrDefaultAsync(u => u.Id == currentUser.Id, cancellationToken)
             ?? throw new UnauthorizedAccessException();
