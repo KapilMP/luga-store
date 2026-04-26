@@ -15,7 +15,7 @@ public record UpdateShopManagerRequest(string FirstName, string LastName, bool I
 [ApiController]
 [Route("shops/{shopId:int}/[controller]")]
 [EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
-public class ManagerController(ISender mediator) : ControllerBase
+public class ManagersController(ISender mediator) : ControllerBase
 {
     [HttpPost]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)}")]

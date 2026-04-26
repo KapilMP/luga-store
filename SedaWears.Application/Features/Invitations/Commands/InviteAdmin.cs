@@ -32,7 +32,6 @@ public class InviteAdminHandler(
 {
     public async Task Handle(InviteAdminCommand request, CancellationToken ct)
     {
-        // 1. Check if user already exists as an Admin
         var user = await dbContext.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == UserRole.Admin, ct);
 
@@ -44,14 +43,13 @@ public class InviteAdminHandler(
                 throw new BadRequestException("Email already in use.");
         }
 
-        // 2. Create the new Admin user
         user = new User
         {
             Email = request.Email,
             UserName = Guid.NewGuid().ToString(),
             FirstName = string.Empty,
             LastName = string.Empty,
-            IsActive = true,
+            IsActive = false,
             Role = UserRole.Admin,
             IsAdminInvitationAccepted = false
         };
@@ -65,7 +63,7 @@ public class InviteAdminHandler(
 
         // 4. Generate and send invitation
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var url = $"{appConfig.FrontendUrl}/accept-invitation?email={user.Email}&token={HttpUtility.UrlEncode(token)}&role={nameof(UserRole.Admin)}";
+        var url = $"{appConfig.FrontendUrl}/accept-invitation?email={user.Email}&token={HttpUtility.UrlEncode(token)}";
 
         await emailService.SendEmailAsync(
             user.Email!,

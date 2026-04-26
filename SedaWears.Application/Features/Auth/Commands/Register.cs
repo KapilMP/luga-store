@@ -2,6 +2,7 @@ using SedaWears.Application.Features.Users;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using FluentValidation;
+using SedaWears.Application.Common.Validators;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Features.Auth.Models;
@@ -21,8 +22,7 @@ public class RegisterValidator : AbstractValidator<RegisterCommand>
             .EmailAddress().WithMessage("Please enter a valid email address.");
 
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password is required.")
-            .MinimumLength(6).WithMessage("Password must be at least 6 characters long.");
+            .Password();
 
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("First name is required.");

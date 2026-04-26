@@ -73,7 +73,14 @@ public static class DependencyInjection
 
     private static IServiceCollection AddIdentity(this IServiceCollection services)
     {
-        services.AddIdentityCore<User>()
+        services.AddIdentityCore<User>(options =>
+        {
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequiredLength = 6;
+        })
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 

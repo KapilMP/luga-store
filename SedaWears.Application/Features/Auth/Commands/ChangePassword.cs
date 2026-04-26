@@ -4,11 +4,25 @@ using Microsoft.AspNetCore.Identity;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
 
+using FluentValidation;
+using SedaWears.Application.Common.Validators;
 using SedaWears.Application.Common.Interfaces;
 
 namespace SedaWears.Application.Features.Auth.Commands;
 
 public record ChangePasswordCommand(string CurrentPassword, string NewPassword) : IRequest;
+
+public class ChangePasswordValidator : AbstractValidator<ChangePasswordCommand>
+{
+    public ChangePasswordValidator()
+    {
+        RuleFor(x => x.CurrentPassword)
+            .NotEmpty().WithMessage("Current password is required.");
+
+        RuleFor(x => x.NewPassword)
+            .Password();
+    }
+}
 
 public class ChangePasswordHandler(UserManager<User> userManager, ICurrentUser currentUser) : IRequestHandler<ChangePasswordCommand>
 {

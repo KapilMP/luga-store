@@ -6,20 +6,21 @@ namespace SedaWears.Application.Features.Users;
 
 public static class UserMapper
 {
-    public static BaseUserRepresentation ToUserRepresentation(this User user)
+    public static BaseUserRepresentation ToUserRepresentation(this User user, DateTime? overrideCreatedAt = null)
     {
         var personalInfo = user.ToPersonalInfo();
         var status = new UserStatus(user.IsActive, user.EmailConfirmed);
+        var createdAt = overrideCreatedAt ?? user.CreatedAt;
 
         return user.Role switch
         {
-            UserRole.Admin => new AdminRepresentation(user.Id, personalInfo, status, user.CreatedAt),
+            UserRole.Admin => new AdminRepresentation(user.Id, personalInfo, status, createdAt),
 
             UserRole.Owner => new OwnerRepresentation(
                 user.Id,
                 personalInfo,
                 status,
-                user.CreatedAt,
+                createdAt,
                 user.ShopMemberships
                     .Where(sm => sm.Shop.IsActive)
                     .Select(sm => new ShopSummary(
@@ -33,7 +34,7 @@ public static class UserMapper
                 user.Id,
                 personalInfo,
                 status,
-                user.CreatedAt,
+                createdAt,
                 user.ShopMemberships
                     .Where(sm => sm.Shop.IsActive)
                     .Select(sm => new ShopSummary(
@@ -47,7 +48,7 @@ public static class UserMapper
                 user.Id,
                 personalInfo,
                 status,
-                user.CreatedAt,
+                createdAt,
                 user.Addresses.Select(a => new AddressRepresentation(
                     a.Id, a.Label, a.FullName, a.Email, a.Phone, a.Street, a.City, a.ZipCode
                 )).ToList()

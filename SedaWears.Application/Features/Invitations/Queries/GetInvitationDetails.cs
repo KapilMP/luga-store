@@ -15,7 +15,7 @@ public class GetInvitationDetailsHandler(
     public async Task<InvitationDetailsResponse> Handle(GetInvitationDetailsQuery request, CancellationToken ct)
     {
         var users = await userManager.Users
-            .Where(u => u.Email == request.Email && !u.EmailConfirmed)
+            .Where(u => u.Email == request.Email)
             .ToListAsync(ct);
 
         foreach (var user in users)

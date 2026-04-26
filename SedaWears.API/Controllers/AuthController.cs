@@ -8,6 +8,7 @@ using SedaWears.Application.Features.Invitations.Commands;
 using SedaWears.Application.Features.Invitations.Queries;
 using SedaWears.Application.Common.Settings;
 using SedaWears.Application.Common.Interfaces;
+using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers;
 
@@ -15,7 +16,7 @@ public record LoginRequest(string Email, string Password);
 public record RegisterRequest(string Email, string Password, string FirstName, string LastName, string Phone);
 public record ForgotPasswordRequest(string Email);
 public record ResetPasswordRequest(string Email, string Token, string NewPassword);
-public record AcceptInvitationRequest(int? ShopId, string Email, string Token, string FirstName, string LastName, string Password);
+public record AcceptInvitationRequest(int? ShopId, string Email, string Token, string FirstName, string LastName, string Password, UserRole Role);
 
 [ApiController]
 [Route("[controller]")]
@@ -102,7 +103,8 @@ public class AuthController(
             request.Token,
             request.FirstName,
             request.LastName,
-            request.Password));
+            request.Password,
+            request.Role));
 
         return Ok(new { Message = "Invitation accepted successfully. You can now login with your credentials." });
     }

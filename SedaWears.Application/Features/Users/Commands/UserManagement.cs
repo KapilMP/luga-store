@@ -1,5 +1,6 @@
 using MediatR;
 using FluentValidation;
+using SedaWears.Application.Common.Validators;
 using Microsoft.AspNetCore.Identity;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
@@ -15,7 +16,7 @@ public class UpdateUserValidator : AbstractValidator<UpdateUserCommand>
     {
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("First name is required.");
-            
+
         RuleFor(x => x.LastName)
             .NotEmpty().WithMessage("Last name is required.");
     }

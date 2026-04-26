@@ -25,11 +25,6 @@ public record AddressRepresentation(
     string ZipCode
 );
 
-public record PartialUserRepresentation(
-    int Id,
-    PersonalInfo PersonalInfo
-);
-
 public abstract record BaseUserRepresentation(
     int Id,
     PersonalInfo PersonalInfo,

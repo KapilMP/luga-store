@@ -26,7 +26,7 @@ public class UsersController(ISender mediator) : ControllerBase
         [FromQuery] string? sortOrder = "desc")
         => Ok(await mediator.Send(new GetAdminsQuery(pageNumber, pageSize, isInvited, sortBy, sortOrder)));
 
-    [HttpPost("admins/invite")]
+    [HttpPost("admins")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> InviteAdmin([FromBody] InviteAdminRequest request)
     {
@@ -41,10 +41,6 @@ public class UsersController(ISender mediator) : ControllerBase
         await mediator.Send(new SetUserActiveStatusCommand(id, request.IsActive));
         return NoContent();
     }
-
-
-
-
 
     [HttpGet("customers")]
     [Authorize(Roles = nameof(UserRole.Admin))]
@@ -61,7 +57,6 @@ public class UsersController(ISender mediator) : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetUserProfile(int id)
         => Ok(await mediator.Send(new GetUserQuery(Id: id)));
-
 
 
     [HttpPatch("{id:int}")]
@@ -81,8 +76,6 @@ public class UsersController(ISender mediator) : ControllerBase
         await mediator.Send(new DeleteAdminCommand(id));
         return NoContent();
     }
-
-
 
     [HttpDelete("customers/{id:int}")]
     [Authorize(Roles = nameof(UserRole.Admin))]

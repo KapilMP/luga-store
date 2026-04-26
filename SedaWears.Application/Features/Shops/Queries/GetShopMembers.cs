@@ -24,35 +24,35 @@ public class GetShopMembersHandler(IApplicationDbContext dbContext) : IRequestHa
     {
         var query = dbContext.ShopMembers
             .AsNoTracking()
-            .Include(sm => sm.User)
             .Where(sm => sm.ShopId == request.ShopId);
 
         if (request.Role.HasValue)
             query = query.Where(sm => sm.User.Role == request.Role);
 
         if (request.IsInvited.HasValue)
-            query = query.Where(sm => sm.IsInvitationAccepted == !request.IsInvited.Value);
-
-        var userQuery = query.Select(sm => sm.User)
-            .Include(u => u.ShopMemberships)
-            .ThenInclude(sm => sm.Shop);
-
-        IQueryable<User> sortedUserQuery = request.SortBy?.ToLower() switch
         {
-            "firstname" => request.SortOrder?.ToLower() == "asc" ? userQuery.OrderBy(u => u.FirstName) : userQuery.OrderByDescending(u => u.FirstName),
-            "lastname" => request.SortOrder?.ToLower() == "asc" ? userQuery.OrderBy(u => u.LastName) : userQuery.OrderByDescending(u => u.LastName),
-            "email" => request.SortOrder?.ToLower() == "asc" ? userQuery.OrderBy(u => u.Email) : userQuery.OrderByDescending(u => u.Email),
-            _ => request.SortOrder?.ToLower() == "asc" ? userQuery.OrderBy(u => u.CreatedAt) : userQuery.OrderByDescending(u => u.CreatedAt)
+            var acceptedStatus = !request.IsInvited.Value;
+            query = query.Where(sm => sm.IsInvitationAccepted == acceptedStatus);
+        }
+
+        IQueryable<ShopMember> sortedQuery = request.SortBy?.ToLower() switch
+        {
+            "name" => request.SortOrder?.ToLower() == "asc" ? query.OrderBy(sm => sm.User.FirstName) : query.OrderByDescending(sm => sm.User.FirstName),
+            "email" => request.SortOrder?.ToLower() == "asc" ? query.OrderBy(sm => sm.User.Email) : query.OrderByDescending(sm => sm.User.Email),
+            _ => request.SortOrder?.ToLower() == "asc" ? query.OrderBy(sm => sm.CreatedAt) : query.OrderByDescending(sm => sm.CreatedAt)
         };
 
-        var totalCount = await sortedUserQuery.CountAsync(ct);
+        var totalCount = await sortedQuery.CountAsync(ct);
 
-        var users = await sortedUserQuery
+        var shopMembers = await sortedQuery
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
+            .Include(sm => sm.User)
             .ToListAsync(ct);
 
-        var mappedMembers = users.Select(u => u.ToUserRepresentation()).ToList();
+        var mappedMembers = shopMembers
+            .Select(sm => sm.User.ToUserRepresentation(sm.CreatedAt))
+            .ToList();
 
         return new PaginatedList<BaseUserRepresentation>(mappedMembers, totalCount, request.PageNumber, request.PageSize);
     }

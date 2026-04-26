@@ -1,5 +1,6 @@
 using MediatR;
 using FluentValidation;
+using SedaWears.Application.Common.Validators;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Exceptions;
@@ -22,8 +23,7 @@ public class ResetPasswordValidator : AbstractValidator<ResetPasswordCommand>
             .NotEmpty().WithMessage("Token is required.");
 
         RuleFor(x => x.NewPassword)
-            .NotEmpty().WithMessage("New password is required.")
-            .MinimumLength(6).WithMessage("New password must be at least 6 characters long.");
+            .Password();
     }
 }
 

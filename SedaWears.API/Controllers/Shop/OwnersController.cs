@@ -15,7 +15,7 @@ public record UpdateShopOwnerRequest(string FirstName, string LastName, bool IsA
 [ApiController]
 [Route("shops/{shopId:int}/[controller]")]
 [EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
-public class OwnerController(ISender mediator) : ControllerBase
+public class OwnersController(ISender mediator) : ControllerBase
 {
     [HttpPost]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)}")]
@@ -32,8 +32,9 @@ public class OwnerController(ISender mediator) : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? sortBy = "createdAt",
-        [FromQuery] string? sortOrder = "desc")
-        => Ok(await mediator.Send(new GetShopMembersQuery(shopId, UserRole.Owner, pageNumber, pageSize, sortBy, sortOrder)));
+        [FromQuery] string? sortOrder = "desc",
+        [FromQuery] bool? isInvited = null)
+        => Ok(await mediator.Send(new GetShopMembersQuery(shopId, UserRole.Owner, pageNumber, pageSize, sortBy, sortOrder, isInvited)));
 
     [HttpGet("{ownerId:int}")]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)}")]

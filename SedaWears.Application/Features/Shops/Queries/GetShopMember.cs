@@ -16,11 +16,9 @@ public class GetShopMemberHandler(IApplicationDbContext dbContext) : IRequestHan
         var member = await dbContext.ShopMembers
             .AsNoTracking()
             .Include(sm => sm.User)
-            .ThenInclude(u => u.ShopMemberships)
-            .ThenInclude(sm => sm.Shop)
             .FirstOrDefaultAsync(sm => sm.ShopId == request.ShopId && sm.UserId == request.UserId, ct) 
             ?? throw new NotFoundException("Shop member not found.");
 
-        return member.User.ToUserRepresentation();
+        return member.User.ToUserRepresentation(member.CreatedAt);
     }
 }

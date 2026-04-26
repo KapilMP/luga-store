@@ -6,10 +6,11 @@ namespace SedaWears.Infrastructure.Services;
 
 public class EmailService(IResend resend, EmailConfig config) : IEmailService
 {
-    public async Task SendEmailAsync(string to, string subject, string body)
+    public async Task SendEmailAsync(string to, string subject, string body, bool useNoReply = true)
     {
+        var fromEmail = useNoReply ? config.NoReplyEmail : config.ContactEmail;
         var message = new EmailMessage();
-        message.From = $"{config.FromName} <{config.FromEmail}>";
+        message.From = $"{config.FromName} <{fromEmail}>";
         message.To.Add(to);
         message.Subject = subject;
         message.HtmlBody = body;
