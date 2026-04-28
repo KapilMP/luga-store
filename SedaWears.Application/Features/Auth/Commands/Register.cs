@@ -1,6 +1,7 @@
 using SedaWears.Application.Features.Users;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using SedaWears.Application.Common.Validators;
 using SedaWears.Application.Common.Exceptions;
@@ -50,6 +51,14 @@ public class RegisterHandler(
             PhoneNumber = request.Phone,
             Role = UserRole.Customer
         };
+        if (await userManager.FindByEmailAsync(request.Email) != null)
+            throw new ConflictException("An account with this email address already exists.");
+
+        var phoneExists = await userManager.Users
+            .AnyAsync(u => u.PhoneNumber == request.Phone, ct);
+        if (phoneExists)
+            throw new ConflictException("An account with this phone number already exists.");
+
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);
 
