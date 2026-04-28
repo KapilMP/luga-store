@@ -483,3 +483,9 @@ $RECYCLE.BIN/
 
 # appsettings
 appsettings.Development.json
+
+# Local secrets file
+example
+
+# Environment variable files
+.env.dev

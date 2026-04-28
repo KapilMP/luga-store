@@ -21,7 +21,10 @@ public class GetProductsHandler(IApplicationDbContext dbContext) : IRequestHandl
         var totalCount = await query.CountAsync(ct);
         var products = await query.Skip((request.PageNumber - 1) * request.PageSize)
                                   .Take(request.PageSize)
-                                  .Select(p => new ProductRepresentation(p.Id, p.Name, p.Description, p.Price, p.SizeStocks.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList()))
+                                  .Select(p => new ProductRepresentation(
+                                      p.Id, p.Name, p.Description, p.Price, p.ShippingCost, p.Gender, p.IsFeatured, p.IsNew,
+                                      p.SizeStocks.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList(),
+                                      p.Images.OrderBy(i => i.Order).Select(i => new ProductImageRepresentation(i.Id, i.FileName, i.Order)).ToList()))
                                   .ToListAsync(ct);
 
         return new PaginatedList<ProductRepresentation>(products, totalCount, request.PageNumber, request.PageSize);

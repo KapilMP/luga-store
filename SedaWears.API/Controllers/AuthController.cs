@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Features.Auth.Commands;
 using SedaWears.Application.Features.Invitations.Commands;
 using SedaWears.Application.Features.Invitations.Queries;
@@ -71,6 +73,17 @@ public class AuthController(
         var (response, newRefreshToken) = await mediator.Send(new RefreshTokenCommand(refreshToken));
         SetAuthCookies(newRefreshToken, RefreshPath);
         return Ok(response);
+    }
+
+    [HttpGet("dev/invite-token")]
+    public async Task<IActionResult> DevGetInviteToken([FromQuery] string email, [FromQuery] string role, [FromServices] UserManager<SedaWears.Domain.Entities.User> userManager)
+    {
+        if (!environment.IsDevelopment()) return NotFound();
+        if (!Enum.TryParse<SedaWears.Domain.Enums.UserRole>(role, true, out var roleEnum)) return BadRequest("Invalid role.");
+        var user = await userManager.Users.FirstOrDefaultAsync(u => u.Email == email && u.Role == roleEnum);
+        if (user == null) return NotFound("User not found.");
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        return Ok(new { email, role, token });
     }
 
     [HttpPost("logout")]

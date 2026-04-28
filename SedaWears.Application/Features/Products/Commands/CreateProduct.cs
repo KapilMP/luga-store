@@ -2,11 +2,12 @@ using MediatR;
 using FluentValidation;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Entities;
+using SedaWears.Domain.Enums;
 using SedaWears.Application.Features.Products.Models;
 
 namespace SedaWears.Application.Features.Products.Commands;
 
-public record CreateProductCommand(string Name, string? Description, decimal Price, int CategoryId, List<ProductSizeRepresentation> Sizes) : IRequest<int>;
+public record CreateProductCommand(string Name, string? Description, decimal Price, decimal ShippingCost, Gender Gender, bool IsFeatured, bool IsNew, int CategoryId, List<ProductSizeRepresentation> Sizes) : IRequest<int>;
 
 public class CreateProductValidator : AbstractValidator<CreateProductCommand>
 {
@@ -41,6 +42,10 @@ public class CreateProductHandler(IApplicationDbContext dbContext) : IRequestHan
             Name = request.Name,
             Description = request.Description,
             Price = request.Price,
+            ShippingCost = request.ShippingCost,
+            Gender = request.Gender,
+            IsFeatured = request.IsFeatured,
+            IsNew = request.IsNew,
             CategoryId = request.CategoryId,
             SizeStocks = request.Sizes.Select(s => new ProductSizeStock { Size = s.Size, Stock = s.Stock }).ToList()
         };

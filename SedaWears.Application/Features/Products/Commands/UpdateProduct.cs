@@ -4,11 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
+using SedaWears.Domain.Enums;
 using SedaWears.Application.Features.Products.Models;
 
 namespace SedaWears.Application.Features.Products.Commands;
 
-public record UpdateProductCommand(int Id, string Name, string? Description, decimal Price, int CategoryId, List<ProductSizeRepresentation> Sizes) : IRequest<Unit>;
+public record UpdateProductCommand(int Id, string Name, string? Description, decimal Price, decimal ShippingCost, Gender Gender, bool IsFeatured, bool IsNew, int CategoryId, List<ProductSizeRepresentation> Sizes) : IRequest<Unit>;
 
 public class UpdateProductValidator : AbstractValidator<UpdateProductCommand>
 {
@@ -48,6 +49,10 @@ public class UpdateProductHandler(IApplicationDbContext dbContext) : IRequestHan
         product.Name = request.Name;
         product.Description = request.Description;
         product.Price = request.Price;
+        product.ShippingCost = request.ShippingCost;
+        product.Gender = request.Gender;
+        product.IsFeatured = request.IsFeatured;
+        product.IsNew = request.IsNew;
         product.CategoryId = request.CategoryId;
 
         // Sync sizes
