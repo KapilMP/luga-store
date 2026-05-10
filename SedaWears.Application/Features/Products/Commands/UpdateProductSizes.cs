@@ -1,0 +1,43 @@
+using MediatR;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using SedaWears.Application.Common.Interfaces;
+using SedaWears.Application.Common.Exceptions;
+using SedaWears.Domain.Entities;
+using SedaWears.Application.Features.Products.Models;
+
+namespace SedaWears.Application.Features.Products.Commands;
+
+public record UpdateProductSizesCommand(int Id, List<ProductSizeRepresentation> Sizes) : IRequest<Unit>;
+
+public class UpdateProductSizesValidator : AbstractValidator<UpdateProductSizesCommand>
+{
+    public UpdateProductSizesValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("A valid product identifier is required.");
+
+        RuleFor(x => x.Sizes)
+            .NotEmpty().WithMessage("At least one size with stock must be provided.");
+    }
+}
+
+public class UpdateProductSizesHandler(IApplicationDbContext dbContext) : IRequestHandler<UpdateProductSizesCommand, Unit>
+{
+    public async Task<Unit> Handle(UpdateProductSizesCommand request, CancellationToken ct)
+    {
+        var product = await dbContext.Products
+            .Include(p => p.SizeStocks)
+            .FirstOrDefaultAsync(p => p.Id == request.Id, ct) ?? throw new NotFoundException("Product not found");
+
+        // Sync sizes
+        product.SizeStocks.Clear();
+        foreach (var s in request.Sizes)
+        {
+            product.SizeStocks.Add(new ProductSizeStock { Size = s.Size, Stock = s.Stock });
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+        return Unit.Value;
+    }
+}

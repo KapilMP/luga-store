@@ -4,6 +4,8 @@ using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Enums;
 using SedaWears.Application.Common.Models;
 
+using SedaWears.Application.Common.Validators;
+
 namespace SedaWears.Application.Features.Users.Queries;
 
 public record GetCustomersQuery(
@@ -12,7 +14,9 @@ public record GetCustomersQuery(
     bool? IsInvited = null,
     string? SortBy = "createdAt",
     string? SortOrder = "desc")
-    : IRequest<PaginatedList<CustomerRepresentation>>;
+    : IRequest<PaginatedList<CustomerRepresentation>>, IPaginatedQuery;
+
+public class GetCustomersValidator : PaginatedQueryValidator<GetCustomersQuery> { }
 
 public class GetCustomersHandler(IUserService userService) : IRequestHandler<GetCustomersQuery, PaginatedList<CustomerRepresentation>>
 {

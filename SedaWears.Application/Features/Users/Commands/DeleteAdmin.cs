@@ -21,18 +21,16 @@ public class DeleteAdminValidator : AbstractValidator<DeleteAdminCommand>
 
 public class DeleteAdminHandler(
     UserManager<User> userManager,
-    IApplicationDbContext dbContext,
-    IUserCuckooFilter cuckooFilter) : IRequestHandler<DeleteAdminCommand>
+    IApplicationDbContext dbContext) : IRequestHandler<DeleteAdminCommand>
 {
     public async Task Handle(DeleteAdminCommand request, CancellationToken ct)
     {
         var user = await dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == request.Id && u.Role == UserRole.Admin, ct)
-            ?? throw new NotFoundException("Admin not found.");
+            ?? throw new NotFoundException("User not found.");
 
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);
 
-        await cuckooFilter.RemoveAsync(user.Email!, UserRole.Admin);
     }
 }

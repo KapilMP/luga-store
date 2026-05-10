@@ -20,13 +20,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.AvatarFileName)
             .HasMaxLength(512);
 
-        // Filtered Unique Index: Email + Role must be unique for non-deleted users
         builder.HasIndex(u => new { u.Email, u.Role })
-            .HasFilter("\"IsDeleted\" = false") // Note: Use double quotes for Postgres case-sensitivity if needed, or check your provider
             .IsUnique();
 
         // Indexing common filter properties
         builder.HasIndex(u => u.IsActive);
-        builder.HasIndex(u => u.IsDeleted).HasFilter("\"IsDeleted\" = false");
     }
 }

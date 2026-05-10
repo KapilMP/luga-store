@@ -4,10 +4,21 @@ using SedaWears.Application.Features.Users.Models;
 using SedaWears.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Features.Users;
+using Microsoft.AspNetCore.Identity;
+using SedaWears.Domain.Entities;
+using SedaWears.Application.Common.Settings;
+using System.Web;
+using SedaWears.Application.Common.Exceptions;
+using SedaWears.Application.Features.Users.Projections;
 
 namespace SedaWears.Application.Common.Services;
 
-public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUser) : IUserService
+public class UserService(
+    IApplicationDbContext dbContext,
+    ICurrentUser currentUser,
+    UserManager<User> userManager,
+    IEmailService emailService,
+    AppConfig appConfig) : IUserService
 {
     public async Task<PaginatedList<T>> GetUsersByRoleAsync<T>(
         UserRole role,
@@ -50,11 +61,20 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         }
 
         var totalCount = await query.CountAsync(ct);
-        var users = await query.Skip((pageNumber - 1) * pageSize)
-                               .Take(pageSize)
-                               .ToListAsync(ct);
+        
+        var projectedQuery = role switch
+        {
+            UserRole.Admin => query.ProjectToAdmin().Cast<T>(),
+            UserRole.Owner => query.ProjectToOwner().Cast<T>(),
+            UserRole.Manager => query.ProjectToManager().Cast<T>(),
+            UserRole.Customer => query.ProjectToCustomer().Cast<T>(),
+            _ => throw new ArgumentException("Invalid role")
+        };
 
-        var mappedItems = users.Select(u => (T)u.ToUserRepresentation()).ToList();
+        var mappedItems = await projectedQuery
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
 
         return new PaginatedList<T>(mappedItems, totalCount, pageNumber, pageSize);
     }
@@ -97,12 +117,45 @@ public class UserService(IApplicationDbContext dbContext, ICurrentUser currentUs
         }
 
         var totalCount = await query.CountAsync(ct);
-        var members = await query.Skip((pageNumber - 1) * pageSize)
-                                 .Take(pageSize)
-                                 .ToListAsync(ct);
-
-        var mappedList = members.Select(sm => (ManagerRepresentation)sm.User.ToUserRepresentation()).ToList();
+        var mappedList = await query
+            .Select(sm => sm.User)
+            .ProjectToManager()
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
 
         return new PaginatedList<ManagerRepresentation>(mappedList, totalCount, pageNumber, pageSize);
+    }
+
+    public async Task<T> GetUserByIdAndRoleAsync<T>(int userId, UserRole role, CancellationToken ct = default) where T : BaseUserRepresentation
+    {
+        var query = dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Id == userId && u.Role == role);
+
+        var projectedQuery = role switch
+        {
+            UserRole.Admin => query.ProjectToAdmin().Cast<T>(),
+            UserRole.Owner => query.ProjectToOwner().Cast<T>(),
+            UserRole.Manager => query.ProjectToManager().Cast<T>(),
+            UserRole.Customer => query.ProjectToCustomer().Cast<T>(),
+            _ => throw new ArgumentException("Invalid role")
+        };
+
+        return await projectedQuery.FirstOrDefaultAsync(ct) ?? throw new NotFoundException("User not found.");
+    }
+
+    public async Task SendInvitationEmailAsync(User user)
+    {
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var url = $"{appConfig.FrontendUrl}/accept-invitation?email={user.Email}&token={HttpUtility.UrlEncode(token)}";
+
+        var roleDisplayName = user.Role.ToString();
+
+        var subject = $"SedaWears {roleDisplayName} Invitation";
+        var body = $"<p>You have been invited as a <b>{roleDisplayName}</b> to the SedaWears platform.</p>" +
+                   $"<p>Click <a href='{url}'>here</a> to accept the invitation and set up your account password.</p>";
+
+        await emailService.SendEmailAsync(user.Email!, subject, body);
     }
 }

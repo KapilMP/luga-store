@@ -9,12 +9,11 @@ public class ShopConfiguration : IEntityTypeConfiguration<Shop>
     public void Configure(EntityTypeBuilder<Shop> builder)
     {
         builder.Property(t => t.Name).HasMaxLength(100).IsRequired();
-        builder.Property(t => t.Slug).HasMaxLength(100).IsRequired();
+        builder.Property(t => t.SubdomainSlug).HasMaxLength(100).IsRequired();
         builder.Property(t => t.Description).HasMaxLength(500);
         
-        builder.HasIndex(t => t.Name).IsUnique().HasFilter("\"IsDeleted\" = false");
-        builder.HasIndex(t => t.Slug).IsUnique().HasFilter("\"IsDeleted\" = false");
+        builder.HasIndex(t => t.Name).IsUnique();
+        builder.HasIndex(t => t.SubdomainSlug).IsUnique();
         builder.HasIndex(t => t.IsActive);
-        builder.HasIndex(t => t.IsDeleted).HasFilter("\"IsDeleted\" = false");
     }
 }

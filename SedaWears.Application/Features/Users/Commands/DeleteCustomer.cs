@@ -22,8 +22,7 @@ public class DeleteCustomerValidator : AbstractValidator<DeleteCustomerCommand>
 
 public class DeleteCustomerHandler(
     UserManager<User> userManager, 
-    IApplicationDbContext dbContext,
-    IUserCuckooFilter cuckooFilter) : IRequestHandler<DeleteCustomerCommand>
+    IApplicationDbContext dbContext) : IRequestHandler<DeleteCustomerCommand>
 {
     public async Task Handle(DeleteCustomerCommand request, CancellationToken ct)
     {
@@ -34,6 +33,5 @@ public class DeleteCustomerHandler(
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);
 
-        await cuckooFilter.RemoveAsync(user.Email!, UserRole.Customer);
     }
 }

@@ -1,12 +1,18 @@
 using MediatR;
 using FluentValidation;
+using SedaWears.Domain.Enums;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Entities;
-using SedaWears.Application.Features.Products.Models;
 
 namespace SedaWears.Application.Features.Products.Commands;
 
-public record CreateProductCommand(string Name, string? Description, decimal Price, int CategoryId, List<ProductSizeRepresentation> Sizes) : IRequest<int>;
+public record CreateProductCommand(
+    string Name,
+    string? Description,
+    decimal Price,
+    Gender Gender,
+    int CategoryId,
+    List<string> ImageFileNames) : IRequest;
 
 public class CreateProductValidator : AbstractValidator<CreateProductCommand>
 {
@@ -18,7 +24,7 @@ public class CreateProductValidator : AbstractValidator<CreateProductCommand>
 
         RuleFor(x => x.Description)
             .MinimumLength(10).WithMessage("Description must be at least 10 characters long.")
-            .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.")
+            .MaximumLength(500).WithMessage("Description must not exceed 500 characters.")
             .When(x => !string.IsNullOrEmpty(x.Description));
 
         RuleFor(x => x.Price)
@@ -27,14 +33,17 @@ public class CreateProductValidator : AbstractValidator<CreateProductCommand>
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("A valid category identifier is required.");
 
-        RuleFor(x => x.Sizes)
-            .NotEmpty().WithMessage("At least one size with stock must be provided.");
+        RuleFor(x => x.Gender)
+            .IsInEnum().WithMessage("A valid gender must be specified.");
+
+        RuleFor(x => x.ImageFileNames)
+            .NotEmpty().WithMessage("At least one image must be provided.");
     }
 }
 
-public class CreateProductHandler(IApplicationDbContext dbContext) : IRequestHandler<CreateProductCommand, int>
+public class CreateProductHandler(IApplicationDbContext dbContext) : IRequestHandler<CreateProductCommand>
 {
-    public async Task<int> Handle(CreateProductCommand request, CancellationToken ct)
+    public async Task Handle(CreateProductCommand request, CancellationToken ct)
     {
         var product = new Product
         {
@@ -42,11 +51,15 @@ public class CreateProductHandler(IApplicationDbContext dbContext) : IRequestHan
             Description = request.Description,
             Price = request.Price,
             CategoryId = request.CategoryId,
-            SizeStocks = request.Sizes.Select(s => new ProductSizeStock { Size = s.Size, Stock = s.Stock }).ToList()
+            Gender = request.Gender,
+            Images = request.ImageFileNames.Select((fileName, index) => new ProductImage
+            {
+                FileName = fileName,
+                Order = index
+            }).ToList()
         };
 
         dbContext.Products.Add(product);
         await dbContext.SaveChangesAsync(ct);
-        return product.Id;
     }
 }

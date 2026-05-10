@@ -6,17 +6,20 @@ public static class ApplicationBuilderExtensions
 {
     public static IApplicationBuilder UseApplicationPipeline(this WebApplication app)
     {
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseForwardedHeaders();
+
+        app.UseExceptionHandler();
 
         if (!app.Environment.IsDevelopment())
             app.UseHttpsRedirection();
 
         app.UseCors("Default");
         app.UseRateLimiter();
-        app.UseAntiforgery();
+
         app.UseAuthentication();
+
+        app.UseUserStatusValidation();
         app.UseAuthorization();
-        app.UseMiddleware<ShopContextMiddleware>();
 
         app.MapControllers();
 

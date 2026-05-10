@@ -10,7 +10,7 @@ namespace SedaWears.API.Controllers;
 
 public record UpdateUserRequest(string FirstName, string LastName, bool? IsActive, string? NewPassword);
 public record InviteAdminRequest(string Email);
-public record UpdateAdminRequest(bool IsActive);
+public record UpdateAdminActiveStatusRequest(bool IsActive);
 
 [ApiController]
 [Route("")]
@@ -22,7 +22,7 @@ public class UsersController(ISender mediator) : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] bool? isInvited = false,
-        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortBy = "createdAt",
         [FromQuery] string? sortOrder = "desc")
         => Ok(await mediator.Send(new GetAdminsQuery(pageNumber, pageSize, isInvited, sortBy, sortOrder)));
 
@@ -31,14 +31,14 @@ public class UsersController(ISender mediator) : ControllerBase
     public async Task<IActionResult> InviteAdmin([FromBody] InviteAdminRequest request)
     {
         await mediator.Send(new InviteAdminCommand(request.Email));
-        return NoContent();
+        return Ok(new { Message = "Invitation sent successfully." });
     }
 
-    [HttpPatch("admins/{id:int}")]
+    [HttpPatch("admins/{id:int}/status")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> UpdateAdmin(int id, [FromBody] UpdateAdminRequest request)
+    public async Task<IActionResult> UpdateAdminActiveStatus(int id, [FromBody] UpdateAdminActiveStatusRequest request)
     {
-        await mediator.Send(new SetUserActiveStatusCommand(id, request.IsActive));
+        await mediator.Send(new UpdateUserActiveStatusCommand(id, request.IsActive, UserRole.Admin));
         return NoContent();
     }
 

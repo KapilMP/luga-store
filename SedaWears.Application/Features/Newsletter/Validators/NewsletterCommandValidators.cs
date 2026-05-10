@@ -7,7 +7,7 @@ public class SubscribeCommandValidator : AbstractValidator<SubscribeCommand>
 {
     public SubscribeCommandValidator()
     {
-        RuleFor(v => v.Email).NotEmpty().EmailAddress();
+        RuleFor(v => v.Email).NotEmpty().WithMessage("Email address is required.").EmailAddress().WithMessage("Please provide a valid email address.");
     }
 }
 
@@ -15,7 +15,7 @@ public class UnsubscribeCommandValidator : AbstractValidator<UnsubscribeCommand>
 {
     public UnsubscribeCommandValidator()
     {
-        RuleFor(v => v.Email).NotEmpty().EmailAddress();
+        RuleFor(v => v.Email).NotEmpty().WithMessage("Email address is required.").EmailAddress().WithMessage("Please provide a valid email address.");
     }
 }
 
@@ -23,6 +23,6 @@ public class ConfirmUnsubscribeCommandValidator : AbstractValidator<ConfirmUnsub
 {
     public ConfirmUnsubscribeCommandValidator()
     {
-        RuleFor(v => v.Token).NotEmpty();
+        RuleFor(v => v.Token).NotEmpty().WithMessage("Token is required.");
     }
 }

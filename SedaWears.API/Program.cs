@@ -1,6 +1,5 @@
 using System.CommandLine;
 using SedaWears.API.Extensions;
-using SedaWears.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddRateLimiting(builder.Configuration);
-builder.Services.AddApiServices(builder.Configuration, builder.Environment);
+builder.Services.AddApiServices(builder.Configuration);
 
 var app = builder.Build();
-
-// Seed Redis Cuckoo Filters
-await CuckooFilterSeeder.SeedAsync(app.Services);
 
 // CLI Commands
 var rootCommand = new RootCommand("SedaWears Management CLI");

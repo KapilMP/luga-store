@@ -7,6 +7,8 @@ using SedaWears.Domain.Enums;
 using SedaWears.Application.Features.Users;
 using SedaWears.Domain.Entities;
 
+using SedaWears.Application.Common.Validators;
+
 namespace SedaWears.Application.Features.Shops.Queries;
 
 public record GetShopMembersQuery(
@@ -16,7 +18,9 @@ public record GetShopMembersQuery(
     int PageSize = 10,
     string? SortBy = "createdAt",
     string? SortOrder = "desc",
-    bool? IsInvited = null) : IRequest<PaginatedList<BaseUserRepresentation>>;
+    bool? IsInvited = null) : IRequest<PaginatedList<BaseUserRepresentation>>, IPaginatedQuery;
+
+public class GetShopMembersValidator : PaginatedQueryValidator<GetShopMembersQuery> { }
 
 public class GetShopMembersHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopMembersQuery, PaginatedList<BaseUserRepresentation>>
 {

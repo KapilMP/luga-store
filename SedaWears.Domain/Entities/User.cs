@@ -4,11 +4,10 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.Domain.Entities;
 
-public class User : IdentityUser<int>, ISoftDelete
+public class User : IdentityUser<int>
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public bool IsDeleted { get; set; }
     public bool IsActive { get; set; } = true;
     public bool? IsAdminInvitationAccepted { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -17,4 +16,5 @@ public class User : IdentityUser<int>, ISoftDelete
 
     public ICollection<ShopMember> ShopMemberships { get; set; } = [];
     public ICollection<Address> Addresses { get; set; } = [];
+    public ICollection<WishlistItem> WishlistItems { get; set; } = [];
 }

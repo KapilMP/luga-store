@@ -62,6 +62,7 @@ public class AcceptInvitationHandler(
 
             await VerifyAndAcceptUser(user, request);
             user.IsAdminInvitationAccepted = true;
+            user.IsActive = true;
 
             var result = await userManager.UpdateAsync(user);
             if (!result.Succeeded)

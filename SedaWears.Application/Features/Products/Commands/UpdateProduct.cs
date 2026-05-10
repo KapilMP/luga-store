@@ -1,14 +1,21 @@
 using MediatR;
 using FluentValidation;
+using SedaWears.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
-using SedaWears.Application.Features.Products.Models;
 
 namespace SedaWears.Application.Features.Products.Commands;
 
-public record UpdateProductCommand(int Id, string Name, string? Description, decimal Price, int CategoryId, List<ProductSizeRepresentation> Sizes) : IRequest<Unit>;
+public record UpdateProductCommand(
+    int Id,
+    string Name,
+    string? Description,
+    decimal Price,
+    Gender Gender,
+    int CategoryId,
+    List<string> ImageFileNames) : IRequest;
 
 public class UpdateProductValidator : AbstractValidator<UpdateProductCommand>
 {
@@ -32,32 +39,35 @@ public class UpdateProductValidator : AbstractValidator<UpdateProductCommand>
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("A valid category identifier is required.");
 
-        RuleFor(x => x.Sizes)
-            .NotEmpty().WithMessage("At least one size with stock must be provided.");
+        RuleFor(x => x.Gender)
+            .IsInEnum().WithMessage("A valid gender must be specified.");
+
     }
 }
 
-public class UpdateProductHandler(IApplicationDbContext dbContext) : IRequestHandler<UpdateProductCommand, Unit>
+public class UpdateProductHandler(IApplicationDbContext dbContext) : IRequestHandler<UpdateProductCommand>
 {
-    public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken ct)
+    public async Task Handle(UpdateProductCommand request, CancellationToken ct)
     {
         var product = await dbContext.Products
-            .Include(p => p.SizeStocks)
+            .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Id == request.Id, ct) ?? throw new NotFoundException("Product not found");
 
         product.Name = request.Name;
         product.Description = request.Description;
         product.Price = request.Price;
         product.CategoryId = request.CategoryId;
+        product.Gender = request.Gender;
 
-        // Sync sizes
-        product.SizeStocks.Clear();
-        foreach (var s in request.Sizes)
+        if (request.ImageFileNames is { Count: > 0 })
         {
-            product.SizeStocks.Add(new ProductSizeStock { Size = s.Size, Stock = s.Stock });
+            product.Images.Clear();
+            foreach (var (fileName, index) in request.ImageFileNames.Select((v, i) => (v, i)))
+            {
+                product.Images.Add(new ProductImage { FileName = fileName, Order = index });
+            }
         }
 
         await dbContext.SaveChangesAsync(ct);
-        return Unit.Value;
     }
 }

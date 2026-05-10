@@ -1,6 +1,7 @@
 using SedaWears.Application.Common.Models;
 using SedaWears.Application.Features.Users.Models;
 using SedaWears.Domain.Enums;
+using SedaWears.Domain.Entities;
 
 namespace SedaWears.Application.Common.Interfaces;
 
@@ -23,4 +24,10 @@ public interface IUserService
         string? sortBy = null,
         string? sortOrder = "desc",
         CancellationToken ct = default);
+    Task<T> GetUserByIdAndRoleAsync<T>(
+        int userId,
+        UserRole role,
+        CancellationToken ct = default) where T : BaseUserRepresentation;
+
+    Task SendInvitationEmailAsync(User user);
 }

@@ -12,7 +12,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.Property(p => p.Name).IsRequired().HasMaxLength(100);
         builder.Property(p => p.Price).HasPrecision(18, 2);
-        builder.Property(p => p.ShippingCost).HasPrecision(18, 2);
         builder.Property(p => p.Description).HasMaxLength(1000);
         builder.Property(p => p.Gender).HasConversion<string>().HasMaxLength(32);
 
@@ -25,7 +24,5 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(p => p.Price);
         builder.HasIndex(p => p.Gender);
         builder.HasIndex(p => p.CategoryId);
-        builder.HasIndex(p => p.IsFeatured);
-        builder.HasIndex(p => p.IsNew);
     }
 }

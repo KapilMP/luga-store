@@ -9,7 +9,8 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers.Shop;
 
-public record UpsertShopRequest(string Name, string Slug, string? Description, bool IsActive, string? LogoFileName, string? BannerFileName);
+public record UpsertShopRequest(string Name, string SubdomainSlug, string? Description, string? LogoFileName, string? BannerFileName);
+public record UpdateShopActiveStatusRequest(bool IsActive);
 public record ShopMemberInviteRequest(string Email);
 
 [ApiController]
@@ -38,36 +39,28 @@ public class ShopsController(ISender mediator) : ControllerBase
     {
         await mediator.Send(new CreateShopCommand(
             request.Name,
-            request.Slug,
+            request.SubdomainSlug,
             request.Description,
-            request.IsActive,
             request.LogoFileName,
             request.BannerFileName));
         return Ok(new { message = "Shop created successfully." });
     }
 
-    [HttpPatch("{id:int}")]
+    [HttpPut("{id:int}")]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
     public async Task<IActionResult> UpdateShop(int id, UpsertShopRequest request)
     {
-        await mediator.Send(new UpdateShopCommand(id, request.Name, request.Slug, request.Description, request.IsActive, request.LogoFileName, request.BannerFileName));
+        await mediator.Send(new UpdateShopCommand(id, request.Name, request.SubdomainSlug, request.Description, request.LogoFileName, request.BannerFileName));
         return Ok(new { message = "Shop updated successfully." });
     }
 
-    [HttpPatch("{id:int}/activate")]
+    [HttpPatch("{id:int}/status")]
     [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> ActivateShop(int id)
+    public async Task<IActionResult> UpdateShopStatus(int id, UpdateShopActiveStatusRequest request)
     {
-        await mediator.Send(new SetShopActiveStatusCommand(id, true));
-        return Ok(new { message = "Shop activated successfully." });
-    }
-
-    [HttpPatch("{id:int}/deactivate")]
-    [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> DeactivateShop(int id)
-    {
-        await mediator.Send(new SetShopActiveStatusCommand(id, false));
-        return Ok(new { message = "Shop deactivated successfully." });
+        await mediator.Send(new UpdateShopActiveStatusCommand(id, request.IsActive));
+        var status = request.IsActive ? "activated" : "deactivated";
+        return Ok(new { message = $"Shop {status} successfully." });
     }
 
     [HttpDelete("{id:int}")]

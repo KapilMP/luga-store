@@ -1,8 +1,9 @@
 using SedaWears.Application.Features.Users.Models;
 using MediatR;
 using SedaWears.Application.Common.Interfaces;
-using SedaWears.Domain.Enums;
 using SedaWears.Application.Common.Models;
+
+using SedaWears.Application.Common.Validators;
 
 namespace SedaWears.Application.Features.Users.Queries;
 
@@ -13,7 +14,9 @@ public record GetShopManagersByShopIdQuery(
     bool? Invited = null,
     string? SortBy = "createdAt",
     string? SortOrder = "desc")
-    : IRequest<PaginatedList<ManagerRepresentation>>;
+    : IRequest<PaginatedList<ManagerRepresentation>>, IPaginatedQuery;
+
+public class GetShopManagersByShopIdValidator : PaginatedQueryValidator<GetShopManagersByShopIdQuery> { }
 
 public class GetShopManagersByShopIdHandler(IUserService userService) : IRequestHandler<GetShopManagersByShopIdQuery, PaginatedList<ManagerRepresentation>>
 {

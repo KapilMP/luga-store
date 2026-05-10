@@ -17,9 +17,6 @@ using StackExchange.Redis;
 
 namespace SedaWears.Infrastructure;
 
-/// <summary>
-/// Infrastructure layer dependency injection configuration for modern .NET monolith applications.
-/// </summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -28,7 +25,6 @@ public static class DependencyInjection
             .AddInfrastructureConfigs()
             .AddPersistence(configuration)
             .AddIdentity()
-            .AddRedis()
             .AddResendEmail()
             .AddInfrastructureServices();
 
@@ -38,16 +34,13 @@ public static class DependencyInjection
     private static IServiceCollection AddInfrastructureConfigs(this IServiceCollection services)
     {
         // 1. Scan for all validators once
-        services.AddValidatorsFromAssemblyContaining<JwtConfigValidator>();
         services.AddValidatorsFromAssemblyContaining<RateLimitingConfigValidator>();
 
         // 2. Register Configurations using BindConfiguration (Modern .NET idiomatic way)
         // This also registers the direct type (e.g. JwtConfig) as a Singleton for easier DI.
         services
             .AddConfigWithValidation<ConnectionStringsConfig, ConnectionStringsConfigValidator>("ConnectionStrings")
-            .AddConfigWithValidation<JwtConfig, JwtConfigValidator>("Jwt")
             .AddConfigWithValidation<GoogleConfig, GoogleConfigValidator>("Google")
-            .AddConfigWithValidation<RefreshTokenPathsConfig, RefreshTokenPathsConfigValidator>("RefreshTokenPaths")
             .AddConfigWithValidation<AppConfig, AppConfigValidator>("App")
             .AddConfigWithValidation<S3Config, S3ConfigValidator>("S3")
             .AddConfigWithValidation<EmailConfig, EmailConfigValidator>("Email")
@@ -67,6 +60,12 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var config = sp.GetRequiredService<ConnectionStringsConfig>();
+            return ConnectionMultiplexer.Connect(config.Redis);
+        });
 
         return services;
     }
@@ -89,13 +88,11 @@ public static class DependencyInjection
 
     private static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
-        services.AddScoped<IS3Service, S3Service>();
+        services.AddSingleton<IS3Service, S3Service>();
 
-        services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<IEmailService, EmailService>();
-        services.AddScoped<IUserCuckooFilter, UserCuckooFilter>();
 
         return services;
     }
@@ -110,17 +107,6 @@ public static class DependencyInjection
                 options.ApiToken = config.ApiKey;
             });
         services.AddTransient<IResend, ResendClient>();
-
-        return services;
-    }
-
-    private static IServiceCollection AddRedis(this IServiceCollection services)
-    {
-        services.AddSingleton<IConnectionMultiplexer>(sp =>
-        {
-            var config = sp.GetRequiredService<ConnectionStringsConfig>();
-            return ConnectionMultiplexer.Connect(config.Redis);
-        });
 
         return services;
     }

@@ -1,4 +1,3 @@
-using SedaWears.Application.Features.Users.Models;
 using FluentValidation;
 using SedaWears.Application.Features.Profile.Commands;
 
@@ -8,9 +7,9 @@ public class UpdateAdminProfileCommandValidator : AbstractValidator<UpdateAdminP
 {
     public UpdateAdminProfileCommandValidator()
     {
-        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.Phone).NotEmpty().Matches(@"^\+?[0-9]{7,15}$").WithMessage("A valid phone number is required.");
+        RuleFor(v => v.FirstName).NotEmpty().WithMessage("First name is required.").MaximumLength(50).WithMessage("First name must not exceed 50 characters.");
+        RuleFor(v => v.LastName).NotEmpty().WithMessage("Last name is required.").MaximumLength(50).WithMessage("Last name must not exceed 50 characters.");
+        RuleFor(v => v.Phone).NotEmpty().WithMessage("Phone number is required.").Matches(@"^\+?[0-9]{7,15}$").WithMessage("A valid phone number is required.");
     }
 }
 
@@ -18,9 +17,9 @@ public class UpdateCustomerProfileCommandValidator : AbstractValidator<UpdateCus
 {
     public UpdateCustomerProfileCommandValidator()
     {
-        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.Phone).NotEmpty().Matches(@"^\+?[0-9]{7,15}$").WithMessage("A valid phone number is required.");
+        RuleFor(v => v.FirstName).NotEmpty().WithMessage("First name is required.").MaximumLength(50).WithMessage("First name must not exceed 50 characters.");
+        RuleFor(v => v.LastName).NotEmpty().WithMessage("Last name is required.").MaximumLength(50).WithMessage("Last name must not exceed 50 characters.");
+        RuleFor(v => v.Phone).NotEmpty().WithMessage("Phone number is required.").Matches(@"^\+?[0-9]{7,15}$").WithMessage("A valid phone number is required.");
     }
 }
 
@@ -28,9 +27,9 @@ public class UpdateOwnerProfileCommandValidator : AbstractValidator<UpdateOwnerP
 {
     public UpdateOwnerProfileCommandValidator()
     {
-        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.Phone).NotEmpty().Matches(@"^\+?[0-9]{7,15}$").WithMessage("A valid phone number is required.");
+        RuleFor(v => v.FirstName).NotEmpty().WithMessage("First name is required.").MaximumLength(50).WithMessage("First name must not exceed 50 characters.");
+        RuleFor(v => v.LastName).NotEmpty().WithMessage("Last name is required.").MaximumLength(50).WithMessage("Last name must not exceed 50 characters.");
+        RuleFor(v => v.Phone).NotEmpty().WithMessage("Phone number is required.").Matches(@"^\+?[0-9]{7,15}$").WithMessage("A valid phone number is required.");
     }
 }
 

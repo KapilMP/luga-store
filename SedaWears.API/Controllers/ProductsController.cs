@@ -1,47 +1,93 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using SedaWears.Application.Common.Settings;
 using SedaWears.Application.Features.Products.Commands;
-using SedaWears.Application.Features.Products.Queries;
-using SedaWears.Domain.Common;
-using SedaWears.Domain.Enums;
 using SedaWears.Application.Features.Products.Models;
+using SedaWears.Application.Features.Products.Queries;
+using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers;
 
-public record ProductUpsertRequest(string Name, string? Description, decimal Price, int CategoryId, List<ProductSizeUpsertRequest> Sizes);
+public record UpsertProductRequest(string Name, string? Description, decimal Price, Gender Gender, int CategoryId, List<string> Images);
+public record UpdateProductSizesRequest(List<ProductSizeUpsertRequest> Sizes);
 public record ProductSizeUpsertRequest(ProductSize Size, int Stock);
 
 [ApiController]
 [Route("[controller]")]
+[EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
 public class ProductsController(ISender mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? categoryId = null, [FromQuery] string? search = null)
-        => Ok(await mediator.Send(new GetProductsQuery(pageNumber, pageSize, categoryId, search)));
+    public async Task<IActionResult> GetProducts(
+        [FromQuery] int? categoryId,
+        [FromQuery] int? shopId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortOrder = "asc",
+        [FromQuery] string? search = null,
+        CancellationToken ct = default)
+        => Ok(await mediator.Send(new GetProductsQuery(categoryId, shopId, pageNumber, pageSize, sortBy, sortOrder, search), ct));
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> Get(int id)
-        => Ok(await mediator.Send(new GetProductQuery(id)));
+    public async Task<IActionResult> GetProduct(int id, CancellationToken ct)
+        => Ok(await mediator.Send(new GetProductQuery(id), ct));
 
     [HttpPost]
-    [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> Create(ProductUpsertRequest request)
-        => Ok(await mediator.Send(new CreateProductCommand(request.Name, request.Description, request.Price, request.CategoryId, request.Sizes.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList())));
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
+    public async Task<IActionResult> CreateProduct(UpsertProductRequest request, CancellationToken ct)
+    {
+        var command = new CreateProductCommand(
+            request.Name,
+            request.Description,
+            request.Price,
+            request.Gender,
+            request.CategoryId,
+            request.Images
+        );
+
+        await mediator.Send(command, ct);
+        return Ok(new { message = "Product created successfully." });
+    }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> Update(int id, ProductUpsertRequest request)
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
+    public async Task<IActionResult> UpdateProduct(int id, UpsertProductRequest request, CancellationToken ct)
     {
-        await mediator.Send(new UpdateProductCommand(id, request.Name, request.Description, request.Price, request.CategoryId, request.Sizes.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList()));
-        return Ok();
+        var command = new UpdateProductCommand(
+            id,
+            request.Name,
+            request.Description,
+            request.Price,
+            request.Gender,
+            request.CategoryId,
+            request.Images
+        );
+
+        await mediator.Send(command, ct);
+        return Ok(new { message = "Product updated successfully." });
+    }
+
+    [HttpPatch("{id:int}/sizes")]
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
+    public async Task<IActionResult> UpdateProductSizes(int id, UpdateProductSizesRequest request, CancellationToken ct)
+    {
+        var command = new UpdateProductSizesCommand(
+            id,
+            request.Sizes.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList()
+        );
+
+        await mediator.Send(command, ct);
+        return Ok(new { message = "Product sizes updated successfully." });
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = nameof(UserRole.Admin))]
-    public async Task<IActionResult> Delete(int id)
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
+    public async Task<IActionResult> DeleteProduct(int id, CancellationToken ct)
     {
-        await mediator.Send(new DeleteProductCommand(id));
-        return NoContent();
+        await mediator.Send(new DeleteProductCommand(id), ct);
+        return Ok(new { message = "Product deleted successfully." });
     }
 }

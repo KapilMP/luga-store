@@ -9,23 +9,28 @@ namespace SedaWears.Application.Features.Shops.Commands;
 public record UpdateShopCommand(
     int Id,
     string Name,
-    string Slug,
+    string SubdomainSlug,
     string? Description,
-    bool IsActive,
     string? LogoFileName = null,
     string? BannerFileName = null) : IRequest;
 
 public class UpdateShopValidator : AbstractValidator<UpdateShopCommand>
 {
-    public UpdateShopValidator()
+    private readonly IApplicationDbContext _dbContext;
+
+    public UpdateShopValidator(IApplicationDbContext dbContext)
     {
+        _dbContext = dbContext;
+
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Store name is required.")
-            .MaximumLength(100).WithMessage("Store name must not exceed 100 characters.");
+            .MaximumLength(100).WithMessage("Store name must not exceed 100 characters.")
+            .MustAsync(BeUniqueName).WithMessage("Store name already exists.");
 
-        RuleFor(x => x.Slug)
+        RuleFor(x => x.SubdomainSlug)
             .NotEmpty().WithMessage("Store slug is required.")
-            .MaximumLength(100).WithMessage("Store slug must not exceed 100 characters.");
+            .MaximumLength(100).WithMessage("Store slug must not exceed 100 characters.")
+            .MustAsync(BeUniqueSubdomainSlug).WithMessage("Subdomain slug already exists.");
 
         RuleFor(x => x.Description)
             .MinimumLength(10).WithMessage("Description must be at least 10 characters long.")
@@ -38,6 +43,16 @@ public class UpdateShopValidator : AbstractValidator<UpdateShopCommand>
         RuleFor(x => x.BannerFileName)
             .MaximumLength(255).WithMessage("Banner file name must not exceed 255 characters.");
     }
+
+    private async Task<bool> BeUniqueName(UpdateShopCommand command, string name, CancellationToken ct)
+    {
+        return !await _dbContext.Shops.AnyAsync(x => x.Id != command.Id && EF.Functions.ILike(x.Name, name), ct);
+    }
+
+    private async Task<bool> BeUniqueSubdomainSlug(UpdateShopCommand command, string slug, CancellationToken ct)
+    {
+        return !await _dbContext.Shops.AnyAsync(x => x.Id != command.Id && EF.Functions.ILike(x.SubdomainSlug, slug), ct);
+    }
 }
 
 public class UpdateShopHandler(IApplicationDbContext dbContext) : IRequestHandler<UpdateShopCommand>
@@ -48,11 +63,10 @@ public class UpdateShopHandler(IApplicationDbContext dbContext) : IRequestHandle
             .FirstOrDefaultAsync(s => s.Id == request.Id, ct) ?? throw new NotFoundException("Shop not found");
 
         shop.Name = request.Name;
-        shop.Slug = request.Slug;
+        shop.SubdomainSlug = request.SubdomainSlug;
         shop.Description = request.Description;
         shop.LogoFileName = request.LogoFileName ?? shop.LogoFileName;
         shop.BannerFileName = request.BannerFileName ?? shop.BannerFileName;
-        shop.IsActive = request.IsActive;
 
         await dbContext.SaveChangesAsync(ct);
     }

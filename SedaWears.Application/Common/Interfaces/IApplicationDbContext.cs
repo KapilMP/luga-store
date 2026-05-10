@@ -17,10 +17,10 @@ public interface IApplicationDbContext
     DbSet<RestockSubscription> RestockSubscriptions { get; }
     DbSet<ProductImage> ProductImages { get; }
     DbSet<ProductSizeStock> ProductSizeStocks { get; }
-    DbSet<ProductSale> ProductSales { get; }
     DbSet<CartItem> CartItems { get; }
     DbSet<Shop> Shops { get; }
     DbSet<ShopMember> ShopMembers { get; }
+    DbSet<WishlistItem> WishlistItems { get; }
     DatabaseFacade Database { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

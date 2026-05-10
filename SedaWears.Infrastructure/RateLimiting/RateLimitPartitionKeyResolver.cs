@@ -5,20 +5,20 @@ namespace SedaWears.Infrastructure.RateLimiting;
 
 public static class RateLimitPartitionKeyResolver
 {
-    public static string Resolve(HttpContext context, RateLimitPartition partition)
+    public static string Resolve(HttpContext context, RateLimitPartitionType partitionType)
     {
-        return partition switch
+        return partitionType switch
         {
-            RateLimitPartition.User =>
+            RateLimitPartitionType.User =>
                 context.User.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             
-            RateLimitPartition.IP =>
+            RateLimitPartitionType.IP =>
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             
-            RateLimitPartition.Device =>
+            RateLimitPartitionType.Device =>
                 context.Request.Headers["User-Agent"].ToString(),
             
-            RateLimitPartition.Global => "global",
+            RateLimitPartitionType.Global => "global",
             
             _ => "global"
         };

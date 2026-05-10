@@ -11,6 +11,7 @@ using SedaWears.Domain.Enums;
 namespace SedaWears.API.Controllers.Shop;
 
 public record UpdateShopManagerRequest(string FirstName, string LastName, bool IsActive);
+public record UpdateShopManagerActiveStatusRequest(bool IsActive);
 
 [ApiController]
 [Route("shops/{shopId:int}/[controller]")]
@@ -70,19 +71,11 @@ public class ManagersController(ISender mediator) : ControllerBase
         return Ok(new { message = "Shop manager invitation resent successfully." });
     }
 
-    [HttpPatch("{managerId:int}/activate")]
+    [HttpPatch("{managerId:int}/status")]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)}")]
-    public async Task<IActionResult> ActivateShopManager(int shopId, int managerId)
+    public async Task<IActionResult> UpdateShopManagerActiveStatus(int shopId, int managerId, [FromBody] UpdateShopManagerActiveStatusRequest request)
     {
-        await mediator.Send(new SetShopMemberActiveStatusCommand(shopId, managerId, true));
-        return Ok(new { message = "Shop manager activated successfully." });
-    }
-
-    [HttpPatch("{managerId:int}/deactivate")]
-    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)}")]
-    public async Task<IActionResult> DeactivateShopManager(int shopId, int managerId)
-    {
-        await mediator.Send(new SetShopMemberActiveStatusCommand(shopId, managerId, false));
-        return Ok(new { message = "Shop manager deactivated successfully." });
+        await mediator.Send(new UpdateShopMemberActiveStatusCommand(shopId, managerId, request.IsActive));
+        return Ok(new { message = $"Shop manager {(request.IsActive ? "activated" : "deactivated")} successfully." });
     }
 }

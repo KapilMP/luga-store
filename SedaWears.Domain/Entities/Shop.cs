@@ -2,17 +2,16 @@ using SedaWears.Domain.Common;
 
 namespace SedaWears.Domain.Entities;
 
-public class Shop : BaseEntity, ISoftDelete
+public class Shop : BaseEntity
 {
     public string Name { get; set; } = null!;
-    public string Slug { get; set; } = null!;
+    public string SubdomainSlug { get; set; } = null!;
     public string? Description { get; set; }
     public string? BannerFileName { get; set; }
     public string? LogoFileName { get; set; }
 
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public bool IsDeleted { get; set; }
 
     // Relationships
     public ICollection<ShopMember> Members { get; set; } = [];

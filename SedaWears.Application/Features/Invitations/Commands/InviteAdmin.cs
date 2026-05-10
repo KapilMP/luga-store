@@ -1,17 +1,16 @@
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Application.Common.Interfaces;
-using SedaWears.Application.Common.Settings;
 using SedaWears.Domain.Enums;
 using SedaWears.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using System.Web;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 
 namespace SedaWears.Application.Features.Invitations.Commands;
 
 public record InviteAdminCommand(string Email) : IRequest;
+public record ResendAdminInvitationCommand(int UserId) : IRequest;
 
 public class InviteAdminValidator : AbstractValidator<InviteAdminCommand>
 {
@@ -23,12 +22,12 @@ public class InviteAdminValidator : AbstractValidator<InviteAdminCommand>
     }
 }
 
-public class InviteAdminHandler(
+public class AdminInvitationHandlers(
     UserManager<User> userManager,
     IApplicationDbContext dbContext,
-    IEmailService emailService,
-    IUserCuckooFilter cuckooFilter,
-    AppConfig appConfig) : IRequestHandler<InviteAdminCommand>
+    IUserService userService) :
+    IRequestHandler<InviteAdminCommand>,
+    IRequestHandler<ResendAdminInvitationCommand>
 {
     public async Task Handle(InviteAdminCommand request, CancellationToken ct)
     {
@@ -49,8 +48,8 @@ public class InviteAdminHandler(
             UserName = Guid.NewGuid().ToString(),
             FirstName = string.Empty,
             LastName = string.Empty,
-            IsActive = false,
             Role = UserRole.Admin,
+            IsActive = false,
             IsAdminInvitationAccepted = false
         };
 
@@ -58,17 +57,18 @@ public class InviteAdminHandler(
         if (!result.Succeeded)
             throw new BadRequestException(result.Errors.First().Description);
 
-        // 3. Update Cuckoo Filter for fast lookup
-        await cuckooFilter.AddAsync(user.Email!, UserRole.Admin);
+        await userService.SendInvitationEmailAsync(user);
+    }
 
-        // 4. Generate and send invitation
-        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var url = $"{appConfig.FrontendUrl}/accept-invitation?email={user.Email}&token={HttpUtility.UrlEncode(token)}";
+    public async Task Handle(ResendAdminInvitationCommand request, CancellationToken ct)
+    {
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == request.UserId && u.Role == UserRole.Admin, ct)
+            ?? throw new NotFoundException("User not found.");
 
-        await emailService.SendEmailAsync(
-            user.Email!,
-            "SedaWears Admin Invitation",
-            $"<p>You have been invited as an <b>Admin</b> to the SedaWears platform.</p>" +
-            $"<p>Click <a href='{url}'>here</a> to accept the invitation and set up your account password.</p>");
+        if (user.IsAdminInvitationAccepted == true)
+            throw new BadRequestException("User has already accepted their invitation.");
+
+        await userService.SendInvitationEmailAsync(user);
     }
 }

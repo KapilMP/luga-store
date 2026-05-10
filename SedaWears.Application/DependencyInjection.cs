@@ -1,11 +1,10 @@
 using System.Reflection;
+using System.Text.Json;
 using FluentValidation;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using SedaWears.Application.Common.Behaviors;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Common.Services;
-using SedaWears.Application.Common.Validators;
 
 namespace SedaWears.Application;
 
@@ -13,14 +12,20 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        ValidatorOptions.Global.LanguageManager = new CustomLanguageManager();
-        
+
+        var assembly = Assembly.GetExecutingAssembly();
+
         services.AddScoped<IUserService, UserService>();
-        
-        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-        services.AddMediatR(cfg => {
-            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        ValidatorOptions.Global.DefaultClassLevelCascadeMode = CascadeMode.Continue;
+        ValidatorOptions.Global.DefaultRuleLevelCascadeMode = CascadeMode.Stop;
+        ValidatorOptions.Global.PropertyNameResolver = (_, member, _) => member != null ? JsonNamingPolicy.CamelCase.ConvertName(member.Name) : null;
+
+        services.AddValidatorsFromAssembly(assembly);
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(assembly);
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
 
         return services;

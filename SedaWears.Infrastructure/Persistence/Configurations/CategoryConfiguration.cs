@@ -12,9 +12,6 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(t => t.Slug)
-            .HasMaxLength(100)
-            .IsRequired();
 
         builder.Property(t => t.Description)
             .HasMaxLength(300);
@@ -24,18 +21,12 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .HasFilter("\"ShopId\" IS NOT NULL")
             .IsUnique();
 
-        builder.HasIndex(t => new { t.ShopId, t.Slug })
-            .HasFilter("\"ShopId\" IS NOT NULL")
-            .IsUnique();
 
         // 2. Unique index for global categories (ShopId is null)
         builder.HasIndex(t => t.Name)
             .HasFilter("\"ShopId\" IS NULL")
             .IsUnique();
 
-        builder.HasIndex(t => t.Slug)
-            .HasFilter("\"ShopId\" IS NULL")
-            .IsUnique();
         
         builder.HasIndex(t => t.DisplayOrder);
         builder.HasIndex(t => t.ShopId);

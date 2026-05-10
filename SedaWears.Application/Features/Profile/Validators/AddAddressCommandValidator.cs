@@ -7,12 +7,12 @@ public class AddAddressCommandValidator : AbstractValidator<AddAddressCommand>
 {
     public AddAddressCommandValidator()
     {
-        RuleFor(v => v.Label).NotEmpty();
-        RuleFor(v => v.FullName).NotEmpty();
-        RuleFor(v => v.Email).NotEmpty().EmailAddress();
-        RuleFor(v => v.Phone).NotEmpty();
-        RuleFor(v => v.Street).NotEmpty();
-        RuleFor(v => v.City).NotEmpty();
-        RuleFor(v => v.ZipCode).NotEmpty();
+        RuleFor(v => v.Label).NotEmpty().WithMessage("Label is required.");
+        RuleFor(v => v.FullName).NotEmpty().WithMessage("Full name is required.");
+        RuleFor(v => v.Email).NotEmpty().WithMessage("Email address is required.").EmailAddress().WithMessage("Please provide a valid email address.");
+        RuleFor(v => v.Phone).NotEmpty().WithMessage("Phone number is required.");
+        RuleFor(v => v.Street).NotEmpty().WithMessage("Street address is required.");
+        RuleFor(v => v.City).NotEmpty().WithMessage("City is required.");
+        RuleFor(v => v.ZipCode).NotEmpty().WithMessage("Zip code is required.");
     }
 }

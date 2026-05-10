@@ -4,6 +4,8 @@ using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Enums;
 using SedaWears.Application.Common.Models;
 
+using SedaWears.Application.Common.Validators;
+
 namespace SedaWears.Application.Features.Users.Queries;
 
 public record GetOwnersQuery(
@@ -12,7 +14,9 @@ public record GetOwnersQuery(
     bool? IsInvited = null,
     string? SortBy = "createdAt",
     string? SortOrder = "desc")
-    : IRequest<PaginatedList<OwnerRepresentation>>;
+    : IRequest<PaginatedList<OwnerRepresentation>>, IPaginatedQuery;
+
+public class GetOwnersValidator : PaginatedQueryValidator<GetOwnersQuery> { }
 
 public class GetOwnersHandler(IUserService userService) : IRequestHandler<GetOwnersQuery, PaginatedList<OwnerRepresentation>>
 {

@@ -6,5 +6,5 @@ public record RateLimitPolicyConfig
     public int PermitLimit { get; init; }
     public int QueueLimit { get; init; }
     public QueueProcessingOrder QueueProcessingOrder { get; init; }
-    public RateLimitPartition Partition { get; init; }
+    public RateLimitPartitionType PartitionType { get; init; }
 }

@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Enums;
@@ -11,7 +10,7 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUse
     {
         get
         {
-            var sub = httpContextAccessor.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var sub = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(sub, out var id) ? id : null;
         }
     }
@@ -39,7 +38,7 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUse
     {
         get
         {
-            var role = httpContextAccessor.HttpContext?.User?.FindFirstValue("role");
+            var role = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
             return Enum.TryParse<UserRole>(role, out var result) ? result : null;
         }
     }

@@ -16,20 +16,11 @@ public static class AdminSeeder
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
-        var existingUser = await userManager.Users
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(u => u.Email == email);
+        var existingAdmin = await userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == email && u.Role == UserRole.Admin);
 
-        if (existingUser != null)
+        if (existingAdmin != null)
         {
-            if (existingUser.IsDeleted)
-            {
-                Console.WriteLine($"User with email {email} exists but is soft-deleted. Please restore the user manually or use a different email.");
-            }
-            else
-            {
-                Console.WriteLine($"User with email {email} already exists and is active.");
-            }
             return;
         }
 

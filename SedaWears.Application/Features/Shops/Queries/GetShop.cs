@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Application.Features.Shops.Models;
+using SedaWears.Application.Features.Shops.Projections;
 
 namespace SedaWears.Application.Features.Shops.Queries;
 
@@ -12,21 +13,10 @@ public class GetShopHandler(IApplicationDbContext dbContext) : IRequestHandler<G
 {
     public async Task<ShopRepresentation> Handle(GetShopQuery request, CancellationToken ct)
     {
-        var shop = await dbContext.Shops
-        .IgnoreQueryFilters()
+        return await dbContext.Shops
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == request.Id, ct) ?? throw new NotFoundException("Shop not found");
-
-        return new ShopRepresentation(
-            shop.Id,
-            shop.Name,
-            shop.Slug,
-            shop.Description,
-            shop.LogoFileName,
-            shop.BannerFileName,
-            shop.IsActive,
-            shop.IsDeleted,
-            shop.CreatedAt
-        );
+            .Where(s => s.Id == request.Id)
+            .ProjectToShop()
+            .FirstOrDefaultAsync(ct) ?? throw new NotFoundException("Shop not found");
     }
 }
