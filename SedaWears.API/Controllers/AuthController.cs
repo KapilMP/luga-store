@@ -28,7 +28,6 @@ public class AuthController(ISender mediator, IOriginContext originContext) : Co
 {
 
     [HttpPost("login")]
-
     public async Task<IActionResult> Login(LoginRequest request)
     {
         var (user, role) = await mediator.Send(new LoginCommand(request.Email, request.Password, request.RememberMe));
@@ -71,7 +70,6 @@ public class AuthController(ISender mediator, IOriginContext originContext) : Co
     }
 
     [HttpPost("logout")]
-
     public async Task<IActionResult> Logout()
     {
         var scheme = AuthConstants.GetSchemeForRole(originContext.CurrentRole.ToString());
@@ -88,7 +86,6 @@ public class AuthController(ISender mediator, IOriginContext originContext) : Co
     }
 
     [HttpPost("reset-password")]
-
     public async Task<IActionResult> Reset(ResetPasswordRequest req)
     {
         await mediator.Send(new ResetPasswordCommand(req.Email, req.Token, req.NewPassword));
@@ -96,7 +93,6 @@ public class AuthController(ISender mediator, IOriginContext originContext) : Co
     }
 
     [HttpPost("accept-invitation")]
-
     public async Task<IActionResult> AcceptInvitation(AcceptInvitationRequest request)
     {
         await mediator.Send(new AcceptInvitationCommand(
