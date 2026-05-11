@@ -5,16 +5,17 @@ namespace SedaWears.Application.Features.Products.Projections;
 
 public static class ProductProjections
 {
-    public static IQueryable<ProductRepresentation> ProjectToProduct(this IQueryable<Product> query)
+    public static IQueryable<ProductDto> ProjectToProduct(this IQueryable<Product> query)
     {
-        return query.Select(p => new ProductRepresentation(
+        return query.Select(p => new ProductDto(
             p.Id,
             p.Name,
             p.Description,
             p.Price,
             p.Gender,
-            p.Images.Select(i => i.FileName).ToList(),
-            p.SizeStocks.Select(s => new ProductSizeRepresentation(s.Size, s.Stock)).ToList(),
+            p.Images.OrderBy(i => i.Order).Select(i => i.FileName).ToList(),
+            p.SizeStocks.Select(s => new ProductSizeDto(s.Size, s.Stock)).ToList(),
+            new CategorySummary(p.Category.Id, p.Category.Name),
             p.CreatedAt
         ));
     }

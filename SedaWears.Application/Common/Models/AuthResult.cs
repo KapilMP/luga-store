@@ -6,5 +6,5 @@ public class AuthResult
 {
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
-    public BaseUserRepresentation User { get; set; } = default!;
+    public BaseUserDto User { get; set; } = default!;
 }

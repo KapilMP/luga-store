@@ -14,15 +14,15 @@ public record GetAdminsQuery(
     bool? IsInvited = null,
     string? SortBy = null,
     string? SortOrder = "desc")
-    : IRequest<PaginatedList<AdminRepresentation>>, IPaginatedQuery;
+    : IRequest<PaginatedList<AdminDto>>, IPaginatedQuery;
 
 public class GetAdminsValidator : PaginatedQueryValidator<GetAdminsQuery> { }
 
-public class GetAdminsHandler(IUserService userService) : IRequestHandler<GetAdminsQuery, PaginatedList<AdminRepresentation>>
+public class GetAdminsHandler(IUserService userService) : IRequestHandler<GetAdminsQuery, PaginatedList<AdminDto>>
 {
-    public async Task<PaginatedList<AdminRepresentation>> Handle(GetAdminsQuery request, CancellationToken ct)
+    public async Task<PaginatedList<AdminDto>> Handle(GetAdminsQuery request, CancellationToken ct)
     {
-        return await userService.GetUsersByRoleAsync<AdminRepresentation>(
+        return await userService.GetUsersByRoleAsync<AdminDto>(
             UserRole.Admin,
             request.PageNumber,
             request.PageSize,

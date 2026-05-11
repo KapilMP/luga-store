@@ -1,16 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SedaWears.Application.Features.Users.Models;
 using SedaWears.Application.Features.Users.Queries;
 using SedaWears.Application.Features.Users.Commands;
 using SedaWears.Application.Features.Invitations.Commands;
 using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers;
-
-public record UpdateUserRequest(string FirstName, string LastName, bool? IsActive, string? NewPassword);
-public record InviteAdminRequest(string Email);
-public record UpdateAdminActiveStatusRequest(bool IsActive);
 
 [ApiController]
 [Route("")]
@@ -62,12 +59,14 @@ public class UsersController(ISender mediator) : ControllerBase
     [HttpPatch("{id:int}")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
-        => Ok(await mediator.Send(new UpdateUserCommand(
+    {
+        await mediator.Send(new UpdateUserCommand(
             id,
             request.FirstName,
             request.LastName,
-            request.IsActive,
-            request.NewPassword)));
+            request.IsActive));
+        return NoContent();
+    }
 
     [HttpDelete("admins/{id:int}")]
     [Authorize(Roles = nameof(UserRole.Admin))]
@@ -93,6 +92,12 @@ public class UsersController(ISender mediator) : ControllerBase
         return NoContent();
     }
 
-
+    [HttpDelete("admins/{id:int}/invitation")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    public async Task<IActionResult> DeleteInvitedAdmin(int id)
+    {
+        await mediator.Send(new DeleteInvitedAdminCommand(id));
+        return NoContent();
+    }
 }
 

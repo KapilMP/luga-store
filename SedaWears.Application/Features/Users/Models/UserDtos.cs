@@ -14,7 +14,7 @@ public record UserStatus(
     bool IsEmailConfirmed
 );
 
-public record AddressRepresentation(
+public record AddressDto(
     int Id,
     string Label,
     string FullName,
@@ -25,7 +25,7 @@ public record AddressRepresentation(
     string ZipCode
 );
 
-public abstract record BaseUserRepresentation(
+public abstract record BaseUserDto(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
@@ -38,33 +38,33 @@ public record ShopSummary(
     string? LogoFileName
 );
 
-public record AdminRepresentation(
+public record AdminDto(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
     DateTime CreatedAt
-) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
+) : BaseUserDto(Id, PersonalInfo, Status, CreatedAt);
 
-public record OwnerRepresentation(
+public record OwnerDto(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
     DateTime CreatedAt,
     List<ShopSummary> Shops
-) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
+) : BaseUserDto(Id, PersonalInfo, Status, CreatedAt);
 
-public record ManagerRepresentation(
+public record ManagerDto(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
     DateTime CreatedAt,
     List<ShopSummary> Shops
-) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
+) : BaseUserDto(Id, PersonalInfo, Status, CreatedAt);
 
-public record CustomerRepresentation(
+public record CustomerDto(
     int Id,
     PersonalInfo PersonalInfo,
     UserStatus Status,
     DateTime CreatedAt,
-    List<AddressRepresentation> SavedAddresses
-) : BaseUserRepresentation(Id, PersonalInfo, Status, CreatedAt);
+    List<AddressDto> SavedAddresses
+) : BaseUserDto(Id, PersonalInfo, Status, CreatedAt);

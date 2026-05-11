@@ -8,17 +8,19 @@ using SedaWears.Application.Features.Products.Models;
 using SedaWears.Application.Features.Products.Queries;
 using SedaWears.Domain.Enums;
 
-namespace SedaWears.API.Controllers;
+namespace SedaWears.API.Controllers.Shop;
 
 [ApiController]
-[Route("[controller]")]
+[Route("shops/{shopId:int}/[controller]")]
 [EnableRateLimiting(nameof(RateLimitingPolicies.Global))]
+[Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
 public class ProductsController(ISender mediator) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetProducts(
+        int shopId,
         [FromQuery] int? categoryId,
-        [FromQuery] int? shopId,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? sortBy = null,
@@ -27,13 +29,8 @@ public class ProductsController(ISender mediator) : ControllerBase
         CancellationToken ct = default)
         => Ok(await mediator.Send(new GetProductsQuery(categoryId, shopId, pageNumber, pageSize, sortBy, sortOrder, search), ct));
 
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetProduct(int id, CancellationToken ct)
-        => Ok(await mediator.Send(new GetProductQuery(id), ct));
-
     [HttpPost]
-    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
-    public async Task<IActionResult> CreateProduct(UpsertProductRequest request, CancellationToken ct)
+    public async Task<IActionResult> CreateProduct(int shopId, UpsertProductRequest request, CancellationToken ct)
     {
         var command = new CreateProductCommand(
             request.Name,
@@ -41,7 +38,8 @@ public class ProductsController(ISender mediator) : ControllerBase
             request.Price,
             request.Gender,
             request.CategoryId,
-            request.Images
+            request.Images,
+            shopId
         );
 
         await mediator.Send(command, ct);
@@ -49,8 +47,7 @@ public class ProductsController(ISender mediator) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
-    public async Task<IActionResult> UpdateProduct(int id, UpsertProductRequest request, CancellationToken ct)
+    public async Task<IActionResult> UpdateProduct(int shopId, int id, UpsertProductRequest request, CancellationToken ct)
     {
         var command = new UpdateProductCommand(
             id,
@@ -59,39 +56,25 @@ public class ProductsController(ISender mediator) : ControllerBase
             request.Price,
             request.Gender,
             request.CategoryId,
-            request.Images
+            request.Images,
+            shopId
         );
 
         await mediator.Send(command, ct);
         return Ok(new { message = "Product updated successfully." });
     }
 
-    [HttpPatch("{id:int}/sizes")]
-    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
-    public async Task<IActionResult> UpdateProductSizes(int id, UpdateProductSizesRequest request, CancellationToken ct)
-    {
-        var command = new UpdateProductSizesCommand(
-            id,
-            request.Sizes.Select(s => new ProductSizeDto(s.Size, s.Stock)).ToList()
-        );
-
-        await mediator.Send(command, ct);
-        return Ok(new { message = "Product sizes updated successfully." });
-    }
-
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
-    public async Task<IActionResult> DeleteProduct(int id, CancellationToken ct)
+    public async Task<IActionResult> DeleteProduct(int shopId, int id, CancellationToken ct)
     {
-        await mediator.Send(new DeleteProductCommand(id), ct);
+        await mediator.Send(new DeleteProductCommand(id, shopId), ct);
         return NoContent();
     }
 
     [HttpPatch("{id:int}/status")]
-    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)},{nameof(UserRole.Manager)}")]
-    public async Task<IActionResult> UpdateProductStatus(int id, UpdateProductActiveStatusRequest request, CancellationToken ct)
+    public async Task<IActionResult> UpdateProductStatus(int shopId, int id, UpdateProductActiveStatusRequest request, CancellationToken ct)
     {
-        await mediator.Send(new UpdateProductActiveStatusCommand(id, request.IsActive), ct);
+        await mediator.Send(new UpdateProductActiveStatusCommand(id, request.IsActive, shopId), ct);
         var status = request.IsActive ? "activated" : "deactivated";
         return Ok(new { message = $"Product {status} successfully." });
     }

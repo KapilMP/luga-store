@@ -1,4 +1,4 @@
-using SedaWears.Application.Features.Users;
+using SedaWears.Application.Features.Users.Projections;
 using SedaWears.Application.Features.Users.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -9,12 +9,12 @@ using SedaWears.Application.Common.Interfaces;
 
 namespace SedaWears.Application.Features.Profile.Commands;
 
-public record UpdateManagerProfileCommand(string FirstName, string LastName, string Phone, string? AvatarFileName) : IRequest<ManagerRepresentation>;
+public record UpdateManagerProfileCommand(string FirstName, string LastName, string Phone, string? AvatarFileName) : IRequest<ManagerDto>;
 
 public class UpdateManagerProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) :
-    IRequestHandler<UpdateManagerProfileCommand, ManagerRepresentation>
+    IRequestHandler<UpdateManagerProfileCommand, ManagerDto>
 {
-    public async Task<ManagerRepresentation> Handle(UpdateManagerProfileCommand request, CancellationToken cancellationToken)
+    public async Task<ManagerDto> Handle(UpdateManagerProfileCommand request, CancellationToken cancellationToken)
     {
         var userId = currentUser.Id;
         var user = await userManager.Users
@@ -38,6 +38,6 @@ public class UpdateManagerProfileCommandHandler(UserManager<User> userManager, I
 
         await userManager.UpdateAsync(user);
 
-        return (ManagerRepresentation)user.ToUserRepresentation();
+        return (ManagerDto)user.ToUserDto();
     }
 }

@@ -5,11 +5,11 @@ using SedaWears.Application.Common.Exceptions;
 
 namespace SedaWears.Application.Features.Products.Commands;
 
-public record DeleteProductCommand(int Id, int? ShopId = null) : IRequest<Unit>;
+public record UpdateProductActiveStatusCommand(int Id, bool IsActive, int? ShopId = null) : IRequest;
 
-public class DeleteProductHandler(IApplicationDbContext dbContext) : IRequestHandler<DeleteProductCommand, Unit>
+public class UpdateProductActiveStatusHandler(IApplicationDbContext dbContext) : IRequestHandler<UpdateProductActiveStatusCommand>
 {
-    public async Task<Unit> Handle(DeleteProductCommand request, CancellationToken ct)
+    public async Task Handle(UpdateProductActiveStatusCommand request, CancellationToken ct)
     {
         var product = await dbContext.Products
             .Include(p => p.Category)
@@ -20,8 +20,7 @@ public class DeleteProductHandler(IApplicationDbContext dbContext) : IRequestHan
             throw new NotFoundException("Product not found.");
         }
 
-        dbContext.Products.Remove(product);
+        product.IsActive = request.IsActive;
         await dbContext.SaveChangesAsync(ct);
-        return Unit.Value;
     }
 }

@@ -1,7 +1,7 @@
 
 namespace SedaWears.Application.Features.Shops.Models;
 
-public record ShopRepresentation(
+public record ShopDto(
     int Id,
     string Name,
     string SubdomainSlug,

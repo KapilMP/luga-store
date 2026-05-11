@@ -1,4 +1,4 @@
-using SedaWears.Application.Features.Users;
+using SedaWears.Application.Features.Users.Projections;
 using SedaWears.Application.Features.Users.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -9,12 +9,12 @@ using SedaWears.Application.Common.Interfaces;
 
 namespace SedaWears.Application.Features.Profile.Commands;
 
-public record UpdateAdminProfileCommand(string FirstName, string LastName, string Phone, string? AvatarFileName) : IRequest<AdminRepresentation>;
+public record UpdateAdminProfileCommand(string FirstName, string LastName, string Phone, string? AvatarFileName) : IRequest<AdminDto>;
 
 public class UpdateAdminProfileCommandHandler(UserManager<User> userManager, IS3Service s3Service, ICurrentUser currentUser) :
-    IRequestHandler<UpdateAdminProfileCommand, AdminRepresentation>
+    IRequestHandler<UpdateAdminProfileCommand, AdminDto>
 {
-    public async Task<AdminRepresentation> Handle(UpdateAdminProfileCommand request, CancellationToken cancellationToken)
+    public async Task<AdminDto> Handle(UpdateAdminProfileCommand request, CancellationToken cancellationToken)
     {
         var userId = currentUser.Id!.Value;
         var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("Profile not found.");
@@ -34,6 +34,6 @@ public class UpdateAdminProfileCommandHandler(UserManager<User> userManager, IS3
 
         await userManager.UpdateAsync(user);
 
-        return (AdminRepresentation)user.ToUserRepresentation();
+        return (AdminDto)user.ToUserDto();
     }
 }

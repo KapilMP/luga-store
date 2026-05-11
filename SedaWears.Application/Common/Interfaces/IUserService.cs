@@ -14,9 +14,9 @@ public interface IUserService
         bool? isInvited = null,
         string? sortBy = null,
         string? sortOrder = "desc",
-        CancellationToken ct = default) where T : BaseUserRepresentation;
+        CancellationToken ct = default) where T : BaseUserDto;
 
-    Task<PaginatedList<ManagerRepresentation>> GetShopManagersAsync(
+    Task<PaginatedList<ManagerDto>> GetShopManagersAsync(
         int shopId,
         int pageNumber,
         int pageSize,
@@ -27,7 +27,7 @@ public interface IUserService
     Task<T> GetUserByIdAndRoleAsync<T>(
         int userId,
         UserRole role,
-        CancellationToken ct = default) where T : BaseUserRepresentation;
+        CancellationToken ct = default) where T : BaseUserDto;
 
     Task SendInvitationEmailAsync(User user);
 }

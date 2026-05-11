@@ -16,13 +16,13 @@ public record GetProductsQuery(
     int PageSize = 10,
     string? SortBy = null,
     string? SortOrder = "asc",
-    string? Search = null) : IRequest<PaginatedList<ProductRepresentation>>, IPaginatedQuery;
+    string? Search = null) : IRequest<PaginatedList<ProductDto>>, IPaginatedQuery;
 
 public class GetProductsValidator : PaginatedQueryValidator<GetProductsQuery> { }
 
-public class GetProductsHandler(IApplicationDbContext dbContext) : IRequestHandler<GetProductsQuery, PaginatedList<ProductRepresentation>>
+public class GetProductsHandler(IApplicationDbContext dbContext) : IRequestHandler<GetProductsQuery, PaginatedList<ProductDto>>
 {
-    public async Task<PaginatedList<ProductRepresentation>> Handle(GetProductsQuery request, CancellationToken ct)
+    public async Task<PaginatedList<ProductDto>> Handle(GetProductsQuery request, CancellationToken ct)
     {
         var query = dbContext.Products
             .AsNoTracking();
@@ -55,6 +55,6 @@ public class GetProductsHandler(IApplicationDbContext dbContext) : IRequestHandl
                                   .ProjectToProduct()
                                   .ToListAsync(ct);
 
-        return new PaginatedList<ProductRepresentation>(products, totalCount, request.PageNumber, request.PageSize);
+        return new PaginatedList<ProductDto>(products, totalCount, request.PageNumber, request.PageSize);
     }
 }

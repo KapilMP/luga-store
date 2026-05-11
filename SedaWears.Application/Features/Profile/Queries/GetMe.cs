@@ -10,15 +10,15 @@ using SedaWears.Application.Features.Users.Projections;
 
 namespace SedaWears.Application.Features.Profile.Queries;
 
-public record GetMeQuery : IRequest<BaseUserRepresentation>;
+public record GetMeQuery : IRequest<BaseUserDto>;
 
 public class GetMeHandler(
     IUserService userService,
-    ICurrentUser currentUser) : IRequestHandler<GetMeQuery, BaseUserRepresentation>
+    ICurrentUser currentUser) : IRequestHandler<GetMeQuery, BaseUserDto>
 {
-    public async Task<BaseUserRepresentation> Handle(GetMeQuery request, CancellationToken ct)
+    public async Task<BaseUserDto> Handle(GetMeQuery request, CancellationToken ct)
     {
-        return await userService.GetUserByIdAndRoleAsync<BaseUserRepresentation>(
+        return await userService.GetUserByIdAndRoleAsync<BaseUserDto>(
             currentUser.Id!.Value,
             currentUser.Role!.Value,
             ct);

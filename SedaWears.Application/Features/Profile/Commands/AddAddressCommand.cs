@@ -15,12 +15,12 @@ public record AddAddressCommand(
     string Street,
     string City,
     string ZipCode
-) : IRequest<AddressRepresentation>;
+) : IRequest<AddressDto>;
 
 public class AddAddressCommandHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) :
-    IRequestHandler<AddAddressCommand, AddressRepresentation>
+    IRequestHandler<AddAddressCommand, AddressDto>
 {
-    public async Task<AddressRepresentation> Handle(AddAddressCommand request, CancellationToken cancellationToken)
+    public async Task<AddressDto> Handle(AddAddressCommand request, CancellationToken cancellationToken)
     {
         var userId = currentUser.Id!.Value;
         var user = await dbContext.Users.Include(u => u.Addresses).FirstOrDefaultAsync(u => u.Id == userId, cancellationToken) ?? throw new NotFoundException("User not found.");
@@ -40,6 +40,6 @@ public class AddAddressCommandHandler(IApplicationDbContext dbContext, ICurrentU
         user.Addresses.Add(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new AddressRepresentation(entity.Id, entity.Label, entity.FullName, entity.Email, entity.Phone, entity.Street, entity.City, entity.ZipCode);
+        return new AddressDto(entity.Id, entity.Label, entity.FullName, entity.Email, entity.Phone, entity.Street, entity.City, entity.ZipCode);
     }
 }

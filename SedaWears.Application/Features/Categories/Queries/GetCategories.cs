@@ -15,13 +15,13 @@ public record GetCategoriesQuery(
     int PageSize = 10,
     string? SortBy = null,
     string? SortOrder = "asc",
-    string? Search = null) : IRequest<PaginatedList<CategoryRepresentation>>, IPaginatedQuery;
+    string? Search = null) : IRequest<PaginatedList<CategoryDto>>, IPaginatedQuery;
 
 public class GetCategoriesValidator : PaginatedQueryValidator<GetCategoriesQuery> { }
 
-public class GetCategoriesHandler(IApplicationDbContext dbContext) : IRequestHandler<GetCategoriesQuery, PaginatedList<CategoryRepresentation>>
+public class GetCategoriesHandler(IApplicationDbContext dbContext) : IRequestHandler<GetCategoriesQuery, PaginatedList<CategoryDto>>
 {
-    public async Task<PaginatedList<CategoryRepresentation>> Handle(GetCategoriesQuery request, CancellationToken ct)
+    public async Task<PaginatedList<CategoryDto>> Handle(GetCategoriesQuery request, CancellationToken ct)
     {
         var query = dbContext.Categories
             .AsNoTracking();
@@ -51,6 +51,6 @@ public class GetCategoriesHandler(IApplicationDbContext dbContext) : IRequestHan
             .ProjectToCategory()
             .ToListAsync(ct);
 
-        return new PaginatedList<CategoryRepresentation>(items, totalCount, request.PageNumber, request.PageSize);
+        return new PaginatedList<CategoryDto>(items, totalCount, request.PageNumber, request.PageSize);
     }
 }

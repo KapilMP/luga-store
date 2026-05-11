@@ -2,6 +2,8 @@ using MediatR;
 using FluentValidation;
 using SedaWears.Domain.Enums;
 using SedaWears.Application.Common.Interfaces;
+using SedaWears.Application.Common.Exceptions;
+using Microsoft.EntityFrameworkCore;
 using SedaWears.Domain.Entities;
 
 namespace SedaWears.Application.Features.Products.Commands;
@@ -12,7 +14,8 @@ public record CreateProductCommand(
     decimal Price,
     Gender Gender,
     int CategoryId,
-    List<string> ImageFileNames) : IRequest;
+    List<string> ImageFileNames,
+    int? ShopId = null) : IRequest;
 
 public class CreateProductValidator : AbstractValidator<CreateProductCommand>
 {
@@ -45,6 +48,17 @@ public class CreateProductHandler(IApplicationDbContext dbContext) : IRequestHan
 {
     public async Task Handle(CreateProductCommand request, CancellationToken ct)
     {
+        if (request.ShopId.HasValue)
+        {
+            var categoryExists = await dbContext.Categories
+                .AnyAsync(c => c.Id == request.CategoryId && c.ShopId == request.ShopId, ct);
+
+            if (!categoryExists)
+            {
+                throw new NotFoundException("Category not found.");
+            }
+        }
+
         var product = new Product
         {
             Name = request.Name,

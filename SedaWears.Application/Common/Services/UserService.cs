@@ -3,13 +3,12 @@ using SedaWears.Application.Common.Models;
 using SedaWears.Application.Features.Users.Models;
 using SedaWears.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using SedaWears.Application.Features.Users;
+using SedaWears.Application.Features.Users.Projections;
 using Microsoft.AspNetCore.Identity;
 using SedaWears.Domain.Entities;
 using SedaWears.Application.Common.Settings;
 using System.Web;
 using SedaWears.Application.Common.Exceptions;
-using SedaWears.Application.Features.Users.Projections;
 
 namespace SedaWears.Application.Common.Services;
 
@@ -27,7 +26,7 @@ public class UserService(
         bool? isInvited = null,
         string? sortBy = null,
         string? sortOrder = "desc",
-        CancellationToken ct = default) where T : BaseUserRepresentation
+        CancellationToken ct = default) where T : BaseUserDto
     {
         var query = dbContext.Users
             .Where(u => u.Role == role && u.Id != currentUser.Id);
@@ -79,7 +78,7 @@ public class UserService(
         return new PaginatedList<T>(mappedItems, totalCount, pageNumber, pageSize);
     }
 
-    public async Task<PaginatedList<ManagerRepresentation>> GetShopManagersAsync(
+    public async Task<PaginatedList<ManagerDto>> GetShopManagersAsync(
         int shopId,
         int pageNumber,
         int pageSize,
@@ -124,10 +123,10 @@ public class UserService(
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new PaginatedList<ManagerRepresentation>(mappedList, totalCount, pageNumber, pageSize);
+        return new PaginatedList<ManagerDto>(mappedList, totalCount, pageNumber, pageSize);
     }
 
-    public async Task<T> GetUserByIdAndRoleAsync<T>(int userId, UserRole role, CancellationToken ct = default) where T : BaseUserRepresentation
+    public async Task<T> GetUserByIdAndRoleAsync<T>(int userId, UserRole role, CancellationToken ct = default) where T : BaseUserDto
     {
         var query = dbContext.Users
             .AsNoTracking()

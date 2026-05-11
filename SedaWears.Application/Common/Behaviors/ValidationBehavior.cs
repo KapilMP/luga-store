@@ -5,6 +5,7 @@ namespace SedaWears.Application.Common.Behaviors;
 
 public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
     : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
 {
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
@@ -21,7 +22,7 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
                 .ToList();
 
             if (failures.Count != 0)
-                throw new SedaWears.Application.Common.Exceptions.ValidationException(failures);
+                throw new Exceptions.ValidationException(failures);
         }
 
         return await next();

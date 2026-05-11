@@ -1,16 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SedaWears.Application.Features.Orders.Models;
 using SedaWears.Application.Features.Orders.Commands;
 using SedaWears.Application.Features.Orders.Queries;
-using SedaWears.Application.Common.Settings;
+
 using Microsoft.AspNetCore.RateLimiting;
+using SedaWears.Application.Common.Settings;
 
 namespace SedaWears.API.Controllers.Customer;
-
-public record CheckoutAddressRequest(string FullName, string Phone, string Street, string City, string ZipCode);
-public record OrderItemRequest(int ProductId, int Quantity);
-public record CreateOrderRequest(string? CustomerEmail, CheckoutAddressRequest? ShippingAddress, List<OrderItemRequest> Items);
 
 [ApiController]
 [Route("customer/[controller]")]

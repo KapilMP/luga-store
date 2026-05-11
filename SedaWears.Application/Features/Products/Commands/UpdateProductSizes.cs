@@ -8,7 +8,7 @@ using SedaWears.Application.Features.Products.Models;
 
 namespace SedaWears.Application.Features.Products.Commands;
 
-public record UpdateProductSizesCommand(int Id, List<ProductSizeRepresentation> Sizes) : IRequest<Unit>;
+public record UpdateProductSizesCommand(int Id, List<ProductSizeDto> Sizes) : IRequest<Unit>;
 
 public class UpdateProductSizesValidator : AbstractValidator<UpdateProductSizesCommand>
 {

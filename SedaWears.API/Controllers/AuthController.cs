@@ -1,25 +1,17 @@
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using SedaWears.Application.Features.Auth.Models;
 using SedaWears.Application.Features.Auth.Commands;
 using SedaWears.Application.Features.Invitations.Commands;
 using SedaWears.Application.Features.Invitations.Queries;
 using SedaWears.Application.Common.Settings;
 using SedaWears.Application.Common;
 using SedaWears.Application.Common.Interfaces;
-using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers;
-
-public record LoginRequest(string Email, string Password, bool RememberMe = false);
-public record RegisterRequest(string Email, string Password, string FirstName, string LastName, string Phone);
-public record ForgotPasswordRequest(string Email);
-public record ResetPasswordRequest(string Email, string Token, string NewPassword);
-public record AcceptInvitationRequest(int? ShopId, string Email, string Token, string FirstName, string LastName, string Password, UserRole Role);
-public record RefreshRequest(string RefreshToken);
 
 [ApiController]
 [Route("[controller]")]
@@ -30,12 +22,11 @@ public class AuthController(ISender mediator, IOriginContext originContext) : Co
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var (user, role) = await mediator.Send(new LoginCommand(request.Email, request.Password, request.RememberMe));
+        var (userId, role) = await mediator.Send(new LoginCommand(request.Email, request.Password, request.RememberMe));
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.PersonalInfo.Email!),
+            new(ClaimTypes.NameIdentifier, userId.ToString()),
             new(ClaimTypes.Role, role.ToString()),
         };
 
@@ -52,7 +43,7 @@ public class AuthController(ISender mediator, IOriginContext originContext) : Co
             new ClaimsPrincipal(claimsIdentity),
             authProperties);
 
-        return Ok(user);
+        return Ok();
     }
 
     [HttpPost("register")]

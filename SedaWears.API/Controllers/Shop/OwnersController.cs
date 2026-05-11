@@ -3,15 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SedaWears.Application.Common.Settings;
+using SedaWears.Application.Features.Shops.Models;
 using SedaWears.Application.Features.Shops.Queries;
 using SedaWears.Application.Features.Shops.Commands;
 using SedaWears.Application.Features.Invitations.Commands;
 using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers.Shop;
-
-public record UpdateShopOwnerRequest(string FirstName, string LastName, bool IsActive);
-public record UpdateShopOwnerActiveStatusRequest(bool IsActive);
 
 [ApiController]
 [Route("shops/{shopId:int}/[controller]")]
@@ -44,7 +42,7 @@ public class OwnersController(ISender mediator) : ControllerBase
 
     [HttpPatch("{ownerId:int}")]
     [Authorize(Roles = nameof(UserRole.Owner))]
-    public async Task<IActionResult> UpdateShopOwner([FromRoute] int shopId, [FromRoute] int ownerId, [FromBody] UpdateShopOwnerRequest request)
+    public async Task<IActionResult> UpdateShopOwner([FromRoute] int shopId, [FromRoute] int ownerId, [FromBody] UpdateShopMemberRequest request)
     {
         await mediator.Send(new UpdateShopMemberCommand(
             shopId,
@@ -60,7 +58,7 @@ public class OwnersController(ISender mediator) : ControllerBase
     public async Task<IActionResult> DeleteShopOwner([FromRoute] int shopId, [FromRoute] int ownerId)
     {
         await mediator.Send(new DeleteShopMemberCommand(shopId, ownerId));
-        return Ok(new { message = "Owner deleted successfully." });
+        return NoContent();
     }
 
     [HttpPost("{ownerId:int}/resend-invitation")]
@@ -73,9 +71,16 @@ public class OwnersController(ISender mediator) : ControllerBase
 
     [HttpPatch("{ownerId:int}/status")]
     [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)}")]
-    public async Task<IActionResult> UpdateShopOwnerActiveStatus(int shopId, int ownerId, [FromBody] UpdateShopOwnerActiveStatusRequest request)
+    public async Task<IActionResult> UpdateShopOwnerActiveStatus(int shopId, int ownerId, [FromBody] UpdateShopMemberActiveStatusRequest request)
     {
-        await mediator.Send(new UpdateShopMemberActiveStatusCommand(shopId, ownerId, request.IsActive));
+        await mediator.Send(new UpdateShopMemberActiveStatusCommand(shopId, ownerId, UserRole.Owner, request.IsActive));
         return Ok(new { message = $"Owner {(request.IsActive ? "activated" : "deactivated")} successfully." });
+    }
+    [HttpDelete("{ownerId:int}/invitation")]
+    [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Owner)}")]
+    public async Task<IActionResult> DeleteInvitedShopOwner(int shopId, int ownerId)
+    {
+        await mediator.Send(new DeleteInvitedShopMemberCommand(shopId, ownerId, UserRole.Owner));
+        return NoContent();
     }
 }

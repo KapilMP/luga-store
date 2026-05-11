@@ -5,12 +5,10 @@ using SedaWears.Application.Common.Interfaces;
 using SedaWears.Domain.Entities;
 using SedaWears.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using SedaWears.Application.Features.Users.Models;
-using SedaWears.Application.Features.Users;
 
 namespace SedaWears.Application.Features.Auth.Commands;
 
-public record LoginCommand(string Email, string Password, bool RememberMe = false) : IRequest<(BaseUserRepresentation User, UserRole Role)>;
+public record LoginCommand(string Email, string Password, bool RememberMe = false) : IRequest<(int Id, UserRole Role)>;
 
 public class LoginValidator : AbstractValidator<LoginCommand>
 {
@@ -27,9 +25,9 @@ public class LoginValidator : AbstractValidator<LoginCommand>
 
 public class LoginHandler(
     UserManager<User> userManager,
-    IOriginContext originContext) : IRequestHandler<LoginCommand, (BaseUserRepresentation User, UserRole Role)>
+    IOriginContext originContext) : IRequestHandler<LoginCommand, (int Id, UserRole Role)>
 {
-    public async Task<(BaseUserRepresentation User, UserRole Role)> Handle(LoginCommand request, CancellationToken ct)
+    public async Task<(int Id, UserRole Role)> Handle(LoginCommand request, CancellationToken ct)
     {
         var role = originContext.CurrentRole;
         var user = await userManager.Users
@@ -37,7 +35,7 @@ public class LoginHandler(
             ?? throw new UnauthorizedAccessException("Incorrect email or password.");
 
         if (!await userManager.CheckPasswordAsync(user, request.Password)) throw new UnauthorizedAccessException("Incorrect email or password");
-        
-        return (user.ToUserRepresentation(), user.Role);
+
+        return (user.Id, user.Role);
     }
 }

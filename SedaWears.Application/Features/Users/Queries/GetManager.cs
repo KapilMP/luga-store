@@ -5,14 +5,14 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.Application.Features.Users.Queries;
 
-public record GetManagerQuery(int Id) : IRequest<ManagerRepresentation>;
+public record GetManagerQuery(int Id) : IRequest<ManagerDto>;
 
 public class GetManagerHandler(IUserService userService) :
-    IRequestHandler<GetManagerQuery, ManagerRepresentation>
+    IRequestHandler<GetManagerQuery, ManagerDto>
 {
-    public async Task<ManagerRepresentation> Handle(GetManagerQuery request, CancellationToken ct)
+    public async Task<ManagerDto> Handle(GetManagerQuery request, CancellationToken ct)
     {
-        return await userService.GetUserByIdAndRoleAsync<ManagerRepresentation>(
+        return await userService.GetUserByIdAndRoleAsync<ManagerDto>(
             request.Id,
             UserRole.Manager,
             ct);

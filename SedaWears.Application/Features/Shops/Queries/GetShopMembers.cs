@@ -4,7 +4,7 @@ using SedaWears.Application.Common.Interfaces;
 using SedaWears.Application.Common.Models;
 using SedaWears.Application.Features.Users.Models;
 using SedaWears.Domain.Enums;
-using SedaWears.Application.Features.Users;
+using SedaWears.Application.Features.Users.Projections;
 using SedaWears.Domain.Entities;
 
 using SedaWears.Application.Common.Validators;
@@ -18,13 +18,13 @@ public record GetShopMembersQuery(
     int PageSize = 10,
     string? SortBy = "createdAt",
     string? SortOrder = "desc",
-    bool? IsInvited = null) : IRequest<PaginatedList<BaseUserRepresentation>>, IPaginatedQuery;
+    bool? IsInvited = null) : IRequest<PaginatedList<BaseUserDto>>, IPaginatedQuery;
 
 public class GetShopMembersValidator : PaginatedQueryValidator<GetShopMembersQuery> { }
 
-public class GetShopMembersHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopMembersQuery, PaginatedList<BaseUserRepresentation>>
+public class GetShopMembersHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopMembersQuery, PaginatedList<BaseUserDto>>
 {
-    public async Task<PaginatedList<BaseUserRepresentation>> Handle(GetShopMembersQuery request, CancellationToken ct)
+    public async Task<PaginatedList<BaseUserDto>> Handle(GetShopMembersQuery request, CancellationToken ct)
     {
         var query = dbContext.ShopMembers
             .AsNoTracking()
@@ -48,16 +48,34 @@ public class GetShopMembersHandler(IApplicationDbContext dbContext) : IRequestHa
 
         var totalCount = await sortedQuery.CountAsync(ct);
 
-        var shopMembers = await sortedQuery
+        var pagedMembers = sortedQuery
             .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .Include(sm => sm.User)
-            .ToListAsync(ct);
+            .Take(request.PageSize);
 
-        var mappedMembers = shopMembers
-            .Select(sm => sm.User.ToUserRepresentation(sm.CreatedAt))
-            .ToList();
+        List<BaseUserDto> mappedMembers;
 
-        return new PaginatedList<BaseUserRepresentation>(mappedMembers, totalCount, request.PageNumber, request.PageSize);
+        if (request.Role == UserRole.Owner)
+        {
+            mappedMembers = (await pagedMembers.Select(sm => sm.User).ProjectToOwner().ToListAsync(ct))
+                .Cast<BaseUserDto>().ToList();
+        }
+        else if (request.Role == UserRole.Manager)
+        {
+            mappedMembers = (await pagedMembers.Select(sm => sm.User).ProjectToManager().ToListAsync(ct))
+                .Cast<BaseUserDto>().ToList();
+        }
+        else
+        {
+            // For mixed roles in ShopMembers, we fetch and map
+            var members = await pagedMembers
+                .Include(sm => sm.User)
+                .ThenInclude(u => u.ShopMemberships)
+                .ThenInclude(ms => ms.Shop)
+                .ToListAsync(ct);
+
+            mappedMembers = members.Select(sm => sm.User.ToUserDto(sm.CreatedAt)).ToList();
+        }
+
+        return new PaginatedList<BaseUserDto>(mappedMembers, totalCount, request.PageNumber, request.PageSize);
     }
 }

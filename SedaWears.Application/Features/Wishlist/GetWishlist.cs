@@ -5,18 +5,18 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.Application.Features.Wishlist;
 
-public record WishlistRepresentation(
+public record WishlistDto(
     int ProductId, 
     string ProductName, 
     decimal ProductPrice, 
     string? ProductImage, 
     DateTime AddedAt);
 
-public record GetWishlistQuery() : IRequest<List<WishlistRepresentation>>;
+public record GetWishlistQuery() : IRequest<List<WishlistDto>>;
 
-public class GetWishlistHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) : IRequestHandler<GetWishlistQuery, List<WishlistRepresentation>>
+public class GetWishlistHandler(IApplicationDbContext dbContext, ICurrentUser currentUser) : IRequestHandler<GetWishlistQuery, List<WishlistDto>>
 {
-    public async Task<List<WishlistRepresentation>> Handle(GetWishlistQuery request, CancellationToken ct)
+    public async Task<List<WishlistDto>> Handle(GetWishlistQuery request, CancellationToken ct)
     {
         var userId = currentUser.Id ?? throw new UnauthorizedAccessException();
 
@@ -24,7 +24,7 @@ public class GetWishlistHandler(IApplicationDbContext dbContext, ICurrentUser cu
             .AsNoTracking()
             .Where(w => w.UserId == userId)
             .OrderByDescending(w => w.CreatedAt)
-            .Select(w => new WishlistRepresentation(
+            .Select(w => new WishlistDto(
                 w.ProductId,
                 w.Product.Name,
                 w.Product.Price,

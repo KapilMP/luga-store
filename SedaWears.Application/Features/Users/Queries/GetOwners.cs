@@ -14,15 +14,15 @@ public record GetOwnersQuery(
     bool? IsInvited = null,
     string? SortBy = "createdAt",
     string? SortOrder = "desc")
-    : IRequest<PaginatedList<OwnerRepresentation>>, IPaginatedQuery;
+    : IRequest<PaginatedList<OwnerDto>>, IPaginatedQuery;
 
 public class GetOwnersValidator : PaginatedQueryValidator<GetOwnersQuery> { }
 
-public class GetOwnersHandler(IUserService userService) : IRequestHandler<GetOwnersQuery, PaginatedList<OwnerRepresentation>>
+public class GetOwnersHandler(IUserService userService) : IRequestHandler<GetOwnersQuery, PaginatedList<OwnerDto>>
 {
-    public async Task<PaginatedList<OwnerRepresentation>> Handle(GetOwnersQuery request, CancellationToken ct)
+    public async Task<PaginatedList<OwnerDto>> Handle(GetOwnersQuery request, CancellationToken ct)
     {
-        return await userService.GetUsersByRoleAsync<OwnerRepresentation>(
+        return await userService.GetUsersByRoleAsync<OwnerDto>(
             UserRole.Owner,
             request.PageNumber,
             request.PageSize,

@@ -5,10 +5,15 @@ using Microsoft.AspNetCore.Identity;
 using SedaWears.Application.Common.Exceptions;
 using SedaWears.Domain.Entities;
 using SedaWears.Application.Features.Users.Models;
+using SedaWears.Application.Features.Users.Projections;
+
+using SedaWears.Application.Common.Interfaces;
+
+using Microsoft.EntityFrameworkCore;
 
 namespace SedaWears.Application.Features.Users.Commands;
 
-public record UpdateUserCommand(int Id, string FirstName, string LastName, bool? IsActive, string? NewPassword = null) : IRequest<BaseUserRepresentation>;
+public record UpdateUserCommand(int Id, string FirstName, string LastName, bool? IsActive) : IRequest;
 
 public class UpdateUserValidator : AbstractValidator<UpdateUserCommand>
 {
@@ -22,11 +27,14 @@ public class UpdateUserValidator : AbstractValidator<UpdateUserCommand>
     }
 }
 
-public class UpdateUserHandler(UserManager<User> userManager) : IRequestHandler<UpdateUserCommand, BaseUserRepresentation>
+public class UpdateUserHandler(UserManager<User> userManager, IOriginContext originContext) : IRequestHandler<UpdateUserCommand>
 {
-    public async Task<BaseUserRepresentation> Handle(UpdateUserCommand request, CancellationToken ct)
+    public async Task Handle(UpdateUserCommand request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(request.Id.ToString()) ?? throw new NotFoundException("User not found.");
+        var role = originContext.CurrentRole;
+        var user = await userManager.Users
+            .FirstOrDefaultAsync(u => u.Id == request.Id && u.Role == role, ct)
+            ?? throw new NotFoundException($"{role} not found.");
 
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
@@ -34,13 +42,5 @@ public class UpdateUserHandler(UserManager<User> userManager) : IRequestHandler<
 
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded) throw new BadRequestException(result.Errors.First().Description);
-
-        if (!string.IsNullOrEmpty(request.NewPassword))
-        {
-            var token = await userManager.GeneratePasswordResetTokenAsync(user);
-            await userManager.ResetPasswordAsync(user, token, request.NewPassword);
-        }
-
-        return user.ToUserRepresentation();
     }
 }

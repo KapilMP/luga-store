@@ -3,15 +3,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SedaWears.Application.Common.Settings;
+using SedaWears.Application.Features.Shops.Models;
 using SedaWears.Application.Features.Shops.Queries;
 using SedaWears.Application.Features.Shops.Commands;
 using SedaWears.Domain.Enums;
 
 namespace SedaWears.API.Controllers.Shop;
-
-public record UpsertShopRequest(string Name, string SubdomainSlug, string? Description, string? LogoFileName, string? BannerFileName);
-public record UpdateShopActiveStatusRequest(bool IsActive);
-public record ShopMemberInviteRequest(string Email);
 
 [ApiController]
 [Route("[controller]")]
@@ -68,6 +65,6 @@ public class ShopsController(ISender mediator) : ControllerBase
     public async Task<IActionResult> DeleteShop(int id)
     {
         await mediator.Send(new DeleteShopCommand(id));
-        return Ok(new { message = "Shop deleted successfully." });
+        return NoContent();
     }
 }

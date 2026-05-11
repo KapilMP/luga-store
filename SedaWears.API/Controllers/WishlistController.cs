@@ -25,6 +25,6 @@ public class WishlistController(ISender mediator) : ControllerBase
     public async Task<IActionResult> RemoveFromWishlist(int productId, CancellationToken ct)
     {
         await mediator.Send(new RemoveFromWishlistCommand(productId), ct);
-        return Ok(new { message = "Product removed from wishlist." });
+        return NoContent();
     }
 }

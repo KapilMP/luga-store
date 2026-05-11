@@ -7,31 +7,33 @@ using SedaWears.Domain.Enums;
 using SedaWears.Domain.Entities;
 using SedaWears.Application.Common.Interfaces;
 
+using SedaWears.Application.Features.Users.Projections;
+
 namespace SedaWears.Application.Features.Users.Queries;
 
-public record GetUserQuery(UserRole? Role = null, int? Id = null) : IRequest<BaseUserRepresentation>;
+public record GetUserQuery(UserRole? Role = null, int? Id = null) : IRequest<BaseUserDto>;
 
 public class GetUserHandler(
     UserManager<User> userManager,
     ICurrentUser currentUser,
-    IOriginContext originContext) : IRequestHandler<GetUserQuery, BaseUserRepresentation>
+    IOriginContext originContext) : IRequestHandler<GetUserQuery, BaseUserDto>
 {
-    public async Task<BaseUserRepresentation> Handle(GetUserQuery request, CancellationToken ct)
+    public async Task<BaseUserDto> Handle(GetUserQuery request, CancellationToken ct)
     {
         var role = request.Role ?? originContext.CurrentRole;
         var userId = request.Id ?? currentUser.Id!.Value;
 
-        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("User not found.");
+        var query = userManager.Users.AsNoTracking().Where(u => u.Id == userId && u.Role == role);
 
-        if (user.Role != role) throw new NotFoundException($"{role} not found.");
+        BaseUserDto? userDto = role switch
+        {
+            UserRole.Admin => await query.ProjectToAdmin().FirstOrDefaultAsync(ct),
+            UserRole.Owner => await query.ProjectToOwner().FirstOrDefaultAsync(ct),
+            UserRole.Manager => await query.ProjectToManager().FirstOrDefaultAsync(ct),
+            UserRole.Customer => await query.ProjectToCustomer().FirstOrDefaultAsync(ct),
+            _ => throw new ArgumentOutOfRangeException()
+        };
 
-        var query = userManager.Users;
-
-        if (role == UserRole.Customer) query = query.Include(u => u.Addresses);
-        if (role == UserRole.Manager) query = query.Include(u => u.ShopMemberships).ThenInclude(ms => ms.Shop);
-
-        user = await query.FirstOrDefaultAsync(u => u.Id == userId, ct) ?? user;
-
-        return user.ToUserRepresentation();
+        return userDto ?? throw new NotFoundException($"{role} not found.");
     }
 }

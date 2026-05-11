@@ -14,13 +14,13 @@ public record GetShopManagersByShopIdQuery(
     bool? Invited = null,
     string? SortBy = "createdAt",
     string? SortOrder = "desc")
-    : IRequest<PaginatedList<ManagerRepresentation>>, IPaginatedQuery;
+    : IRequest<PaginatedList<ManagerDto>>, IPaginatedQuery;
 
 public class GetShopManagersByShopIdValidator : PaginatedQueryValidator<GetShopManagersByShopIdQuery> { }
 
-public class GetShopManagersByShopIdHandler(IUserService userService) : IRequestHandler<GetShopManagersByShopIdQuery, PaginatedList<ManagerRepresentation>>
+public class GetShopManagersByShopIdHandler(IUserService userService) : IRequestHandler<GetShopManagersByShopIdQuery, PaginatedList<ManagerDto>>
 {
-    public async Task<PaginatedList<ManagerRepresentation>> Handle(GetShopManagersByShopIdQuery request, CancellationToken ct)
+    public async Task<PaginatedList<ManagerDto>> Handle(GetShopManagersByShopIdQuery request, CancellationToken ct)
     {
         return await userService.GetShopManagersAsync(
             request.ShopId,

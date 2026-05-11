@@ -13,7 +13,7 @@ public record CheckoutItem(int ProductId, int Quantity);
 public record CheckoutCommand(
     string? CustomerEmail,
     CheckoutAddress? ShippingAddress,
-    List<CheckoutItem> Items) : ICommand<CheckoutRepresentation>;
+    List<CheckoutItem> Items) : ICommand<CheckoutDto>;
 
 public class CheckoutValidator : AbstractValidator<CheckoutCommand>
 {
@@ -49,9 +49,9 @@ public class CheckoutValidator : AbstractValidator<CheckoutCommand>
     }
 }
 
-public class CheckoutHandler(IApplicationDbContext context, IAuthService authService, ICurrentUser currentUser) : ICommandHandler<CheckoutCommand, CheckoutRepresentation>
+public class CheckoutHandler(IApplicationDbContext context, IAuthService authService, ICurrentUser currentUser) : ICommandHandler<CheckoutCommand, CheckoutDto>
 {
-    public async Task<CheckoutRepresentation> Handle(CheckoutCommand request, CancellationToken ct)
+    public async Task<CheckoutDto> Handle(CheckoutCommand request, CancellationToken ct)
     {
         int userId;
 
@@ -134,6 +134,6 @@ public class CheckoutHandler(IApplicationDbContext context, IAuthService authSer
         context.Orders.Add(order);
         await context.SaveChangesAsync(ct);
 
-        return new CheckoutRepresentation(order.Id, order.Status.ToString(), order.TotalAmount);
+        return new CheckoutDto(order.Id, order.Status.ToString(), order.TotalAmount);
     }
 }

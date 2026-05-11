@@ -15,13 +15,13 @@ public record GetShopsQuery(
     int PageSize = 10,
     string? SortBy = "createdAt",
     string? SortOrder = "desc",
-    string? Search = null) : IRequest<PaginatedList<ShopRepresentation>>, IPaginatedQuery;
+    string? Search = null) : IRequest<PaginatedList<ShopDto>>, IPaginatedQuery;
 
 public class GetShopsValidator : PaginatedQueryValidator<GetShopsQuery> { }
 
-public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopsQuery, PaginatedList<ShopRepresentation>>
+public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopsQuery, PaginatedList<ShopDto>>
 {
-    public async Task<PaginatedList<ShopRepresentation>> Handle(GetShopsQuery request, CancellationToken ct)
+    public async Task<PaginatedList<ShopDto>> Handle(GetShopsQuery request, CancellationToken ct)
     {
         var query = dbContext.Shops
             .AsNoTracking();
@@ -58,6 +58,6 @@ public class GetShopsHandler(IApplicationDbContext dbContext) : IRequestHandler<
             .ProjectToShop()
             .ToListAsync(ct);
 
-        return new PaginatedList<ShopRepresentation>(items, totalCount, request.PageNumber, request.PageSize);
+        return new PaginatedList<ShopDto>(items, totalCount, request.PageNumber, request.PageSize);
     }
 }

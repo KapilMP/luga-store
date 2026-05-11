@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SedaWears.Application.Features.Cart.Models;
 using SedaWears.Application.Features.Cart.Commands;
 using SedaWears.Application.Features.Cart.Queries;
 using SedaWears.Domain.Enums;
@@ -9,9 +10,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using SedaWears.Application.Common.Settings;
 
 namespace SedaWears.API.Controllers.Customer;
-
-public record AddToCartRequest(int ProductId, ProductSize Size, int Quantity);
-public record UpdateCartRequest(ProductSize Size, int Quantity);
 
 [ApiController]
 [Route("customer/[controller]")]

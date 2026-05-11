@@ -14,15 +14,15 @@ public record GetCustomersQuery(
     bool? IsInvited = null,
     string? SortBy = "createdAt",
     string? SortOrder = "desc")
-    : IRequest<PaginatedList<CustomerRepresentation>>, IPaginatedQuery;
+    : IRequest<PaginatedList<CustomerDto>>, IPaginatedQuery;
 
 public class GetCustomersValidator : PaginatedQueryValidator<GetCustomersQuery> { }
 
-public class GetCustomersHandler(IUserService userService) : IRequestHandler<GetCustomersQuery, PaginatedList<CustomerRepresentation>>
+public class GetCustomersHandler(IUserService userService) : IRequestHandler<GetCustomersQuery, PaginatedList<CustomerDto>>
 {
-    public async Task<PaginatedList<CustomerRepresentation>> Handle(GetCustomersQuery request, CancellationToken ct)
+    public async Task<PaginatedList<CustomerDto>> Handle(GetCustomersQuery request, CancellationToken ct)
     {
-        return await userService.GetUsersByRoleAsync<CustomerRepresentation>(
+        return await userService.GetUsersByRoleAsync<CustomerDto>(
             UserRole.Customer,
             request.PageNumber,
             request.PageSize,

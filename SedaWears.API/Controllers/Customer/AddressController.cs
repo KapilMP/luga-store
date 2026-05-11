@@ -18,13 +18,13 @@ namespace SedaWears.API.Controllers.Customer;
 public class AddressController(ISender mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<AddressRepresentation>>> GetAddresses()
+    public async Task<ActionResult<List<AddressDto>>> GetAddresses()
     {
         return await mediator.Send(new GetAddressesQuery());
     }
 
     [HttpPost]
-    public async Task<ActionResult<AddressRepresentation>> AddAddress(AddressRequest request)
+    public async Task<ActionResult<AddressDto>> AddAddress(AddressRequest request)
     {
         return await mediator.Send(new AddAddressCommand(
             request.Label, request.FullName, request.Email, request.Phone, request.Street, request.City, request.ZipCode));

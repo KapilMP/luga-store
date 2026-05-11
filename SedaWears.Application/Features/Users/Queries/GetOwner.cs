@@ -5,14 +5,14 @@ using SedaWears.Domain.Enums;
 
 namespace SedaWears.Application.Features.Users.Queries;
 
-public record GetOwnerQuery(int Id) : IRequest<OwnerRepresentation>;
+public record GetOwnerQuery(int Id) : IRequest<OwnerDto>;
 
 public class GetOwnerHandler(IUserService userService) :
-    IRequestHandler<GetOwnerQuery, OwnerRepresentation>
+    IRequestHandler<GetOwnerQuery, OwnerDto>
 {
-    public async Task<OwnerRepresentation> Handle(GetOwnerQuery request, CancellationToken ct)
+    public async Task<OwnerDto> Handle(GetOwnerQuery request, CancellationToken ct)
     {
-        return await userService.GetUserByIdAndRoleAsync<OwnerRepresentation>(
+        return await userService.GetUserByIdAndRoleAsync<OwnerDto>(
             request.Id,
             UserRole.Owner,
             ct);

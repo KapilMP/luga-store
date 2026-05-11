@@ -5,9 +5,9 @@ namespace SedaWears.Application.Features.Categories.Projections;
 
 public static class CategoryProjections
 {
-    public static IQueryable<CategoryRepresentation> ProjectToCategory(this IQueryable<Category> query)
+    public static IQueryable<CategoryDto> ProjectToCategory(this IQueryable<Category> query)
     {
-        return query.Select(c => new CategoryRepresentation(
+        return query.Select(c => new CategoryDto(
             c.Id,
             c.Name,
             c.Description,

@@ -7,11 +7,11 @@ using SedaWears.Application.Features.Shops.Projections;
 
 namespace SedaWears.Application.Features.Shops.Queries;
 
-public record GetShopQuery(int Id) : IRequest<ShopRepresentation>;
+public record GetShopQuery(int Id) : IRequest<ShopDto>;
 
-public class GetShopHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopQuery, ShopRepresentation>
+public class GetShopHandler(IApplicationDbContext dbContext) : IRequestHandler<GetShopQuery, ShopDto>
 {
-    public async Task<ShopRepresentation> Handle(GetShopQuery request, CancellationToken ct)
+    public async Task<ShopDto> Handle(GetShopQuery request, CancellationToken ct)
     {
         return await dbContext.Shops
             .AsNoTracking()
